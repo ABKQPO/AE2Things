@@ -1,7 +1,5 @@
 package com.asdflj.ae2thing.util;
 
-import com.asdflj.ae2thing.integration.Mods;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +16,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.api.Constants;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.nei.NEI_TH_Config;
 import com.asdflj.ae2thing.nei.object.OrderStack;

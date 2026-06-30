@@ -40,6 +40,7 @@ import com.asdflj.ae2thing.client.render.BlockPosHighlighter;
 import com.asdflj.ae2thing.client.render.Notification;
 import com.asdflj.ae2thing.client.render.WirelessOverlayRender;
 import com.asdflj.ae2thing.common.item.ItemPhial;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.loader.KeybindLoader;
 import com.asdflj.ae2thing.loader.ListenerLoader;
 import com.asdflj.ae2thing.loader.RenderLoader;
@@ -47,7 +48,6 @@ import com.asdflj.ae2thing.nei.recipes.DefaultExtractorLoader;
 import com.asdflj.ae2thing.network.CPacketCraftRequest;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.FindITUtil;
-import com.asdflj.ae2thing.integration.Mods;
 
 import appeng.api.events.GuiScrollEvent;
 import appeng.api.storage.data.IAEItemStack;

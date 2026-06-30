@@ -6,8 +6,8 @@ import net.minecraft.item.ItemStack;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import com.asdflj.ae2thing.util.BaublesUtil;
 import com.asdflj.ae2thing.integration.Mods;
+import com.asdflj.ae2thing.util.BaublesUtil;
 import com.glodblock.github.common.item.ItemBaseWirelessTerminal;
 import com.glodblock.github.common.item.ItemWirelessUltraTerminal;
 import com.glodblock.github.util.UltraTerminalModes;

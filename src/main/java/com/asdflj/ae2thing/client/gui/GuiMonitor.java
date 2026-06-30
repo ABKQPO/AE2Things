@@ -22,12 +22,12 @@ import com.asdflj.ae2thing.client.gui.widget.ITypeFilterGui;
 import com.asdflj.ae2thing.client.gui.widget.THGuiTextField;
 import com.asdflj.ae2thing.client.gui.widget.TypeFilterWidget;
 import com.asdflj.ae2thing.client.me.AdvItemRepo;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.InventoryHandler;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.network.CPacketInventoryAction;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.AspectUtil;
-import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.glodblock.github.common.item.ItemFluidDrop;
 

@@ -1,7 +1,5 @@
 package com.asdflj.ae2thing.util;
 
-import com.asdflj.ae2thing.integration.Mods;
-
 import static com.asdflj.ae2thing.api.Constants.MessageType.UPDATE_PLAYER_ITEM;
 import static com.asdflj.ae2thing.nei.NEI_TH_Config.getConfigValue;
 
@@ -18,6 +16,7 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.world.World;
 
 import com.asdflj.ae2thing.AE2Thing;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.nei.object.OrderStack;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
@@ -55,7 +54,8 @@ public class GTUtil {
 
     public static String getRecipeName(IRecipeHandler recipe, List<OrderStack<?>> in) {
         if (recipe instanceof GTNEIDefaultHandler) {
-            if (Mods.PROGRAMMABLE_HATCHES.isModLoaded() && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT)) {
+            if (Mods.PROGRAMMABLE_HATCHES.isModLoaded()
+                && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT)) {
                 return recipe.getRecipeName();
             }
             for (OrderStack<?> stack : in) {

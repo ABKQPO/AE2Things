@@ -8,8 +8,8 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
 import com.asdflj.ae2thing.common.Config;
-import com.asdflj.ae2thing.util.Ae2Reflect;
 import com.asdflj.ae2thing.integration.Mods;
+import com.asdflj.ae2thing.util.Ae2Reflect;
 import com.asdflj.ae2thing.util.TicUtil;
 
 import appeng.api.networking.energy.IEnergySource;

@@ -1,10 +1,10 @@
 package com.asdflj.ae2thing.util;
 
-import com.asdflj.ae2thing.integration.Mods;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.regex.Pattern;
+
+import com.asdflj.ae2thing.integration.Mods;
 
 public class NeCharUtil {
 

@@ -16,9 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.Constants;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 import com.asdflj.ae2thing.util.BaublesUtil;
-import com.asdflj.ae2thing.integration.Mods;
 
 import appeng.api.features.INetworkEncodable;
 import appeng.api.networking.IGrid;

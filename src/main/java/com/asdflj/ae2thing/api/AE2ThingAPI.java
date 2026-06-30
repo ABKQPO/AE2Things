@@ -30,13 +30,13 @@ import com.asdflj.ae2thing.client.event.NotificationEvent;
 import com.asdflj.ae2thing.common.Config;
 import com.asdflj.ae2thing.common.fluids.Mana;
 import com.asdflj.ae2thing.common.storage.StorageManager;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.network.CPacketFindCellItem;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.util.Ae2Reflect;
 import com.asdflj.ae2thing.util.AspectUtil;
-import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.NameConst;
 import com.glodblock.github.util.Util;
 

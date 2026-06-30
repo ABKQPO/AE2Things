@@ -12,8 +12,8 @@ import net.minecraft.nbt.NBTTagCompound;
 
 import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.api.adapter.terminal.ITerminal;
-import com.asdflj.ae2thing.util.BaublesUtil;
 import com.asdflj.ae2thing.integration.Mods;
+import com.asdflj.ae2thing.util.BaublesUtil;
 
 public interface IItemTerminal extends ITerminal {
 

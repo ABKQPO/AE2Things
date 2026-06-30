@@ -5,12 +5,12 @@ import net.minecraft.util.ResourceLocation;
 import com.asdflj.ae2thing.common.Config;
 import com.asdflj.ae2thing.common.storage.CellHandler;
 import com.asdflj.ae2thing.crossmod.waila.WailaInit;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.InventoryHandler;
 import com.asdflj.ae2thing.loader.ChannelLoader;
 import com.asdflj.ae2thing.loader.ItemAndBlockHolder;
 import com.asdflj.ae2thing.loader.RecipeLoader;
 import com.asdflj.ae2thing.proxy.CommonProxy;
-import com.asdflj.ae2thing.integration.Mods;
 
 import appeng.api.AEApi;
 import cpw.mods.fml.common.Mod;

@@ -23,10 +23,10 @@ import com.asdflj.ae2thing.client.gui.IGuiMonitorTerminal;
 import com.asdflj.ae2thing.client.gui.IWidgetGui;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.me.AdvItemRepo;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.network.CPacketInventoryAction;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.AspectUtil;
-import com.asdflj.ae2thing.integration.Mods;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.config.SearchBoxMode;

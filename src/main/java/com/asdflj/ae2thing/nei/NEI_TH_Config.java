@@ -8,8 +8,8 @@ import com.asdflj.ae2thing.Tags;
 import com.asdflj.ae2thing.client.gui.GuiCraftingTerminal;
 import com.asdflj.ae2thing.client.gui.GuiInfusionPatternTerminal;
 import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
-import com.asdflj.ae2thing.nei.recipes.FluidRecipe;
 import com.asdflj.ae2thing.integration.Mods;
+import com.asdflj.ae2thing.nei.recipes.FluidRecipe;
 import com.github.vfyjxf.nee.nei.NEETerminalBookmarkContainerHandler;
 
 import codechicken.lib.config.ConfigTagParent;

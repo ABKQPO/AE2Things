@@ -23,13 +23,13 @@ import org.lwjgl.opengl.GL12;
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.client.gui.widget.IGuiSelection;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.nei.NEI_TH_Config;
 import com.asdflj.ae2thing.network.CPacketFluidUpdate;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.AspectUtil;
 import com.asdflj.ae2thing.util.HBMAeAddonUtil;
-import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.NameConst;
 import com.glodblock.github.common.item.ItemFluidDrop;
 import com.glodblock.github.hbmaeaddon.util.HBMUtil;
@@ -101,14 +101,16 @@ public abstract class BaseMEGui extends AEBaseGui implements IGuiSelection {
     protected boolean isFilledContainer(ItemStack is) {
         if (is == null) return false;
         return (Util.FluidUtil.isFluidContainer(is) && Util.FluidUtil.isFilled(is))
-            || (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.isEssentiaContainer(is) && !AspectUtil.isEmptyEssentiaContainer(is))
+            || (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.isEssentiaContainer(is)
+                && !AspectUtil.isEmptyEssentiaContainer(is))
             || (Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemHasFluidType(is));
     }
 
     private boolean isEmptyContainer(ItemStack is, IAEFluidStack fs) {
         if (is == null) return false;
         return Util.FluidUtil.isEmpty(is)
-            || (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.isEssentiaContainer(is) && AspectUtil.isEmptyEssentiaContainer(is))
+            || (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.isEssentiaContainer(is)
+                && AspectUtil.isEmptyEssentiaContainer(is))
             || (Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemIsEmptyContainer(is, fs));
     }
 

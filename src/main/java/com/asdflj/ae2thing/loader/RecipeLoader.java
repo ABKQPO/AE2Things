@@ -36,9 +36,9 @@ import net.minecraftforge.oredict.ShapelessOreRecipe;
 
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.common.Config;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.loader.recipe.WirelessTerminalEnergyRecipe;
 import com.asdflj.ae2thing.loader.recipe.WirelessTerminalQuantumBridgeRecipe;
-import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.TicUtil;
 import com.glodblock.github.common.storage.CellType;
 

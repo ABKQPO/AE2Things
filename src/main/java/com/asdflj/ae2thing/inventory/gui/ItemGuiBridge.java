@@ -10,8 +10,8 @@ import net.minecraftforge.common.util.ForgeDirection;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import com.asdflj.ae2thing.util.BaublesUtil;
 import com.asdflj.ae2thing.integration.Mods;
+import com.asdflj.ae2thing.util.BaublesUtil;
 
 public abstract class ItemGuiBridge<T> implements IGuiFactory {
 

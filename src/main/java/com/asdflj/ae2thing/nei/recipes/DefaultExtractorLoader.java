@@ -1,8 +1,8 @@
 package com.asdflj.ae2thing.nei.recipes;
 
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.nei.recipes.extractor.TCRecipeExtractor;
 import com.asdflj.ae2thing.nei.recipes.extractor.VanillaRecipeExtractor;
-import com.asdflj.ae2thing.integration.Mods;
 
 public class DefaultExtractorLoader implements Runnable {
 

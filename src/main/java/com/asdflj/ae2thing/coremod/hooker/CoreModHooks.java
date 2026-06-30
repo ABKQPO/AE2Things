@@ -7,9 +7,9 @@ import com.asdflj.ae2thing.common.Config;
 import com.asdflj.ae2thing.common.parts.PartThaumatoriumInterface;
 import com.asdflj.ae2thing.common.tile.TileExIOPort;
 import com.asdflj.ae2thing.common.tile.TileInfusionInterface;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.EssentiaInventoryAdaptor;
 import com.asdflj.ae2thing.inventory.ThaumatoriumInventoryAdapter;
-import com.asdflj.ae2thing.integration.Mods;
 
 import appeng.api.parts.IPart;
 import appeng.tile.storage.TileIOPort;
