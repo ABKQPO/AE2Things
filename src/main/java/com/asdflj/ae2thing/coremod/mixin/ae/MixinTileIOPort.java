@@ -13,7 +13,12 @@ import appeng.tile.storage.TileIOPort;
 @Mixin(TileIOPort.class)
 public abstract class MixinTileIOPort extends AENetworkInvTile {
 
-    @ModifyVariable(method = "transferContents", at = @At(value = "HEAD"), remap = false, ordinal = 0, argsOnly = true)
+    @ModifyVariable(
+        method = "transferContents",
+        at = @At(value = "HEAD"),
+        remap = false,
+        argsOnly = true,
+        name = "itemsToMove")
     private long transferContents(long itemsToMove) {
         if (this.getTile() instanceof TileExIOPort) {
             itemsToMove *= Config.exIOPortTransferContentsRate;

@@ -57,7 +57,6 @@ public class CellInventory implements ITCellInventory {
         this.cellType = (IStorageItemCell) this.cellItem.getItem();
     }
 
-    @SuppressWarnings("unchecked")
     private void getAllInv() {
         if (ModAndClassUtil.FTR) {
             this.modInv.addAll(
@@ -103,7 +102,7 @@ public class CellInventory implements ITCellInventory {
 
         for (IInventory inv : this.modInv) {
             if (inv instanceof BaseBackpackHandler bbh && bbh.hasFluidTank()) {
-                this.fluidInv.add((BaseBackpackHandler) inv);
+                this.fluidInv.add(bbh);
             }
         }
     }

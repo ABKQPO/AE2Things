@@ -57,7 +57,7 @@ public abstract class MixinItemRepo implements IDisplayRepo, IDisplayRepoExtend 
 
     private boolean addView(ArrayList<Object> view, Object o) {
         GuiScreen gui = mc.currentScreen;
-        if (gui == null) return view.add(o);;
+        if (gui == null) return view.add(o);
         if (!AE2ThingAPI.instance()
             .terminal()
             .isPinTerminal(gui)) {

@@ -49,7 +49,7 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
         super(container);
     }
 
-    @Inject(method = "actionPerformed", at = @At(value = "HEAD"), cancellable = true)
+    @Inject(method = "actionPerformed", at = @At(value = "HEAD"))
     private void actionPerformed(GuiButton btn, CallbackInfo ci) {
         if (btn == start) {
             clickStart = true;

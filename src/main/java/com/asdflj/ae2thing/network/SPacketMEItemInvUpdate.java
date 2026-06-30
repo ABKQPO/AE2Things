@@ -12,6 +12,7 @@ import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.client.gui.IGuiMonitorTerminal;
 
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -37,6 +38,10 @@ public class SPacketMEItemInvUpdate extends SPacketMEBaseInvUpdate implements IM
     }
 
     public void appendItem(final IAEItemStack is) {
+        list.add(is);
+    }
+
+    public void appendStack(final IAEStack<?> is) {
         list.add(is);
     }
 

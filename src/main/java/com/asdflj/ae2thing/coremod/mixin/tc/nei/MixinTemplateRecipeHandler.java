@@ -19,12 +19,12 @@ import com.gtnewhorizons.aspectrecipeindex.nei.arcaneworkbench.ShapelessArcaneRe
         AlchemyRecipeHandler.class, InfusionRecipeHandler.class })
 public class MixinTemplateRecipeHandler {
 
-    @ModifyVariable(method = "loadCraftingRecipes*", at = @At("HEAD"), remap = false, ordinal = 0, argsOnly = true)
+    @ModifyVariable(method = "loadCraftingRecipes*", at = @At("HEAD"), remap = false, argsOnly = true, name = "result")
     public ItemStack ae2thing$loadCraftingRecipes(ItemStack ingredient) {
         return itemPhial2ItemAspect(ingredient);
     }
 
-    @ModifyVariable(method = "loadUsageRecipes", at = @At("HEAD"), remap = false, ordinal = 0, argsOnly = true)
+    @ModifyVariable(method = "loadUsageRecipes*", at = @At("HEAD"), remap = false, argsOnly = true, name = "ingredient")
     public ItemStack ae2thing$loadUsageRecipes(ItemStack ingredient) {
         return itemPhial2ItemAspect(ingredient);
     }

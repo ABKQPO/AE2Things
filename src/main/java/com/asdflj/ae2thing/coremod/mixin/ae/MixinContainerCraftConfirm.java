@@ -17,7 +17,7 @@ import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingJob;
 import appeng.api.storage.ITerminalHost;
-import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.container.AEBaseContainer;
 import appeng.container.implementations.ContainerCraftConfirm;
 
@@ -25,22 +25,22 @@ import appeng.container.implementations.ContainerCraftConfirm;
 public abstract class MixinContainerCraftConfirm extends AEBaseContainer {
 
     @Shadow(remap = false)
-    private ICraftingJob result;
+    protected ICraftingJob result;
 
     @Shadow(remap = false)
     public abstract boolean isSimulation();
 
     @Shadow(remap = false)
-    protected abstract IGrid getGrid();
+    public abstract IGrid getGrid();
 
-    private IAEItemStack is = null;
+    private IAEStack<?> is = null;
 
     public MixinContainerCraftConfirm(InventoryPlayer ip, ITerminalHost anchor) {
         super(ip, anchor);
     }
 
     @Inject(method = "setItemToCraft", at = @At("HEAD"), remap = false)
-    public void setItemToCraft(IAEItemStack itemToCraft, CallbackInfo ci) {
+    public void setItemToCraft(IAEStack<?> itemToCraft, CallbackInfo ci) {
         if (itemToCraft != null) {
             is = itemToCraft.copy();
         }
@@ -50,7 +50,7 @@ public abstract class MixinContainerCraftConfirm extends AEBaseContainer {
     public void startJob(CallbackInfo ci) {
         if (this.result != null && !this.isSimulation() && getGrid() != null && is != null) {
             SPacketMEItemInvUpdate piu = new SPacketMEItemInvUpdate(ADD_PINNED_ITEM);
-            piu.appendItem(is);
+            piu.appendStack(is);
             AE2Thing.proxy.netHandler.sendTo(piu, (EntityPlayerMP) this.getPlayerInv().player);
             is = null;
         }

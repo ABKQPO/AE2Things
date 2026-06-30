@@ -9,6 +9,8 @@ dependencies {
     compileOnlyApi("com.github.GTNewHorizons:ae2stuff:0.10.19-GTNH:dev")
     runtimeOnlyNonPublishable("com.github.GTNewHorizons:ae2stuff:0.10.19-GTNH:dev")
 
+    runtimeOnlyNonPublishable("net.industrial-craft:industrialcraft-2:2.2.828-experimental:dev")
+
     compileOnlyApi("com.github.GTNewHorizons:waila:1.19.30:dev")
     compileOnlyApi("com.github.GTNewHorizons:WirelessCraftingTerminal:1.12.16:dev")
     compileOnlyApi("com.github.GTNewHorizons:FindIt:1.4.3:dev")
