@@ -41,9 +41,8 @@ import appeng.util.MonitorableTypeFilter;
 import appeng.util.Platform;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
-public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
-    implements IGridHost, IPatternTerminal, IClickableInTerminal, IAEAppEngInventory, IInterfaceTerminal,
-    ITerminalTypeFilterProvider {
+public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal implements IGridHost, IPatternTerminal,
+    IClickableInTerminal, IAEAppEngInventory, IInterfaceTerminal, ITerminalTypeFilterProvider {
 
     protected AppEngInternalInventory craftingEx;
     protected AppEngInternalInventory outputEx;

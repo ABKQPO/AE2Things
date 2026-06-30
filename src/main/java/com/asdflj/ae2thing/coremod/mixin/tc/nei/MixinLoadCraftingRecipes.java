@@ -8,8 +8,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import codechicken.nei.recipe.TemplateRecipeHandler;
 import com.gtnewhorizons.aspectrecipeindex.nei.ItemsContainingAspectHandler;
+
+import codechicken.nei.recipe.TemplateRecipeHandler;
 
 @Mixin(ItemsContainingAspectHandler.class)
 public abstract class MixinLoadCraftingRecipes extends TemplateRecipeHandler {

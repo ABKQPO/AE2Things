@@ -3,7 +3,6 @@ package com.asdflj.ae2thing.api.adapter.findit;
 import java.util.ArrayList;
 import java.util.List;
 
-import appeng.api.networking.IGridHost;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 
@@ -12,6 +11,7 @@ import com.glodblock.github.util.Util;
 
 import appeng.api.AEApi;
 import appeng.api.networking.IGrid;
+import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.storage.IMEInventory;
 import appeng.api.storage.StorageChannel;

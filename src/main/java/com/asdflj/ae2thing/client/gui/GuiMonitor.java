@@ -75,9 +75,8 @@ import appeng.util.Platform;
 import codechicken.nei.util.TextHistory;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
-public abstract class GuiMonitor extends BaseMEGui
-    implements IConfigManagerHost, ISortSource, IDropToFillTextField, IGuiDrawSlot, IGuiMonitorTerminal,
-    ITypeFilterGui {
+public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost, ISortSource, IDropToFillTextField,
+    IGuiDrawSlot, IGuiMonitorTerminal, ITypeFilterGui {
 
     protected GuiImgButton clearBtn;
     public static int craftingGridOffsetX;
@@ -222,8 +221,7 @@ public abstract class GuiMonitor extends BaseMEGui
         IAEItemStack stack = aeStack instanceof IAEItemStack ais ? ais : null;
         switch (clickMode) {
             case 0: // pickup / set-down.
-                action = ctrlDown == 1 ? MonitorableAction.SPLIT_OR_PLACE_SINGLE
-                    : MonitorableAction.PICKUP_OR_SET_DOWN;
+                action = ctrlDown == 1 ? MonitorableAction.SPLIT_OR_PLACE_SINGLE : MonitorableAction.PICKUP_OR_SET_DOWN;
                 if (stack != null && action == MonitorableAction.PICKUP_OR_SET_DOWN
                     && stack.getStackSize() == 0
                     && player.inventory.getItemStack() == null) {

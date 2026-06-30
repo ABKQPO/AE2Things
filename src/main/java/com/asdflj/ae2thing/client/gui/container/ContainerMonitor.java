@@ -55,9 +55,8 @@ import appeng.util.Platform;
 import appeng.util.item.AEFluidStack;
 import appeng.util.item.AEItemStack;
 
-public abstract class ContainerMonitor extends BaseNetworkContainer
-    implements IConfigurableObject, IConfigManagerHost, IAEAppEngInventory, IContainerCraftingPacket,
-    ITypeFilterContainer {
+public abstract class ContainerMonitor extends BaseNetworkContainer implements IConfigurableObject, IConfigManagerHost,
+    IAEAppEngInventory, IContainerCraftingPacket, ITypeFilterContainer {
 
     protected final IItemList<IAEItemStack> items = AEApi.instance()
         .storage()
@@ -189,8 +188,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer
         }
         for (final Object crafter : this.crafters) {
             if (crafter instanceof EntityPlayerMP playerMP) {
-                AE2Thing.proxy.netHandler
-                    .sendTo(new SPacketTypeFilter(provider.getTypeFilter(playerMP)), playerMP);
+                AE2Thing.proxy.netHandler.sendTo(new SPacketTypeFilter(provider.getTypeFilter(playerMP)), playerMP);
             }
         }
         this.typeFilterSynced = true;
@@ -263,8 +261,8 @@ public abstract class ContainerMonitor extends BaseNetworkContainer
         if (Util.FluidUtil.isFluidContainer(
             AE2ThingAPI.instance()
                 .getFluidContainer(ifs))) {
-                    result = Util.FluidUtil.fillStack(container, ifs.getFluidStack());
-                }
+            result = Util.FluidUtil.fillStack(container, ifs.getFluidStack());
+        }
         return result != null && result.left != 0;
     }
 

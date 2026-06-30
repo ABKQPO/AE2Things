@@ -1,7 +1,5 @@
 package com.asdflj.ae2thing.proxy;
 
-import de.eydamos.backpack.item.ItemBackpackBase;
-import forestry.storage.items.ItemBackpack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.WorldSavedData;
@@ -57,6 +55,8 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import cpw.mods.fml.common.event.FMLServerStoppingEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import de.eydamos.backpack.item.ItemBackpackBase;
+import forestry.storage.items.ItemBackpack;
 import ic2.core.Ic2Items;
 
 public class CommonProxy {

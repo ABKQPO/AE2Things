@@ -17,8 +17,8 @@ import net.minecraft.world.World;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.nei.ButtonConstants;
-import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 import com.asdflj.ae2thing.nei.object.OrderStack;
+import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 
 import appeng.api.util.IInterfaceViewable;
 import appeng.util.item.AEItemStack;

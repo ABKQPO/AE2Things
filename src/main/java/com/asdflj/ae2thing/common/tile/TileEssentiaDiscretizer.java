@@ -93,8 +93,7 @@ public class TileEssentiaDiscretizer extends AENetworkTile implements IPriorityH
 
     private IMEMonitor<AEEssentiaStack> getEssentiaGrid() {
         try {
-            return AspectUtil.getEssentiaMonitor(
-                getProxy().getGrid());
+            return AspectUtil.getEssentiaMonitor(getProxy().getGrid());
         } catch (GridAccessException e) {
             return null;
         }

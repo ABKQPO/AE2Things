@@ -18,7 +18,8 @@ import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 /**
  * Shared client-side helper that renders one {@link TypeToggleButton} per registered {@link IAEStackType} and keeps a
- * local copy of the per-type visibility map. GUIs delegate their {@code getTypeFilter()} to {@link #getFilters()} so the
+ * local copy of the per-type visibility map. GUIs delegate their {@code getTypeFilter()} to {@link #getFilters()} so
+ * the
  * shared {@code ItemRepo} can apply the filter, and route toggle clicks through {@link #handleButtonClick(GuiButton)}.
  */
 public class TypeFilterWidget {

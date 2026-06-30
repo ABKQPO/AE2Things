@@ -272,16 +272,8 @@ public class GuiBaseInterfaceWireless extends BaseMEGui implements IDropToFillTe
 
     @Override
     public void drawFG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
-        fontRendererObj.drawString(
-            getGuiDisplayName(GuiText.InterfaceTerminal.getLocal()),
-            8,
-            6,
-            4210752);
-        fontRendererObj.drawString(
-            GuiText.inventory.getLocal(),
-            VIEW_LEFT + 2,
-            this.ySize - 96,
-            4210752);
+        fontRendererObj.drawString(getGuiDisplayName(GuiText.InterfaceTerminal.getLocal()), 8, 6, 4210752);
+        fontRendererObj.drawString(GuiText.inventory.getLocal(), VIEW_LEFT + 2, this.ySize - 96, 4210752);
         if (!neiPresent && tooltipStack != null) {
             renderToolTip(tooltipStack, mouseX, mouseY);
         }

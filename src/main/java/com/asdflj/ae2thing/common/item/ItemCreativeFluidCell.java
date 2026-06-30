@@ -70,13 +70,12 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageCell 
         FluidStack fs = StackInfo.getFluid(is);
         setUnlocalizedName(this.name);
         setTextureName(
-            AE2Thing
-                .resource(
-                    String.format(
-                        "%s_%s",
-                        NameConst.ITEM_CREATIVE_FLUID_CELL,
-                        fs.getFluid()
-                            .getName()))
+            AE2Thing.resource(
+                String.format(
+                    "%s_%s",
+                    NameConst.ITEM_CREATIVE_FLUID_CELL,
+                    fs.getFluid()
+                        .getName()))
                 .toString());
         this.setMaxStackSize(1);
         this.setFeature(EnumSet.of(AEFeature.StorageCells));

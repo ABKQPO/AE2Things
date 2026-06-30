@@ -31,13 +31,12 @@ public enum Mixins implements IMixins {
         .addRequiredMod(Mods.AE2)
         .setPhase(Phase.LATE)),
 
-    ASPECT_RECIPE_INDEX(new MixinBuilder()
-        .addClientMixins("tc.nei.MixinLoadCraftingRecipes", "tc.nei.MixinTemplateRecipeHandler")
-        .addRequiredMod(Mods.ASPECT_RECIPE_INDEX)
-        .setPhase(Phase.LATE)),
+    ASPECT_RECIPE_INDEX(
+        new MixinBuilder().addClientMixins("tc.nei.MixinLoadCraftingRecipes", "tc.nei.MixinTemplateRecipeHandler")
+            .addRequiredMod(Mods.ASPECT_RECIPE_INDEX)
+            .setPhase(Phase.LATE)),
 
-    BLOCK_RENDERER(new MixinBuilder()
-        .addClientMixins("br.MixinBRUtil")
+    BLOCK_RENDERER(new MixinBuilder().addClientMixins("br.MixinBRUtil")
         .addRequiredMod(Mods.BLOCK_RENDERER)
         .setPhase(Phase.LATE)),
 
@@ -51,8 +50,7 @@ public enum Mixins implements IMixins {
         .addRequiredMod(Mods.NOT_ENOUGH_ITEMS)
         .setPhase(Phase.LATE)),
 
-    WIRELESS_CRAFTING_TERMINAL(new MixinBuilder()
-        .addCommonMixins("wct.MixinRandomUtils")
+    WIRELESS_CRAFTING_TERMINAL(new MixinBuilder().addCommonMixins("wct.MixinRandomUtils")
         .addRequiredMod(Mods.WIRELESS_CRAFTING_TERMINAL)
         .setPhase(Phase.LATE));
 

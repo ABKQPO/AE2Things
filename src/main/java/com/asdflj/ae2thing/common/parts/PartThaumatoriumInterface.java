@@ -51,8 +51,7 @@ public class PartThaumatoriumInterface extends PartFluidInterface
                 this.getProxy()
                     .getGrid());
             if (monitor == null) return 0;
-            AEEssentiaStack notInsertable = monitor
-                .injectItems(new AEEssentiaStack(aspect, amount), mode, this.source);
+            AEEssentiaStack notInsertable = monitor.injectItems(new AEEssentiaStack(aspect, amount), mode, this.source);
             if (notInsertable == null) return amount;
             return (int) (amount - notInsertable.getStackSize());
         } catch (Exception ignored) {}

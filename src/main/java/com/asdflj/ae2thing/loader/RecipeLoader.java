@@ -234,10 +234,7 @@ public class RecipeLoader implements Runnable {
                 INFUSION_INTERFACE.stack(),
                 com.glodblock.github.loader.ItemAndBlockHolder.INTERFACE,
                 AE2ThingAPI.PHIAL);
-            GameRegistry.addShapelessRecipe(
-                ESSENTIA_DISCRETIZER.stack(),
-                THE_DISTILLATION_ENCODER,
-                AE2ThingAPI.PHIAL);
+            GameRegistry.addShapelessRecipe(ESSENTIA_DISCRETIZER.stack(), THE_DISTILLATION_ENCODER, AE2ThingAPI.PHIAL);
             GameRegistry.addShapelessRecipe(INFUSION_INTERFACE.stack(), THAUMATRIUM_INTERFACE.stack());
             GameRegistry.addShapelessRecipe(THAUMATRIUM_INTERFACE.stack(), INFUSION_INTERFACE.stack());
 

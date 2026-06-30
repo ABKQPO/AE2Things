@@ -38,8 +38,8 @@ import appeng.api.networking.events.MENetworkPowerStatusChange;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartRenderHelper;
 import appeng.api.storage.IMEMonitor;
-import appeng.api.storage.ITerminalTypeFilterProvider;
 import appeng.api.storage.ITerminalHost;
+import appeng.api.storage.ITerminalTypeFilterProvider;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStackType;
@@ -59,9 +59,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
-public abstract class THPart extends AEBasePart
-    implements IPowerChannelState, ITerminalHost, IConfigManagerHost, IViewCellStorage, IAEAppEngInventory,
-    ITerminalTypeFilterProvider {
+public abstract class THPart extends AEBasePart implements IPowerChannelState, ITerminalHost, IConfigManagerHost,
+    IViewCellStorage, IAEAppEngInventory, ITerminalTypeFilterProvider {
 
     protected static final int POWERED_FLAG = 4;
     protected static final int CHANNEL_FLAG = 16;

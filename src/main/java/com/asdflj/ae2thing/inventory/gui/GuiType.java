@@ -346,9 +346,7 @@ public enum GuiType {
                 (int) player.posY,
                 (int) player.posZ,
                 player.inventory.currentItem);
-            AEBaseContainer bc = new ContainerWirelessCraftingTerminal(
-                new InventoryPlayerWrapper(player, item),
-                term);
+            AEBaseContainer bc = new ContainerWirelessCraftingTerminal(new InventoryPlayerWrapper(player, item), term);
             bc.setOpenContext(new ContainerOpenContext(term));
             bc.getOpenContext()
                 .setWorld(player.worldObj);

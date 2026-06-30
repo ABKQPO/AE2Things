@@ -3,7 +3,6 @@ package com.asdflj.ae2thing.api.adapter.terminal.item;
 import static com.asdflj.ae2thing.nei.NEI_TH_Config.getConfigValue;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import net.minecraft.inventory.IInventory;

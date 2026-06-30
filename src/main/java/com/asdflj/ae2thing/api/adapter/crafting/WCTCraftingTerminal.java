@@ -41,9 +41,7 @@ public class WCTCraftingTerminal implements ICraftingTerminalAdapter {
     public void moveItems(GuiContainer firstGui, IRecipeHandler recipe, int recipeIndex) {
         try {
             final List<PositionedStack> ingredients = recipe.getIngredientStacks(recipeIndex);
-            NetworkHandler.instance.sendToServer(
-                new PacketNEIRecipe(
-                    packIngredients(firstGui, ingredients, false)));
+            NetworkHandler.instance.sendToServer(new PacketNEIRecipe(packIngredients(firstGui, ingredients, false)));
         } catch (IOException ignored) {}
     }
 }

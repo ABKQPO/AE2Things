@@ -69,8 +69,7 @@ public class ItemMonitor implements IMEMonitorHandlerReceiver<IAEItemStack>, IPr
     }
 
     private void fluidHandler(IAEItemStack send) {
-        if (this.fluidMonitorObject != null && send.getStackSize() == 0
-            && send.getItem() instanceof ItemFluidDrop) {
+        if (this.fluidMonitorObject != null && send.getStackSize() == 0 && send.getItem() instanceof ItemFluidDrop) {
             this.fluidMonitorObject.addItemCraftingFluid(send);
         }
     }

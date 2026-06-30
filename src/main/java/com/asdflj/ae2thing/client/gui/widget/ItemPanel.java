@@ -320,8 +320,7 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
         MonitorableAction action = null;
         switch (clickMode) {
             case 0: // pickup / set-down.
-                action = ctrlDown == 1 ? MonitorableAction.SPLIT_OR_PLACE_SINGLE
-                    : MonitorableAction.PICKUP_OR_SET_DOWN;
+                action = ctrlDown == 1 ? MonitorableAction.SPLIT_OR_PLACE_SINGLE : MonitorableAction.PICKUP_OR_SET_DOWN;
                 if (stack != null && action == MonitorableAction.PICKUP_OR_SET_DOWN
                     && stack.getStackSize() == 0
                     && player.inventory.getItemStack() == null) {
