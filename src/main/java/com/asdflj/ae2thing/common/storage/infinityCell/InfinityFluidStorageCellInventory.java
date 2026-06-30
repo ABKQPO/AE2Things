@@ -17,10 +17,11 @@ import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.common.item.BaseCellItem;
 import com.asdflj.ae2thing.common.storage.DataStorage;
 import com.asdflj.ae2thing.common.storage.ITFluidCellInventory;
-import com.glodblock.github.common.storage.IStorageFluidCell;
 
 import appeng.api.config.Actionable;
+import appeng.api.config.FuzzyMode;
 import appeng.api.exceptions.AppEngException;
+import appeng.api.implementations.items.IStorageCell;
 import appeng.api.implementations.tiles.IChestOrDrive;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.ISaveProvider;
@@ -34,7 +35,7 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
     protected static final String FLUID_TYPE_TAG = "ft";
     protected static final String FLUID_COUNT_TAG = "fc";
     private final IChestOrDrive drive;
-    protected IStorageFluidCell cellType;
+    protected IStorageCell cellType;
     protected final ItemStack cellItem;
     protected final ISaveProvider container;
     protected long storedFluidCount;
@@ -49,7 +50,7 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
         }
         this.drive = c instanceof IChestOrDrive ? (IChestOrDrive) c : null;
         this.cellItem = o;
-        this.cellType = (IStorageFluidCell) this.cellItem.getItem();
+        this.cellType = (IStorageCell) this.cellItem.getItem();
         this.container = c;
         this.data = Platform.openNbtData(o);
         this.storedFluids = this.data.getLong(FLUID_TYPE_TAG);
@@ -65,7 +66,7 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
         if (input.getStackSize() == 0) {
             return null;
         }
-        if (this.cellType.isBlackListed(this.cellItem, input)) {
+        if (this.cellType.isBlackListed(input)) {
             return input;
         }
         final IAEFluidStack l = this.getCellFluids()
@@ -79,7 +80,7 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
             return null;
         }
 
-        if (this.canHoldNewFluid()) // room for new type, and for at least one item!
+        if (this.canHoldNewItem()) // room for new type, and for at least one item!
         {
             if (mode == Actionable.MODULATE) {
                 this.cellFluids.add(input);
@@ -141,7 +142,7 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
     }
 
     @Override
-    public IItemList<IAEFluidStack> getAvailableItems(IItemList<IAEFluidStack> out) {
+    public IItemList<IAEFluidStack> getAvailableItems(IItemList<IAEFluidStack> out, int iteration) {
         AE2ThingAPI.instance()
             .getStorageManager()
             .addGrid(this.getUUID(), this.drive);
@@ -190,8 +191,18 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
     }
 
     @Override
+    public double getIdleDrain() {
+        return this.cellType.getIdleDrain(this.cellItem);
+    }
+
+    @Override
     public double getIdleDrain(ItemStack is) {
         return this.cellType.getIdleDrain(is);
+    }
+
+    @Override
+    public FuzzyMode getFuzzyMode() {
+        return this.cellType.getFuzzyMode(this.cellItem);
     }
 
     @Override
@@ -205,7 +216,7 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
     }
 
     @Override
-    public boolean canHoldNewFluid() {
+    public boolean canHoldNewItem() {
         return true;
     }
 
@@ -225,44 +236,49 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
     }
 
     @Override
-    public long getStoredFluidCount() {
+    public long getStoredItemCount() {
         return this.storedFluidCount;
     }
 
     @Override
-    public long getRemainingFluidCount() {
+    public long getRemainingItemCount() {
         return Integer.MAX_VALUE;
     }
 
     @Override
-    public long getRemainingFluidTypes() {
+    public long getRemainingItemTypes() {
         return Integer.MAX_VALUE;
     }
 
     @Override
-    public int getUnusedFluidCount() {
+    public int getUnusedItemCount() {
         return Integer.MAX_VALUE;
     }
 
     @Override
     public int getStatusForCell() {
-        if (this.canHoldNewFluid()) {
+        if (this.canHoldNewItem()) {
             return 1;
         }
-        if (this.getRemainingFluidCount() > 0) {
+        if (this.getRemainingItemCount() > 0) {
             return 2;
         }
         return 3;
     }
 
     @Override
-    public long getStoredFluidTypes() {
+    public long getStoredItemTypes() {
         return this.storedFluids;
     }
 
     @Override
-    public long getTotalFluidTypes() {
+    public long getTotalItemTypes() {
         return this.cellType.getTotalTypes(this.cellItem);
+    }
+
+    @Override
+    public String getOreFilter() {
+        return this.cellType.getOreFilter(this.cellItem);
     }
 
     @Override
@@ -276,7 +292,7 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
     }
 
     @Override
-    public IAEFluidStack getAvailableItem(@Nonnull IAEFluidStack request) {
+    public IAEFluidStack getAvailableItem(@Nonnull IAEFluidStack request, int iteration) {
         return this.getCellFluids()
             .findPrecise(request);
     }

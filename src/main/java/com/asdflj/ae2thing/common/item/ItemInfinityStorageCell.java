@@ -30,8 +30,10 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.core.features.AEFeature;
 import appeng.core.localization.GuiText;
 import appeng.items.contents.CellConfig;
+import appeng.items.contents.CellConfigLegacy;
 import appeng.items.contents.CellUpgrades;
 import appeng.util.Platform;
+import appeng.util.item.AEItemStackType;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -162,7 +164,7 @@ public class ItemInfinityStorageCell extends BaseCellItem implements IStorageCel
 
     @Override
     public IInventory getConfigInventory(ItemStack is) {
-        return new CellConfig(is);
+        return new CellConfigLegacy(new CellConfig(is), AEItemStackType.ITEM_STACK_TYPE);
     }
 
     @Override

@@ -7,6 +7,7 @@ import net.minecraft.util.ResourceLocation;
 
 import com.asdflj.ae2thing.AE2Thing;
 
+import appeng.client.gui.slots.VirtualMESlot;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
@@ -35,6 +36,10 @@ public interface IAEBasePanel extends IDraggable {
     void mouseClicked(int xCoord, int yCoord, int btn);
 
     boolean handleMouseClick(Slot slot, int slotIdx, int ctrlDown, int mouseButton);
+
+    default boolean handleVirtualSlotClick(VirtualMESlot slot, int mouseButton) {
+        return false;
+    }
 
     boolean actionPerformed(GuiButton btn);
 

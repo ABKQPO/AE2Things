@@ -19,7 +19,6 @@ import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.widgets.GuiTabButton;
 import appeng.client.gui.widgets.IDropToFillTextField;
 import appeng.client.gui.widgets.MEGuiTextField;
-import appeng.core.localization.GuiColors;
 import appeng.core.localization.GuiText;
 
 public class GuiRenamer extends AEBaseGui implements IDropToFillTextField {
@@ -68,7 +67,7 @@ public class GuiRenamer extends AEBaseGui implements IDropToFillTextField {
 
     @Override
     public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
-        this.fontRendererObj.drawString(GuiText.Renamer.getLocal(), 12, 8, GuiColors.RenamerTitle.getColor());
+        this.fontRendererObj.drawString(GuiText.Renamer.getLocal(), 12, 8, 4210752);
     }
 
     @Override

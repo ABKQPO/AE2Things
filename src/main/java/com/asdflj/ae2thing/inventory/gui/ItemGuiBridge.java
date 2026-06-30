@@ -12,7 +12,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import com.asdflj.ae2thing.util.BaublesUtil;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
-import com.glodblock.github.util.Util;
 
 public abstract class ItemGuiBridge<T> implements IGuiFactory {
 
@@ -28,9 +27,9 @@ public abstract class ItemGuiBridge<T> implements IGuiFactory {
 
     @Override
     public Object createServerGui(EntityPlayer player, World world, int x, int y, int z, ForgeDirection face) {
-        ImmutablePair<Util.GuiHelper.InvType, Integer> result = Util.GuiHelper.decodeInvType(x);
+        ImmutablePair<GuiBridgeInvType, Integer> result = GuiBridgeInvType.decode(x);
         ItemStack is = null;
-        if (result.left == Util.GuiHelper.InvType.PLAYER_INV) {
+        if (result.left == GuiBridgeInvType.PLAYER_INV) {
             is = player.inventory.getStackInSlot(result.right);
         } else if (ModAndClassUtil.BAUBLES) {
             is = BaublesUtil.getBaublesInv(player)
@@ -45,9 +44,9 @@ public abstract class ItemGuiBridge<T> implements IGuiFactory {
     @Nullable
     @Override
     public Object createClientGui(EntityPlayer player, World world, int x, int y, int z, ForgeDirection face) {
-        ImmutablePair<Util.GuiHelper.InvType, Integer> result = Util.GuiHelper.decodeInvType(x);
+        ImmutablePair<GuiBridgeInvType, Integer> result = GuiBridgeInvType.decode(x);
         ItemStack is = null;
-        if (result.left == Util.GuiHelper.InvType.PLAYER_INV) {
+        if (result.left == GuiBridgeInvType.PLAYER_INV) {
             is = player.inventory.getStackInSlot(result.right);
         } else if (ModAndClassUtil.BAUBLES) {
             is = BaublesUtil.getBaublesInv(player)

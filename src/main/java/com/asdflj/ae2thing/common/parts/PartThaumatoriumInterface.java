@@ -5,24 +5,21 @@ import java.util.List;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.util.ForgeDirection;
-import net.minecraftforge.fluids.FluidStack;
 
 import org.jetbrains.annotations.NotNull;
 
 import com.asdflj.ae2thing.common.item.ItemPhial;
 import com.asdflj.ae2thing.inventory.IEssentiaContainer;
-import com.glodblock.github.common.item.ItemFluidPacket;
+import com.asdflj.ae2thing.util.AspectUtil;
 import com.glodblock.github.common.parts.PartFluidInterface;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.MachineSource;
-import appeng.api.networking.storage.IStorageGrid;
-import appeng.api.storage.data.IAEFluidStack;
-import appeng.util.item.AEFluidStack;
+import appeng.api.storage.IMEMonitor;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumicenergistics.api.tiles.IEssentiaTransportWithSimulate;
-import thaumicenergistics.common.fluids.GaseousEssentia;
+import thaumicenergistics.common.storage.AEEssentiaStack;
 
 public class PartThaumatoriumInterface extends PartFluidInterface
     implements IEssentiaTransportWithSimulate, IEssentiaContainer {
@@ -40,8 +37,8 @@ public class PartThaumatoriumInterface extends PartFluidInterface
         for (Aspect aspect : aspects.getAspectsSorted()) {
             int stored = aspects.getAmount(aspect);
             if (stored > 0) {
-                ItemStack fluidPacket = ItemFluidPacket.newStack(ItemPhial.newEssentiaStack(aspect, stored));
-                drops.add(fluidPacket);
+                // Essentia is no longer a fluid, so spill the buffered essentia as phial items.
+                drops.add(ItemPhial.newStack(aspect, stored));
             }
         }
     }
@@ -50,12 +47,12 @@ public class PartThaumatoriumInterface extends PartFluidInterface
     public int addEssentia(@NotNull Aspect aspect, int amount, @NotNull ForgeDirection side, @NotNull Actionable mode) {
         if (amount <= 0) return 0;
         try {
-            IStorageGrid storageGrid = this.getProxy()
-                .getGrid()
-                .getCache(IStorageGrid.class);
-            IAEFluidStack fs = AEFluidStack.create(new FluidStack(GaseousEssentia.getGasFromAspect(aspect), amount));
-            IAEFluidStack notInsertable = storageGrid.getFluidInventory()
-                .injectItems(fs, mode, this.source);
+            IMEMonitor<AEEssentiaStack> monitor = AspectUtil.getEssentiaMonitor(
+                this.getProxy()
+                    .getGrid());
+            if (monitor == null) return 0;
+            AEEssentiaStack notInsertable = monitor
+                .injectItems(new AEEssentiaStack(aspect, amount), mode, this.source);
             if (notInsertable == null) return amount;
             return (int) (amount - notInsertable.getStackSize());
         } catch (Exception ignored) {}

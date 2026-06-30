@@ -3,6 +3,7 @@ package com.asdflj.ae2thing.api.adapter.findit;
 import java.util.ArrayList;
 import java.util.List;
 
+import appeng.api.networking.IGridHost;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 
@@ -20,7 +21,7 @@ import codechicken.nei.recipe.StackInfo;
 
 public interface IFindItAdapter {
 
-    Class<? extends appeng.api.networking.IGridHost> getCls();
+    Class<? extends IGridHost> getCls();
 
     boolean supportFluid();
 

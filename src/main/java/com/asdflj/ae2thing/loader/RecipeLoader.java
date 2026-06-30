@@ -21,8 +21,8 @@ import static com.asdflj.ae2thing.loader.ItemAndBlockHolder.MANA_IMPORT_BUS;
 import static com.asdflj.ae2thing.loader.ItemAndBlockHolder.THAUMATRIUM_INTERFACE;
 import static com.asdflj.ae2thing.loader.ItemAndBlockHolder.WIRELESS_CONNECTOR_TERMINAL;
 import static com.glodblock.github.loader.ItemAndBlockHolder.CELL_HOUSING;
-import static com.glodblock.github.loader.ItemAndBlockHolder.FLUID_TERMINAL_EX;
 import static com.glodblock.github.loader.ItemAndBlockHolder.WIRELESS_INTERFACE_TERM;
+import static com.glodblock.github.loader.ItemAndBlockHolder.WIRELESS_PATTERN_TERM;
 import static thaumcraft.common.config.ConfigItems.itemResource;
 import static thaumcraft.common.config.ConfigItems.itemThaumonomicon;
 import static thaumicenergistics.common.blocks.BlockEnum.DISTILLATION_ENCODER;
@@ -200,7 +200,7 @@ public class RecipeLoader implements Runnable {
         GameRegistry.addShapelessRecipe(
             ITEM_WIRELESS_DUAL_INTERFACE_TERMINAL.stack(),
             WIRELESS_INTERFACE_TERM,
-            FLUID_TERMINAL_EX.stack());
+            WIRELESS_PATTERN_TERM.stack());
         GameRegistry.addShapelessRecipe(
             FLUID_PACKET_ENCODER.stack(),
             com.glodblock.github.loader.ItemAndBlockHolder.DECODER.stack());
@@ -236,7 +236,7 @@ public class RecipeLoader implements Runnable {
                 AE2ThingAPI.PHIAL);
             GameRegistry.addShapelessRecipe(
                 ESSENTIA_DISCRETIZER.stack(),
-                com.glodblock.github.loader.ItemAndBlockHolder.DISCRETIZER,
+                THE_DISTILLATION_ENCODER,
                 AE2ThingAPI.PHIAL);
             GameRegistry.addShapelessRecipe(INFUSION_INTERFACE.stack(), THAUMATRIUM_INTERFACE.stack());
             GameRegistry.addShapelessRecipe(THAUMATRIUM_INTERFACE.stack(), INFUSION_INTERFACE.stack());

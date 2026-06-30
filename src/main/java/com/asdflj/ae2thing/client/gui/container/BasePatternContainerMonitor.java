@@ -71,7 +71,6 @@ public abstract class BasePatternContainerMonitor extends ContainerMonitor imple
                     } else {
                         this.monitor.addListener();
                         this.fluidMonitor.addListener();
-                        this.setCellInventory(this.monitor.getMonitor());
                     }
                 }
             } else {

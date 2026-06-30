@@ -16,24 +16,28 @@ import com.asdflj.ae2thing.common.storage.infinityCell.InfinityFluidStorageCellI
 import com.asdflj.ae2thing.common.tabs.AE2ThingTabs;
 import com.asdflj.ae2thing.util.NameConst;
 import com.glodblock.github.api.FluidCraftAPI;
-import com.glodblock.github.common.storage.IStorageFluidCell;
 
 import appeng.api.AEApi;
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.IncludeExclude;
 import appeng.api.exceptions.AppEngException;
+import appeng.api.implementations.items.IStorageCell;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.ISaveProvider;
 import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.core.features.AEFeature;
 import appeng.core.localization.GuiText;
 import appeng.items.contents.CellConfig;
+import appeng.items.contents.CellConfigLegacy;
 import appeng.items.contents.CellUpgrades;
 import appeng.util.Platform;
+import appeng.util.item.AEFluidStackType;
 import cpw.mods.fml.common.registry.GameRegistry;
 
-public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStorageFluidCell {
+public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStorageCell {
 
     private final int perType = 1;
     private final double idleDrain = 2000D;
@@ -55,8 +59,13 @@ public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStora
     }
 
     @Override
-    public long getBytes(ItemStack cellItem) {
+    public int getBytes(ItemStack cellItem) {
         return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public int BytePerType(ItemStack cellItem) {
+        return this.perType;
     }
 
     @Override
@@ -65,12 +74,14 @@ public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStora
     }
 
     @Override
-    public boolean isBlackListed(ItemStack cellItem, IAEFluidStack requestedAddition) {
-        return requestedAddition == null || requestedAddition.getFluid() == null
-            || FluidCraftAPI.instance()
-                .isBlacklistedInStorage(
-                    requestedAddition.getFluid()
-                        .getClass());
+    public boolean isBlackListed(IAEStack<?> requestedAddition) {
+        if (!(requestedAddition instanceof IAEFluidStack fluidStack)) {
+            return true;
+        }
+        return fluidStack.getFluid() == null || FluidCraftAPI.instance()
+            .isBlacklistedInStorage(
+                fluidStack.getFluid()
+                    .getClass());
     }
 
     @Override
@@ -84,6 +95,11 @@ public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStora
     }
 
     @Override
+    public double getIdleDrain() {
+        return this.idleDrain;
+    }
+
+    @Override
     public double getIdleDrain(ItemStack is) {
         return this.idleDrain;
     }
@@ -91,6 +107,11 @@ public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStora
     @Override
     public int getTotalTypes(ItemStack cellItem) {
         return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public IAEStackType<?> getStackType() {
+        return AEFluidStackType.FLUID_STACK_TYPE;
     }
 
     @Override
@@ -105,7 +126,7 @@ public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStora
 
     @Override
     public IInventory getConfigInventory(ItemStack is) {
-        return new CellConfig(is);
+        return new CellConfigLegacy(new CellConfig(is), AEFluidStackType.FLUID_STACK_TYPE);
     }
 
     @Override

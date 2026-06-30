@@ -21,7 +21,7 @@ public class ClassTransformer implements IClassTransformer {
             case "appeng.client.me.ItemRepo" -> tform = PlatformTransformer.INSTANCE;
             case "com.glodblock.github.inventory.FluidConvertingInventoryAdaptor" -> tform = FluidConvertingInventoryAdaptorTransformer.INSTANCE;
             case "thaumcraft.common.tiles.TileThaumatorium" -> tform = TileThaumatoriumTransformer.INSTANCE;
-            case "com.glodblock.github.client.gui.GuiDualInterface" -> tform = GuiDualInterfaceTransformer.INSTANCE;
+            case "com.glodblock.github.client.gui.GuiFluidInterface" -> tform = GuiDualInterfaceTransformer.INSTANCE;
             case "appeng.crafting.v2.CraftingJobV2", "appeng.me.GridStorage" -> tform = CraftingJobV2Transformer.INSTANCE;
             default -> {
                 return code;

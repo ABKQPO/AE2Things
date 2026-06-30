@@ -23,6 +23,7 @@ import com.asdflj.ae2thing.common.Config;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.client.gui.widgets.IScrollSource;
 import appeng.client.gui.widgets.ISortSource;
@@ -51,9 +52,8 @@ public class AdvItemRepo extends ItemRepo implements Runnable {
             }
         });
 
-    protected final ArrayList<IAEItemStack> view = Ae2ReflectClient.getView(this);
-    protected final ArrayList<ItemStack> dsp = Ae2ReflectClient.getDsp(this);
-    protected final IItemList<IAEItemStack> list = Ae2ReflectClient.getList(this);
+    protected final ArrayList<IAEStack<?>> view = Ae2ReflectClient.getView(this);
+    protected final IItemList<IAEStack<?>> list = Ae2ReflectClient.getList(this);
 
     protected AdvItemRepo repo;
     protected final Set<IAEItemStack> cache = Collections.synchronizedSet(new HashSet<>());
@@ -139,11 +139,8 @@ public class AdvItemRepo extends ItemRepo implements Runnable {
         try {
             lock.lock();
             this.view.clear();
-            this.dsp.clear();
             this.view.ensureCapacity(this.repo.view.size());
-            this.dsp.ensureCapacity(this.repo.dsp.size());
             this.view.addAll(this.repo.view);
-            this.dsp.addAll(this.repo.dsp);
             this.gui.setScrollBar();
         } finally {
             lock.unlock();

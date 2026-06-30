@@ -12,12 +12,12 @@ import appeng.api.config.Upgrades;
 import appeng.api.implementations.items.IUpgradeModule;
 import appeng.api.storage.ICellCacheRegistry;
 import appeng.api.storage.IMEInventory;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.me.storage.MEInventoryHandler;
 import appeng.me.storage.MEPassThrough;
 import appeng.util.item.AEItemStack;
+import appeng.util.item.AEItemStackType;
 import appeng.util.prioitylist.FuzzyPriorityList;
 import appeng.util.prioitylist.OreFilteredList;
 import appeng.util.prioitylist.PrecisePriorityList;
@@ -26,7 +26,7 @@ public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack>
     implements ICellInventoryHandler, ICellCacheRegistry {
 
     public CellInventoryHandler(IMEInventory<IAEItemStack> i) {
-        super(i, StorageChannel.ITEMS);
+        super(i, AEItemStackType.ITEM_STACK_TYPE);
         final ITCellInventory ci = this.getCellInv();
         if (ci instanceof CellInventory) return;
         init(ci);

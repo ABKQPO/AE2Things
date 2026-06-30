@@ -104,21 +104,19 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
         } else if (firstGui instanceof GuiWirelessDualInterfaceTerminal) {
             boolean priority = ((GuiWirelessDualInterfaceTerminal) firstGui).container.prioritize;
             boolean craft = shouldCraft(recipe);
-            List<com.glodblock.github.nei.object.OrderStack<?>> in;
-            in = com.glodblock.github.nei.recipes.FluidRecipe.getPackageInputs(recipe, recipeIndex, !craft && priority);
+            List<OrderStack<?>> in;
+            in = FluidRecipe.getPackageInputs(recipe, recipeIndex, !craft && priority);
             setSuggestion(craft, recipe, (GuiWirelessDualInterfaceTerminal) firstGui, in);
             if (ModAndClassUtil.PH && !craft) {
                 in = PHUtil.transfer(in);
             }
-            List<com.glodblock.github.nei.object.OrderStack<?>> out = com.glodblock.github.nei.recipes.FluidRecipe
-                .getPackageOutputs(recipe, recipeIndex, !notUseOther(recipe));
-            AE2Thing.proxy.netHandler
-                .sendToServer(new CPacketTransferRecipe(transfer(in), transfer(out), craft, shift));
+            List<OrderStack<?>> out = FluidRecipe.getPackageOutputs(recipe, recipeIndex, !notUseOther(recipe));
+            AE2Thing.proxy.netHandler.sendToServer(new CPacketTransferRecipe(in, out, craft, shift));
         }
     }
 
     private void setSuggestion(boolean craft, IRecipeHandler recipe, GuiWirelessDualInterfaceTerminal gui,
-        List<com.glodblock.github.nei.object.OrderStack<?>> in) {
+        List<OrderStack<?>> in) {
         String suggestion;
         if (craft) {
             com.google.common.base.Optional<ItemStack> molecular = AEApi.instance()
@@ -147,14 +145,6 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
     private boolean notUseOther(IRecipeHandler recipeHandler) {
         TemplateRecipeHandler tRecipe = (TemplateRecipeHandler) recipeHandler;
         return notOtherSet.contains(tRecipe.getOverlayIdentifier());
-    }
-
-    private static List<OrderStack<?>> transfer(List<com.glodblock.github.nei.object.OrderStack<?>> input) {
-        List<OrderStack<?>> out = new ArrayList<>();
-        for (com.glodblock.github.nei.object.OrderStack<?> stack : input) {
-            out.add(new OrderStack<>(stack.getStack(), stack.getIndex()));
-        }
-        return out;
     }
 
     private boolean shouldCraft(IRecipeHandler recipeHandler) {

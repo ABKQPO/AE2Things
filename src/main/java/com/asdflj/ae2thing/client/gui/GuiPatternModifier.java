@@ -28,7 +28,7 @@ import appeng.client.gui.AEBaseGui;
 import appeng.core.localization.GuiColors;
 import appeng.core.localization.GuiText;
 import appeng.core.sync.network.NetworkHandler;
-import appeng.core.sync.packets.PacketNEIDragClick;
+import appeng.core.sync.packets.PacketClickOrDragFakeSlot;
 import appeng.util.Platform;
 import codechicken.nei.VisiblityData;
 import codechicken.nei.api.INEIGuiHandler;
@@ -186,7 +186,7 @@ public class GuiPatternModifier extends AEBaseGui implements INEIGuiHandler {
             }
         if (target != null) {
             target.putStack(draggedStack.copy());
-            NetworkHandler.instance.sendToServer(new PacketNEIDragClick(draggedStack, target.slotNumber));
+            NetworkHandler.instance.sendToServer(new PacketClickOrDragFakeSlot(draggedStack, target.slotNumber, false));
             return true;
         }
 

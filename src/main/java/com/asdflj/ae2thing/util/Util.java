@@ -31,7 +31,6 @@ import com.asdflj.ae2thing.common.item.ItemWirelessDualInterfaceTerminal;
 import com.glodblock.github.client.gui.FCGuiTextField;
 import com.glodblock.github.common.item.ItemFluidDrop;
 import com.glodblock.github.common.item.ItemFluidPacket;
-import com.glodblock.github.crossmod.thaumcraft.AspectUtil;
 import com.mojang.authlib.GameProfile;
 
 import appeng.api.AEApi;
@@ -60,7 +59,6 @@ import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import thaumicenergistics.common.integration.tc.AspectHooks;
 
 public class Util {
 
@@ -186,12 +184,7 @@ public class Util {
         if (item.getItem() instanceof ItemFluidDrop) {
             FluidStack fs = ItemFluidDrop.getFluidStack(item.getItemStack());
             if (fs == null) return GameRegistry.findUniqueIdentifierFor(item.getItem()).modId;
-            if (ModAndClassUtil.THE && AspectUtil.isEssentiaGas(fs)) {
-                ModContainer mod = AspectHooks.aspectToMod.getOrDefault(AspectUtil.getAspectFromGas(fs), null);
-                if (mod != null) return mod.getModId();
-            } else {
-                return getFluidModID(fs.getFluid());
-            }
+            return getFluidModID(fs.getFluid());
         }
         return Platform.getModId(item);
     }
@@ -213,12 +206,7 @@ public class Util {
     public static String getDisplayName(IAEItemStack item) {
         FluidStack fs = StackInfo.getFluid(item.getItemStack());
         if (fs != null) {
-            if (ModAndClassUtil.THE && AspectUtil.isEssentiaGas(fs)) {
-                return AspectUtil.getAspectFromGas(fs)
-                    .getName();
-            } else {
-                return fs.getLocalizedName();
-            }
+            return fs.getLocalizedName();
         }
         return Platform.getItemDisplayName(item);
     }

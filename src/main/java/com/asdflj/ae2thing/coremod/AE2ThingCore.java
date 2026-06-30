@@ -6,8 +6,8 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import com.google.common.collect.Lists;
 import com.gtnewhorizon.gtnhmixins.IEarlyMixinLoader;
+import com.gtnewhorizon.gtnhmixins.builders.IMixins;
 
 import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
 
@@ -20,8 +20,7 @@ public class AE2ThingCore implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Override
     public String[] getASMTransformerClass() {
-        return new String[] { AE2ThingCore.class.getPackage()
-            .getName() + ".ClassTransformer" };
+        return new String[] { ClassTransformer.class.getName() };
     }
 
     @Nullable
@@ -38,7 +37,6 @@ public class AE2ThingCore implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Override
     public void injectData(Map<String, Object> data) {
-        // NO-OP
         DEV_ENVIRONMENT = !(boolean) data.get("runtimeDeobfuscationEnabled");
     }
 
@@ -55,7 +53,7 @@ public class AE2ThingCore implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Override
     public List<String> getMixins(Set<String> loadedCoreMods) {
-        return Lists.newArrayList();
+        return IMixins.getEarlyMixins(Mixins.class, loadedCoreMods);
     }
 
     public static boolean isDevEnv() {

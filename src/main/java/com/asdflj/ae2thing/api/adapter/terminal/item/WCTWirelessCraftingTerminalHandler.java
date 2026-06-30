@@ -7,11 +7,11 @@ import net.minecraftforge.common.util.ForgeDirection;
 import net.p455w0rd.wirelesscraftingterminal.items.ItemWirelessCraftingTerminal;
 
 import com.asdflj.ae2thing.inventory.InventoryHandler;
+import com.asdflj.ae2thing.inventory.gui.GuiBridgeInvType;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.util.BaublesUtil;
 import com.asdflj.ae2thing.util.BlockPos;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
-import com.glodblock.github.util.Util;
 
 import appeng.util.Platform;
 
@@ -23,7 +23,7 @@ public class WCTWirelessCraftingTerminalHandler implements ITerminalHandler {
             for (int i = 0; i < player.inventory.mainInventory.length; i++) {
                 ItemStack stack = player.inventory.getStackInSlot(i);
                 if (Platform.isSameItemPrecise(stack, item)) {
-                    openGui(player, Util.GuiHelper.encodeType(i, Util.GuiHelper.InvType.PLAYER_INV), stack);
+                    openGui(player, GuiBridgeInvType.encode(i, GuiBridgeInvType.PLAYER_INV), stack);
                     return;
                 }
             }
@@ -33,7 +33,7 @@ public class WCTWirelessCraftingTerminalHandler implements ITerminalHandler {
             for (int i = 0; i < handler.getSizeInventory(); ++i) {
                 ItemStack is = handler.getStackInSlot(i);
                 if (BaublesUtil.isSameItemPrecise(is, item, i, items)) {
-                    openGui(player, Util.GuiHelper.encodeType(i, Util.GuiHelper.InvType.PLAYER_BAUBLES), is);
+                    openGui(player, GuiBridgeInvType.encode(i, GuiBridgeInvType.PLAYER_BAUBLES), is);
                     return;
                 }
             }

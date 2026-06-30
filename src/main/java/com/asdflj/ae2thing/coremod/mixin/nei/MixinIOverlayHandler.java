@@ -20,6 +20,7 @@ import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IDisplayRepo;
 import appeng.api.storage.data.IItemList;
 import appeng.client.gui.AEBaseGui;
@@ -39,7 +40,7 @@ public interface MixinIOverlayHandler extends IOverlayHandler {
         int recipeIndex) {
         final List<GuiOverlayButton.ItemOverlayState> itemPresenceSlots = new ArrayList<>();
         final List<PositionedStack> ingredients = recipe.getIngredientStacks(recipeIndex);
-        IItemList<IAEItemStack> list = null;
+        IItemList<IAEStack<?>> list = null;
         boolean displayFluid = false;
         if (firstGui instanceof IGuiMonitor gm) {
             list = Ae2ReflectClient.getList(gm.getRepo());
@@ -87,8 +88,8 @@ public interface MixinIOverlayHandler extends IOverlayHandler {
                     isCraftable = list.findPrecise(item)
                         .isCraftable();
                 } else if (fs == null) {
-                    for (IAEItemStack is : list.findFuzzy(item, FuzzyMode.IGNORE_ALL)) {
-                        if (stack.contains(is.getItemStack())) {
+                    for (IAEStack<?> is : list.findFuzzy(item, FuzzyMode.IGNORE_ALL)) {
+                        if (is instanceof IAEItemStack ais && stack.contains(ais.getItemStack())) {
                             found = true;
                             if (is.isCraftable()) {
                                 isCraftable = true;

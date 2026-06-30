@@ -11,12 +11,13 @@ import net.minecraftforge.fluids.FluidStack;
 
 import com.asdflj.ae2thing.common.item.BaseCellItem;
 import com.asdflj.ae2thing.common.storage.ITFluidCellInventory;
-import com.glodblock.github.common.storage.IStorageFluidCell;
 import com.glodblock.github.util.Util;
 
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
+import appeng.api.config.FuzzyMode;
 import appeng.api.exceptions.AppEngException;
+import appeng.api.implementations.items.IStorageCell;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.ISaveProvider;
 import appeng.api.storage.StorageChannel;
@@ -25,7 +26,7 @@ import appeng.api.storage.data.IItemList;
 
 public class CreativeFluidCellInventory implements ITFluidCellInventory {
 
-    protected IStorageFluidCell cellType;
+    protected IStorageCell cellType;
     protected final ItemStack cellItem;
     protected final ISaveProvider container;
     protected IItemList<IAEFluidStack> cellFluids = null;
@@ -35,7 +36,7 @@ public class CreativeFluidCellInventory implements ITFluidCellInventory {
             throw new AppEngException("ItemStack was used as a cell, but was not a cell!");
         }
         this.cellItem = o;
-        this.cellType = (IStorageFluidCell) this.cellItem.getItem();
+        this.cellType = (IStorageCell) this.cellItem.getItem();
         this.container = c;
     }
 
@@ -45,8 +46,18 @@ public class CreativeFluidCellInventory implements ITFluidCellInventory {
     }
 
     @Override
+    public double getIdleDrain() {
+        return this.cellType.getIdleDrain(this.cellItem);
+    }
+
+    @Override
     public double getIdleDrain(ItemStack is) {
         return this.cellType.getIdleDrain(is);
+    }
+
+    @Override
+    public FuzzyMode getFuzzyMode() {
+        return this.cellType.getFuzzyMode(this.cellItem);
     }
 
     @Override
@@ -60,7 +71,7 @@ public class CreativeFluidCellInventory implements ITFluidCellInventory {
     }
 
     @Override
-    public boolean canHoldNewFluid() {
+    public boolean canHoldNewItem() {
         return false;
     }
 
@@ -80,44 +91,49 @@ public class CreativeFluidCellInventory implements ITFluidCellInventory {
     }
 
     @Override
-    public long getStoredFluidCount() {
+    public long getStoredItemCount() {
         return 0;
     }
 
     @Override
-    public long getRemainingFluidCount() {
+    public long getRemainingItemCount() {
         return 0;
     }
 
     @Override
-    public long getRemainingFluidTypes() {
+    public long getRemainingItemTypes() {
         return 0;
     }
 
     @Override
-    public int getUnusedFluidCount() {
+    public int getUnusedItemCount() {
         return 0;
     }
 
     @Override
     public int getStatusForCell() {
-        if (this.canHoldNewFluid()) {
+        if (this.canHoldNewItem()) {
             return 1;
         }
-        if (this.getRemainingFluidCount() > 0) {
+        if (this.getRemainingItemCount() > 0) {
             return 2;
         }
         return 3;
     }
 
     @Override
-    public long getStoredFluidTypes() {
+    public long getStoredItemTypes() {
         return 1;
     }
 
     @Override
-    public long getTotalFluidTypes() {
+    public long getTotalItemTypes() {
         return 1;
+    }
+
+    @Override
+    public String getOreFilter() {
+        return this.cellType.getOreFilter(this.cellItem);
     }
 
     @Override
@@ -139,7 +155,7 @@ public class CreativeFluidCellInventory implements ITFluidCellInventory {
         if (input == null || input.getStackSize() == 0) {
             return null;
         }
-        if (this.cellType.isBlackListed(this.cellItem, input)) {
+        if (this.cellType.isBlackListed(input)) {
             return input;
         }
         if (this.getCellFluids()
@@ -164,7 +180,7 @@ public class CreativeFluidCellInventory implements ITFluidCellInventory {
     }
 
     @Override
-    public IItemList<IAEFluidStack> getAvailableItems(IItemList<IAEFluidStack> out) {
+    public IItemList<IAEFluidStack> getAvailableItems(IItemList<IAEFluidStack> out, int iteration) {
         for (final IAEFluidStack i : this.getCellFluids()) {
             out.add(i);
         }

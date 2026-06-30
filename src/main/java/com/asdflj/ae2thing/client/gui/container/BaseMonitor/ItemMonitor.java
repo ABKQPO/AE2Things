@@ -9,8 +9,6 @@ import net.minecraft.inventory.ICrafting;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
-import com.asdflj.ae2thing.util.TheUtil;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.AEApi;
@@ -71,12 +69,10 @@ public class ItemMonitor implements IMEMonitorHandlerReceiver<IAEItemStack>, IPr
     }
 
     private void fluidHandler(IAEItemStack send) {
-        if (this.fluidMonitorObject != null && ModAndClassUtil.THE && TheUtil.isItemCraftingAspect(send)) {
-            this.fluidMonitorObject.addItemCraftingAspect(send);
-        } else if (this.fluidMonitorObject != null && send.getStackSize() == 0
+        if (this.fluidMonitorObject != null && send.getStackSize() == 0
             && send.getItem() instanceof ItemFluidDrop) {
-                this.fluidMonitorObject.addItemCraftingFluid(send);
-            }
+            this.fluidMonitorObject.addItemCraftingFluid(send);
+        }
     }
 
     @Override

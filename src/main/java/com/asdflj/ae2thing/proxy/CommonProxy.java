@@ -1,7 +1,7 @@
 package com.asdflj.ae2thing.proxy;
 
-import static thaumicenergistics.common.fluids.GaseousEssentia.registerGases;
-
+import de.eydamos.backpack.item.ItemBackpackBase;
+import forestry.storage.items.ItemBackpack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.WorldSavedData;
@@ -14,7 +14,6 @@ import net.p455w0rd.wirelesscraftingterminal.items.ItemWirelessCraftingTerminal;
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.api.adapter.crafting.AECraftingTerminal;
-import com.asdflj.ae2thing.api.adapter.crafting.FCCraftingTerminal;
 import com.asdflj.ae2thing.api.adapter.crafting.WCTCraftingTerminal;
 import com.asdflj.ae2thing.api.adapter.findit.EssentiaStorageBusAdapter;
 import com.asdflj.ae2thing.api.adapter.findit.FluidStorageBusAdapter;
@@ -41,15 +40,14 @@ import com.asdflj.ae2thing.loader.PatternTerminalMouseWheelLoader;
 import com.asdflj.ae2thing.network.wrapper.AE2ThingNetworkWrapper;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.darkona.adventurebackpack.item.ItemAdventureBackpack;
-import com.glodblock.github.common.item.ItemWirelessFluidTerminal;
 import com.glodblock.github.common.item.ItemWirelessInterfaceTerminal;
 import com.glodblock.github.common.item.ItemWirelessLevelTerminal;
 import com.glodblock.github.common.item.ItemWirelessPatternTerminal;
 import com.glodblock.github.common.item.ItemWirelessUltraTerminal;
 
+import appeng.api.AEApi;
 import appeng.api.config.Upgrades;
 import appeng.api.implementations.ICraftingPatternItem;
-import appeng.core.features.registries.InterfaceTerminalRegistry;
 import appeng.util.Platform;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -93,9 +91,6 @@ public class CommonProxy {
         AE2ThingAPI.instance()
             .terminal()
             .registerCraftingTerminal(new AECraftingTerminal());
-        AE2ThingAPI.instance()
-            .terminal()
-            .registerCraftingTerminal(new FCCraftingTerminal());
         if (ModAndClassUtil.WCT) {
             AE2ThingAPI.instance()
                 .terminal()
@@ -113,22 +108,20 @@ public class CommonProxy {
     public void postInit(FMLPostInitializationEvent event) {
         if (ModAndClassUtil.BACKPACK) {
             AE2ThingAPI.instance()
-                .addBackpackItem(de.eydamos.backpack.item.ItemBackpackBase.class);
+                .addBackpackItem(ItemBackpackBase.class);
         }
         if (ModAndClassUtil.FTR) {
             AE2ThingAPI.instance()
-                .addBackpackItem(forestry.storage.items.ItemBackpack.class);
+                .addBackpackItem(ItemBackpack.class);
         }
         if (ModAndClassUtil.ADVENTURE_BACKPACK) {
             AE2ThingAPI.instance()
                 .addBackpackItem(ItemAdventureBackpack.class);
         }
-        Upgrades.PATTERN_REFILLER.registerItem(ItemAndBlockHolder.ITEM_WIRELESS_DUAL_INTERFACE_TERMINAL.stack(), 1);
         // Upgrades.ORE_FILTER.registerItem(ItemAndBlockHolder.TOGGLE_VIEW_CELL.stack(), 1);
         // Upgrades.FUZZY.registerItem(ItemAndBlockHolder.TOGGLE_VIEW_CELL.stack(), 1);
         // Upgrades.INVERTER.registerItem(ItemAndBlockHolder.TOGGLE_VIEW_CELL.stack(), 1);
         if (ModAndClassUtil.THE) {
-            Upgrades.PATTERN_REFILLER.registerItem(ItemAndBlockHolder.INFUSION_PATTERN_TERMINAL.stack(), 1);
             Upgrades.LOCK_CRAFTING.registerItem(ItemAndBlockHolder.INFUSION_INTERFACE.stack(), 1);
             Upgrades.LOCK_CRAFTING.registerItem(ItemAndBlockHolder.THAUMATRIUM_INTERFACE.stack(), 1);
             Upgrades.ADVANCED_BLOCKING.registerItem(ItemAndBlockHolder.INFUSION_INTERFACE.stack(), 1);
@@ -144,9 +137,13 @@ public class CommonProxy {
                 AE2ThingAPI.instance()
                     .setDefaultFluidContainer(Ic2Items.cell);
             }
-            InterfaceTerminalRegistry.instance()
+            AEApi.instance()
+                .registries()
+                .interfaceTerminal()
                 .register(TileInfusionInterface.class);
-            InterfaceTerminalRegistry.instance()
+            AEApi.instance()
+                .registries()
+                .interfaceTerminal()
                 .register(PartThaumatoriumInterface.class);
         }
         if (ModAndClassUtil.BOTANIA) {
@@ -178,9 +175,6 @@ public class CommonProxy {
             .terminal()
             .registerTerminalItem(ItemWirelessUltraTerminal.class, new UltraTerminalHandler());
         FCBaseTerminalHandler h = new FCBaseTerminalHandler();
-        AE2ThingAPI.instance()
-            .terminal()
-            .registerTerminalItem(ItemWirelessFluidTerminal.class, h);
         AE2ThingAPI.instance()
             .terminal()
             .registerTerminalItem(ItemWirelessLevelTerminal.class, h);
@@ -237,10 +231,7 @@ public class CommonProxy {
     }
 
     public void onLoadComplete(FMLLoadCompleteEvent event) {
-        if (ModAndClassUtil.THE && (ModAndClassUtil.GT5NH || ModAndClassUtil.GT5)) {
-            // fix terminus essentia not register
-            registerGases();
-        }
+
     }
 
     public void serverStarting(FMLServerStartingEvent event) {

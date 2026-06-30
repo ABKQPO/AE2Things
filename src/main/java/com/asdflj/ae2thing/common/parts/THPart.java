@@ -27,7 +27,6 @@ import appeng.api.config.SecurityPermissions;
 import appeng.api.config.Settings;
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
-import appeng.api.config.TypeFilter;
 import appeng.api.config.ViewItems;
 import appeng.api.implementations.IPowerChannelState;
 import appeng.api.implementations.tiles.IViewCellStorage;
@@ -39,9 +38,11 @@ import appeng.api.networking.events.MENetworkPowerStatusChange;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartRenderHelper;
 import appeng.api.storage.IMEMonitor;
+import appeng.api.storage.ITerminalTypeFilterProvider;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.util.IConfigManager;
 import appeng.client.texture.CableBusTextures;
 import appeng.me.GridAccessException;
@@ -51,13 +52,16 @@ import appeng.tile.inventory.IAEAppEngInventory;
 import appeng.tile.inventory.InvOperation;
 import appeng.util.ConfigManager;
 import appeng.util.IConfigManagerHost;
+import appeng.util.MonitorableTypeFilter;
 import appeng.util.Platform;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
+import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public abstract class THPart extends AEBasePart
-    implements IPowerChannelState, ITerminalHost, IConfigManagerHost, IViewCellStorage, IAEAppEngInventory {
+    implements IPowerChannelState, ITerminalHost, IConfigManagerHost, IViewCellStorage, IAEAppEngInventory,
+    ITerminalTypeFilterProvider {
 
     protected static final int POWERED_FLAG = 4;
     protected static final int CHANNEL_FLAG = 16;
@@ -69,6 +73,7 @@ public abstract class THPart extends AEBasePart
 
     private final IConfigManager cm = new ConfigManager(this);
     private final AppEngInternalInventory viewCell = new AppEngInternalInventory(this, 5);
+    private final MonitorableTypeFilter typeFilters = new MonitorableTypeFilter();
 
     public THPart(final ItemStack is) {
         this(is, false);
@@ -89,7 +94,6 @@ public abstract class THPart extends AEBasePart
         this.cm.registerSetting(Settings.SORT_BY, SortOrder.NAME);
         this.cm.registerSetting(Settings.VIEW_MODE, ViewItems.ALL);
         this.cm.registerSetting(Settings.SORT_DIRECTION, SortDir.ASCENDING);
-        this.cm.registerSetting(Settings.TYPE_FILTER, TypeFilter.ALL);
     }
 
     @MENetworkEventSubscribe
@@ -144,6 +148,7 @@ public abstract class THPart extends AEBasePart
         this.spin = data.getByte("spin");
         this.cm.readFromNBT(data);
         this.viewCell.readFromNBT(data, "viewCell");
+        this.typeFilters.readFromNBT(data);
     }
 
     @Override
@@ -153,6 +158,17 @@ public abstract class THPart extends AEBasePart
         data.setByte("spin", this.getSpin());
         this.cm.writeToNBT(data);
         this.viewCell.writeToNBT(data, "viewCell");
+        this.typeFilters.writeToNBT(data);
+    }
+
+    @Override
+    public Reference2BooleanMap<IAEStackType<?>> getTypeFilter(EntityPlayer player) {
+        return this.typeFilters.getFilters(player);
+    }
+
+    @Override
+    public void saveTypeFilter() {
+        this.saveChanges();
     }
 
     public abstract GuiType getGui();

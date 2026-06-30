@@ -12,30 +12,26 @@ import com.asdflj.ae2thing.client.gui.IGuiDrawSlot;
 import com.glodblock.github.common.item.ItemFluidPacket;
 
 import appeng.api.storage.data.IAEItemStack;
-import appeng.client.me.SlotME;
 
 public class RenderFluidPacketPatternSlot implements ISlotRender {
 
     @Override
     public Predicate<Slot> get() {
         return slot -> {
-            if (!(slot instanceof SlotME)) {
-                ItemStack stack = slot.getStack();
-                return stack.getItem() instanceof ItemFluidPacket;
-            }
-            return false;
+            ItemStack stack = slot.getStack();
+            return stack != null && stack.getItem() instanceof ItemFluidPacket;
         };
     }
 
     @Override
     public boolean drawSlot(Slot slot, IAEItemStack stack, IGuiDrawSlot draw, boolean display) {
-        if (stack.getItem() instanceof ItemFluidPacket && !(slot instanceof SlotME)) {
+        if (stack.getItem() instanceof ItemFluidPacket) {
             FluidStack fluidStack = ItemFluidPacket.getFluidStack(stack);
             if (fluidStack == null || fluidStack.amount <= 0) {
                 return true;
             }
             draw.getAEBaseGui()
-                .drawMCSlot(slot);
+                .func_146977_a(slot);
             IAEItemStack fake = stack.copy();
             fake.setStackSize(fluidStack.amount);
             aeRenderItem.setAeStack(fake);

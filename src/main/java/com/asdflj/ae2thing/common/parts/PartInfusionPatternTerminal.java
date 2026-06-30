@@ -38,14 +38,14 @@ public class PartInfusionPatternTerminal extends THPart implements IPatternTermi
                 && AEApi.instance()
                     .definitions()
                     .materials()
-                    .cardPatternRefiller()
+                    .basicCard()
                     .isSameAs(itemstack);
         }
     }
 
-    private static final FCPartsTexture FRONT_BRIGHT_ICON = FCPartsTexture.PartFluidPatternTerminal_Bright;
-    private static final FCPartsTexture FRONT_DARK_ICON = FCPartsTexture.PartFluidPatternTerminal_Colored;
-    private static final FCPartsTexture FRONT_COLORED_ICON = FCPartsTexture.PartFluidPatternTerminal_Dark;
+    private static final FCPartsTexture FRONT_BRIGHT_ICON = FCPartsTexture.PartTerminalBroad;
+    private static final FCPartsTexture FRONT_DARK_ICON = FCPartsTexture.PartTerminalBroad;
+    private static final FCPartsTexture FRONT_COLORED_ICON = FCPartsTexture.PartTerminalBroad;
 
     protected final AppEngInternalInventory pattern = new AppEngInternalInventory(this, 2);
     protected AppEngInternalInventory crafting = new BiggerAppEngInventory(this, 1);

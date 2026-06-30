@@ -18,8 +18,9 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import com.asdflj.ae2thing.AE2Thing;
+import com.asdflj.ae2thing.api.InventoryActionExtend;
 import com.asdflj.ae2thing.client.gui.container.ContainerInfusionPatternTerminal;
-import com.asdflj.ae2thing.network.CPacketInventoryAction;
+import com.asdflj.ae2thing.network.CPacketInventoryActionExtend;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.glodblock.github.client.gui.GuiFCImgButton;
@@ -39,9 +40,7 @@ import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.OptionalSlotFake;
 import appeng.container.slot.SlotDisabled;
 import appeng.container.slot.SlotFakeCraftingMatrix;
-import appeng.core.localization.GuiColors;
 import appeng.core.localization.GuiText;
-import appeng.helpers.InventoryAction;
 import appeng.util.item.AEItemStack;
 import thaumcraft.common.config.ConfigBlocks;
 
@@ -89,12 +88,13 @@ public class GuiInfusionPatternTerminal extends GuiMonitor implements IGuiMonito
         if (mouseButton == 3) {
             if (slot instanceof OptionalSlotFake || slot instanceof SlotFakeCraftingMatrix) {
                 if (slot.getHasStack()) {
-                    InventoryAction action = InventoryAction.SET_PATTERN_VALUE;
+                    InventoryActionExtend action = InventoryActionExtend.SET_PATTERN_VALUE;
                     IAEItemStack stack = AEItemStack.create(slot.getStack());
                     ((AEBaseContainer) this.inventorySlots).setTargetStack(stack);
                     for (int i = 0; i < this.inventorySlots.inventorySlots.size(); i++) {
                         if (slot.equals(this.inventorySlots.inventorySlots.get(i))) {
-                            AE2Thing.proxy.netHandler.sendToServer(new CPacketInventoryAction(action, i, 0, stack));
+                            AE2Thing.proxy.netHandler
+                                .sendToServer(new CPacketInventoryActionExtend(action, i, 0, stack));
                         }
                     }
                     return;
@@ -111,7 +111,7 @@ public class GuiInfusionPatternTerminal extends GuiMonitor implements IGuiMonito
             GuiText.PatternTerminalEx.getLocal(),
             8,
             this.ySize - 96 + 1 - this.getReservedSpace(),
-            GuiColors.PatternTerminalEx.getColor());
+            4210752);
         this.fontRendererObj.drawString(this.getGuiDisplayName(GuiText.Terminal.getLocal()), 8, 6, 4210752);
         updateButton(this.tabCraftButton, this.container.isCraftingMode());
         updateButton(this.tabProcessButton, !this.container.isCraftingMode());
@@ -364,7 +364,6 @@ public class GuiInfusionPatternTerminal extends GuiMonitor implements IGuiMonito
 
     }
 
-    @Override
     protected boolean isPowered() {
         return this.container.hasPower;
     }

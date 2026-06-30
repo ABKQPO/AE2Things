@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import net.minecraft.item.ItemStack;
 
-import com.glodblock.github.nei.object.OrderStack;
+import com.asdflj.ae2thing.nei.object.OrderStack;
 
 import reobf.proghatches.item.ItemProgrammingCircuit;
 import reobf.proghatches.item.ItemProgrammingToolkit;

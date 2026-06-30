@@ -12,6 +12,8 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.p455w0rd.wirelesscraftingterminal.common.WCTGuiHandler;
 import net.p455w0rd.wirelesscraftingterminal.common.container.ContainerWirelessCraftingTerminal;
+import net.p455w0rd.wirelesscraftingterminal.core.sync.network.NetworkHandler;
+import net.p455w0rd.wirelesscraftingterminal.core.sync.packets.PacketNEIRecipe;
 import net.p455w0rd.wirelesscraftingterminal.reference.Reference;
 
 import codechicken.nei.PositionedStack;
@@ -22,7 +24,7 @@ public class WCTCraftingTerminal implements ICraftingTerminalAdapter {
     @Override
     public void openGui(EntityPlayerMP player, TileEntity tile, ForgeDirection face, Object target) {
         WCTGuiHandler.launchGui(
-            Reference.GUI_CRAFT_CONFIRM,
+            Reference.GUI_WCT,
             player,
             player.worldObj,
             (int) player.posX,
@@ -39,8 +41,8 @@ public class WCTCraftingTerminal implements ICraftingTerminalAdapter {
     public void moveItems(GuiContainer firstGui, IRecipeHandler recipe, int recipeIndex) {
         try {
             final List<PositionedStack> ingredients = recipe.getIngredientStacks(recipeIndex);
-            net.p455w0rd.wirelesscraftingterminal.core.sync.network.NetworkHandler.instance.sendToServer(
-                new net.p455w0rd.wirelesscraftingterminal.core.sync.packets.PacketNEIRecipe(
+            NetworkHandler.instance.sendToServer(
+                new PacketNEIRecipe(
                     packIngredients(firstGui, ingredients, false)));
         } catch (IOException ignored) {}
     }

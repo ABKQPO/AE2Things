@@ -1,38 +1,15 @@
 {
   "required": true,
-  "minVersion": "0",
+  "minVersion": "0.8.5-GTNH",
   "package": "com.asdflj.ae2thing.coremod.mixin",
   "refmap": "mixins.ae2thing.refmap.json",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
+  "overwrites": {
+    "conformVisibility": true
+  },
   "mixins": [
   ],
-  "client": [
-    "ae.AccessorGuiScrollbar",
-    "ae.MixinAEBaseGui",
-    "ae.MixinContainerCraftConfirm",
-    "ae.MixinCraftingCPUCluster",
-    "ae.MixinGuiCraftAmount",
-    "ae.MixinGuiCraftConfirm",
-    "ae.MixinItemRepo",
-    "ae.MixinTileIOPort",
-    "ae.MixinContainerCraftAmount",
-    "br.MixinBRUtil",
-    "fc.MixinGuiFluidCraftAmount",
-    "nei.MixinGuiContainerManager",
-    "nei.MixinGuiOverlayButton",
-    "nei.MixinIOverlayHandler",
-    "nei.MixinPanelWidget",
-    "nei.MixinRecipeItemInputHandler",
-    "tc.nei.MixinLoadCraftingRecipes",
-    "tc.nei.MixinTemplateRecipeHandler",
-    "wct.MixinRandomUtils"
-  ],
-  "server": [
-    "ae.MixinContainerCraftConfirm",
-    "ae.MixinCraftingCPUCluster",
-    "ae.MixinTileIOPort",
-    "ae.MixinContainerCraftAmount",
-    "wct.MixinRandomUtils"
-  ]
+  "client": [],
+  "server": []
 }

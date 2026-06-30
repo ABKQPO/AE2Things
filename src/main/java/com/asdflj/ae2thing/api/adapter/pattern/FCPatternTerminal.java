@@ -3,9 +3,7 @@ package com.asdflj.ae2thing.api.adapter.pattern;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 
-import com.glodblock.github.inventory.item.IItemPatternTerminal;
-
-import appeng.container.AEBaseContainer;
+import appeng.helpers.IContainerCraftingPacket;
 
 public class FCPatternTerminal implements IPatternTerminalAdapter {
 
@@ -27,10 +25,8 @@ public class FCPatternTerminal implements IPatternTerminalAdapter {
 
     @Override
     public IInventory getInventoryByName(Container container, String name) {
-        if (container instanceof AEBaseContainer c) {
-            if (c.getTarget() instanceof IItemPatternTerminal t) {
-                return t.getInventoryByName(name);
-            }
+        if (container instanceof IContainerCraftingPacket c) {
+            return c.getInventoryByName(name);
         }
         return null;
     }

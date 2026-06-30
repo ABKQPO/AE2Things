@@ -94,7 +94,10 @@ public class FindITUtil implements Runnable {
         if (c.getTarget() instanceof TileEntity t) {
             HashSet<Slot> slots = getSlots(c, t);
             if (slots.isEmpty()) return;
-            slotHighlighter.highlightSlots(guiContainer, slots, FindItConfig.ITEM_HIGHLIGHTING_COLOR);
+            slotHighlighter.highlightSlots(
+                guiContainer,
+                slots,
+                Integer.parseUnsignedInt(FindItConfig.ITEM_HIGHLIGHTING_COLOR, 16));
         }
     }
 

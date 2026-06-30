@@ -167,7 +167,7 @@ public class ContainerInfusionPatternTerminal extends BasePatternContainerMonito
                     .maybeStack(blanksToRefill)
                     .get());
             final IAEItemStack extracted = Platform
-                .poweredExtraction(this.getPowerSource(), this.getCellInventory(), request, this.getActionSource());
+                .poweredExtraction(this.getPowerSource(), this.getMonitor(), request, this.getActionSource());
             if (extracted != null) {
                 if (blanks != null) blanks.stackSize += extracted.getStackSize();
                 else {

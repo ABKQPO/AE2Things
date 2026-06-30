@@ -391,8 +391,9 @@ public class PatternPanel implements IAEBasePanel {
                             AE2Thing.proxy.netHandler
                                 .sendToServer(new CPacketInventoryActionExtend(action, i, 0, stack));
                         } else {
-                            InventoryAction action = InventoryAction.SET_PATTERN_VALUE;
-                            AE2Thing.proxy.netHandler.sendToServer(new CPacketInventoryAction(action, i, 0, stack));
+                            InventoryActionExtend action = InventoryActionExtend.SET_PATTERN_VALUE;
+                            AE2Thing.proxy.netHandler
+                                .sendToServer(new CPacketInventoryActionExtend(action, i, 0, stack));
                         }
                     }
                 }
@@ -406,7 +407,7 @@ public class PatternPanel implements IAEBasePanel {
             if (action == InventoryAction.SPLIT_OR_PLACE_SINGLE) {
                 action = InventoryAction.MOVE_REGION;
             } else {
-                action = InventoryAction.PICKUP_SINGLE;
+                action = InventoryAction.PLACE_SINGLE;
             }
         }
         if (Ae2ReflectClient.getDragClick(this.parent)
@@ -454,7 +455,7 @@ public class PatternPanel implements IAEBasePanel {
             AE2Thing.proxy.netHandler.sendToServer(
                 new CPacketTerminalBtns("PatternTerminal.Combine", this.combineDisableBtn == btn ? 1 : 0));
             return true;
-        } else if (com.glodblock.github.util.ModAndClassUtil.isDoubleButton && doubleBtn == btn) {
+        } else if (ModAndClassUtil.isDoubleButton && doubleBtn == btn) {
             final boolean backwards = Mouse.isButtonDown(1);
             int val = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) ? 1 : 0;
             if (backwards) val |= 0b10;

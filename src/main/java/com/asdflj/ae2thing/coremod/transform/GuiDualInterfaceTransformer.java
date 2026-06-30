@@ -40,13 +40,13 @@ public class GuiDualInterfaceTransformer extends ClassTransformer.ClassMapper {
             @Override
             public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
                 super.visitMethodInsn(opcode, owner, name, desc, itf);
-                if (name.equals("translateToLocal")) {
+                if (name.equals("getGuiDisplayName")) {
                     super.visitVarInsn(Opcodes.ALOAD, 0);
                     super.visitMethodInsn(
                         Opcodes.INVOKESTATIC,
                         "com/asdflj/ae2thing/coremod/hooker/CoreModHooksClient",
                         "translateToLocal",
-                        "(Ljava/lang/String;Lcom/glodblock/github/client/gui/GuiDualInterface;)Ljava/lang/String;",
+                        "(Ljava/lang/String;Lcom/glodblock/github/client/gui/GuiFluidInterface;)Ljava/lang/String;",
                         false);
                 }
             }

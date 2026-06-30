@@ -8,11 +8,10 @@ import net.minecraft.item.ItemStack;
 import com.asdflj.ae2thing.common.item.ItemPhial;
 import com.asdflj.ae2thing.nei.object.IRecipeExtractor;
 import com.asdflj.ae2thing.nei.object.OrderStack;
-import com.djgiannuzz.thaumcraftneiplugin.items.ItemAspect;
+import com.gtnewhorizons.aspectrecipeindex.common.items.ItemAspect;
 
 import codechicken.nei.PositionedStack;
 import thaumcraft.api.aspects.Aspect;
-import thaumcraft.api.aspects.AspectList;
 
 public class TCRecipeExtractor implements IRecipeExtractor {
 
@@ -33,14 +32,10 @@ public class TCRecipeExtractor implements IRecipeExtractor {
             OrderStack<?> stack = OrderStack.pack(rawInputs.get(i), c ? index : i);
             if (stack != null) {
                 if (stack.getStack() instanceof ItemStack is && is.getItem() instanceof ItemAspect) {
-                    AspectList aspectList = ItemAspect.getAspects(is);
-                    for (Aspect aspect : aspectList.getAspects()) {
-                        int amount = aspectList.getAmount(aspect);
-                        if (amount > 0) {
-                            ItemStack out = ItemPhial.newStack(aspect, is.stackSize);
-                            stack.putStack(out);
-                            break;
-                        }
+                    Aspect aspect = ItemAspect.getAspect(is);
+                    if (aspect != null) {
+                        ItemStack out = ItemPhial.newStack(aspect, is.stackSize);
+                        stack.putStack(out);
                     }
                 }
                 tmp.add(stack);

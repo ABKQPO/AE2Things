@@ -204,7 +204,7 @@ public abstract class GuiAmount extends AEBaseGui implements IGuiDrawSlot, IGuiC
 
     @Override
     public void func_146977_a(final Slot s) {
-        if (drawSlot(s)) super.func_146977_a(s);
+        if (drawSlot(s, () -> super.func_146977_a(s))) super.func_146977_a(s);
     }
 
     @Override

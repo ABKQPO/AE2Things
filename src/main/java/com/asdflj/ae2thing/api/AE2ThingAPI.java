@@ -35,9 +35,9 @@ import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.network.CPacketFindCellItem;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.util.Ae2Reflect;
+import com.asdflj.ae2thing.util.AspectUtil;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.asdflj.ae2thing.util.NameConst;
-import com.glodblock.github.crossmod.thaumcraft.AspectUtil;
 import com.glodblock.github.util.Util;
 
 import appeng.api.storage.data.IAEFluidStack;
@@ -194,9 +194,7 @@ public final class AE2ThingAPI implements IAE2ThingAPI {
 
     @Override
     public ItemStack getFluidContainer(FluidStack fluid) {
-        if (ModAndClassUtil.THE && AspectUtil.isEssentiaGas(fluid)) {
-            return PHIAL;
-        } else if (canFillContainer(BUCKET, fluid)) {
+        if (canFillContainer(BUCKET, fluid)) {
             return BUCKET;
         } else if (getDefaultFluidContainer() != BUCKET && canFillContainer(getDefaultFluidContainer(), fluid)) {
             return getDefaultFluidContainer();

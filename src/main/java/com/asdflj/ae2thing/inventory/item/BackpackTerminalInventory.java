@@ -13,29 +13,33 @@ import appeng.api.config.PowerMultiplier;
 import appeng.api.config.Settings;
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
-import appeng.api.config.TypeFilter;
 import appeng.api.config.ViewItems;
 import appeng.api.implementations.guiobjects.IGuiItemObject;
 import appeng.api.networking.energy.IEnergySource;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.ITerminalHost;
+import appeng.api.storage.ITerminalTypeFilterProvider;
 import appeng.api.storage.MEMonitorHandler;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.util.IConfigManager;
 import appeng.container.interfaces.IInventorySlotAware;
 import appeng.tile.inventory.AppEngInternalInventory;
 import appeng.util.ConfigManager;
+import appeng.util.MonitorableTypeFilter;
 import appeng.util.Platform;
+import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack>
-    implements ITerminalHost, IInventorySlotAware, IGuiItemObject, IEnergySource {
+    implements ITerminalHost, IInventorySlotAware, IGuiItemObject, IEnergySource, ITerminalTypeFilterProvider {
 
     private final ItemStack target;
     private final int inventorySlot;
     protected AppEngInternalInventory crafting;
     protected EntityPlayer player;
+    private final MonitorableTypeFilter typeFilters = new MonitorableTypeFilter();
 
     @SuppressWarnings("unchecked")
     public BackpackTerminalInventory(ItemStack is, int slot, EntityPlayer player, IMEInventoryHandler<?> monitor) {
@@ -44,6 +48,7 @@ public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack>
         this.inventorySlot = slot;
         this.player = player;
         this.crafting = new ItemBiggerAppEngInventory(is, Constants.CRAFTING, 9, player, slot);
+        this.typeFilters.readFromNBT(Platform.openNbtData(this.target));
     }
 
     @Override
@@ -80,7 +85,6 @@ public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack>
         out.registerSetting(Settings.SORT_BY, SortOrder.NAME);
         out.registerSetting(Settings.VIEW_MODE, ViewItems.ALL);
         out.registerSetting(Settings.SORT_DIRECTION, SortDir.ASCENDING);
-        out.registerSetting(Settings.TYPE_FILTER, TypeFilter.ALL);
         out.readFromNBT(
             (NBTTagCompound) Platform.openNbtData(this.target)
                 .copy());
@@ -98,5 +102,16 @@ public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack>
     public double extractAEPower(double amt, Actionable mode, PowerMultiplier usePowerMultiplier) {
         amt = usePowerMultiplier.multiply(amt);
         return usePowerMultiplier.divide(amt);
+    }
+
+    @Override
+    public Reference2BooleanMap<IAEStackType<?>> getTypeFilter(EntityPlayer player) {
+        return this.typeFilters.getFilters(player);
+    }
+
+    @Override
+    public void saveTypeFilter() {
+        this.typeFilters.writeToNBT(this.target);
+        this.saveSettings();
     }
 }

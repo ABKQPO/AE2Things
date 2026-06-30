@@ -5,5 +5,6 @@ public enum InventoryActionExtend {
     GET_CRAFTING_STATE,
     REPLACE_PATTERN,
     CLEAR_PATTERN,
-    REQUEST_ITEM
+    REQUEST_ITEM,
+    SET_PATTERN_VALUE
 }

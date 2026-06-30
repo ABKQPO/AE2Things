@@ -69,7 +69,6 @@ public class ContainerCraftingTerminal extends ContainerMonitor {
     void setMonitor() {
         this.monitor.setMonitor(this.host.getItemInventory());
         this.monitor.addListener();
-        this.setCellInventory(this.monitor.getMonitor());
         this.setPowerSource((IEnergySource) this.host);
     }
 

@@ -6,10 +6,8 @@ import static net.minecraft.client.gui.Gui.drawRect;
 import java.awt.Color;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 import net.minecraftforge.fluids.Fluid;
@@ -17,19 +15,14 @@ import net.minecraftforge.fluids.Fluid;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 
-import com.asdflj.ae2thing.api.AE2ThingAPI;
-import com.asdflj.ae2thing.api.Pinned;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.asdflj.ae2thing.util.Util;
 import com.glodblock.github.common.item.ItemFluidDrop;
-import com.glodblock.github.crossmod.thaumcraft.AspectRender;
-import com.glodblock.github.crossmod.thaumcraft.AspectUtil;
 import com.mitchej123.hodgepodge.textures.IPatchedTextureAtlasSprite;
 
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.client.me.SlotME;
 
 public class RenderHelper {
 
@@ -38,26 +31,6 @@ public class RenderHelper {
     private static long lastRunTime;
     public static long interval = 30;
     public static RenderItem itemRender = new RenderItem();
-
-    public static void drawPinnedSlot(Slot slotIn, GuiScreen gui) {
-        if (!AE2ThingAPI.instance()
-            .terminal()
-            .isPinTerminal(gui)) return;
-        if (slotIn instanceof SlotME slotME && slotME.getHasStack()) {
-            int x = slotIn.xDisplayPosition;
-            int y = slotIn.yDisplayPosition;
-            IAEItemStack item = ((SlotME) slotIn).getAEStack();
-            if (!AE2ThingAPI.instance()
-                .getPinned()
-                .isPinnedItem(item)) return;
-            Pinned.PinInfo info = AE2ThingAPI.instance()
-                .getPinned()
-                .getPinInfo(item);
-            if (info != null && !info.canPrune) {
-                updateColorAndDrawItemBorder(x, y);
-            }
-        }
-    }
 
     public static void renderAEStack(IAEStack<?> stack, int x, int y, float z) {
         renderAEStack(stack, x, y, z, true);
@@ -114,27 +87,10 @@ public class RenderHelper {
             GL11.glEnable(GL12.GL_RESCALE_NORMAL);
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
             GL11.glTranslatef(0f, 0f, z);
-            if (ModAndClassUtil.THE && AspectUtil.isEssentiaGas(fluidStack)) {
-                GL11.glDisable(GL11.GL_DEPTH_TEST);
-                AspectRender.drawAspect(
-                    Minecraft.getMinecraft().thePlayer,
-                    x,
-                    y,
-                    z,
-                    AspectUtil.getAspectFromGas(fluidStack.getFluidStack()),
-                    fluidStack.getStackSize() <= 0 ? 1 : fluidStack.getStackSize());
-                IAEItemStack gas = fluidDrop.copy()
-                    .setStackSize(stack.getStackSize() / AspectUtil.R);
-                GL11.glTranslatef(0f, 0f, 150f);
-                if (renderStackSize) {
-                    drawStackSize(gas, x, y);
-                }
-            } else {
-                drawFluid(x, y, fluidStack.getFluid());
-                GL11.glTranslatef(0f, 0f, 150f);
-                if (renderStackSize) {
-                    drawStackSize(fluidDrop, x, y);
-                }
+            drawFluid(x, y, fluidStack.getFluid());
+            GL11.glTranslatef(0f, 0f, 150f);
+            if (renderStackSize) {
+                drawStackSize(fluidDrop, x, y);
             }
             GL11.glPopMatrix();
             GL11.glPopAttrib();

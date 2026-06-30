@@ -54,7 +54,7 @@ public abstract class MixinCraftingCPUCluster {
                 networkKey = ((TileSecurity) iterator.next()
                     .getMachine()).getLocatableSerial();
                 player = ps.player;
-                output = job.getOutput()
+                output = (IAEItemStack) job.getOutput()
                     .copy();
             } else {
                 setAsNull();

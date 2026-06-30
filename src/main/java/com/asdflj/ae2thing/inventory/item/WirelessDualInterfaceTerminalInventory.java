@@ -3,6 +3,7 @@ package com.asdflj.ae2thing.inventory.item;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -21,23 +22,28 @@ import com.glodblock.github.common.item.ItemFluidPacket;
 import appeng.api.config.Settings;
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
-import appeng.api.config.TypeFilter;
 import appeng.api.config.ViewItems;
 import appeng.api.implementations.ICraftingPatternItem;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.ICraftingPatternDetails;
+import appeng.api.parts.IInterfaceTerminal;
+import appeng.api.storage.ITerminalTypeFilterProvider;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.util.AECableType;
 import appeng.api.util.IConfigManager;
 import appeng.tile.inventory.AppEngInternalInventory;
 import appeng.tile.inventory.IAEAppEngInventory;
 import appeng.tile.inventory.InvOperation;
 import appeng.util.ConfigManager;
+import appeng.util.MonitorableTypeFilter;
 import appeng.util.Platform;
+import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
-    implements IGridHost, IPatternTerminal, IClickableInTerminal, IAEAppEngInventory {
+    implements IGridHost, IPatternTerminal, IClickableInTerminal, IAEAppEngInventory, IInterfaceTerminal,
+    ITerminalTypeFilterProvider {
 
     protected AppEngInternalInventory craftingEx;
     protected AppEngInternalInventory outputEx;
@@ -52,6 +58,7 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
     protected boolean beSubstitute = false;
     protected int activePage = 0;
     private Util.DimensionalCoordSide tile;
+    private final MonitorableTypeFilter typeFilters = new MonitorableTypeFilter();
 
     public WirelessDualInterfaceTerminalInventory(WirelessObject obj) {
         super(obj);
@@ -98,6 +105,7 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
             NBTTagCompound tileMsg = (NBTTagCompound) data.getTag("clickedInterface");
             this.tile = Util.DimensionalCoordSide.readFromNBT(tileMsg);
         }
+        this.typeFilters.readFromNBT(data);
     }
 
     @Override
@@ -110,7 +118,6 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
         out.registerSetting(Settings.SORT_BY, SortOrder.NAME);
         out.registerSetting(Settings.VIEW_MODE, ViewItems.ALL);
         out.registerSetting(Settings.SORT_DIRECTION, SortDir.ASCENDING);
-        out.registerSetting(Settings.TYPE_FILTER, TypeFilter.ALL);
         out.readFromNBT(
             (NBTTagCompound) Platform.openNbtData(this.getItemStack())
                 .copy());
@@ -139,25 +146,15 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
 
     @Override
     public IInventory getInventoryByName(String name) {
-        if (name.equals(Constants.CRAFTING_EX)) {
-            return this.craftingEx;
-        }
+        return switch (name) {
+            case Constants.CRAFTING_EX -> this.craftingEx;
+            case Constants.OUTPUT_EX -> this.outputEx;
+            case Constants.CRAFTING -> this.crafting;
+            case Constants.PATTERN -> this.pattern;
+            case Constants.UPGRADES -> this.upgrades;
+            default -> null;
+        };
 
-        if (name.equals(Constants.OUTPUT_EX)) {
-            return this.outputEx;
-        }
-        if (name.equals(Constants.CRAFTING)) {
-            return this.crafting;
-        }
-
-        if (name.equals(Constants.PATTERN)) {
-            return this.pattern;
-        }
-        if (name.equals(Constants.UPGRADES)) {
-            return this.upgrades;
-        }
-
-        return null;
     }
 
     @Override
@@ -397,6 +394,7 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
             tile.writeToNBT(tileMsg);
         }
         data.setTag("clickedInterface", tileMsg);
+        this.typeFilters.writeToNBT(data);
     }
 
     @Override
@@ -408,5 +406,20 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
     @Override
     public Util.DimensionalCoordSide getClickedInterface() {
         return this.tile;
+    }
+
+    @Override
+    public boolean needsUpdate() {
+        return true;
+    }
+
+    @Override
+    public Reference2BooleanMap<IAEStackType<?>> getTypeFilter(EntityPlayer player) {
+        return this.typeFilters.getFilters(player);
+    }
+
+    @Override
+    public void saveTypeFilter() {
+        this.writeToNBT();
     }
 }

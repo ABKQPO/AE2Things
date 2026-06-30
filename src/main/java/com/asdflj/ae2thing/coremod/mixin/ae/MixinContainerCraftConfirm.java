@@ -13,8 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
-import com.asdflj.ae2thing.util.TheUtil;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingJob;
@@ -51,9 +49,6 @@ public abstract class MixinContainerCraftConfirm extends AEBaseContainer {
     @Inject(method = "startJob()V", at = @At("HEAD"), remap = false)
     public void startJob(CallbackInfo ci) {
         if (this.result != null && !this.isSimulation() && getGrid() != null && is != null) {
-            if (ModAndClassUtil.THE && TheUtil.isItemCraftingAspect(is)) {
-                is = TheUtil.itemCraftingAspect2FluidDrop(is);
-            }
             SPacketMEItemInvUpdate piu = new SPacketMEItemInvUpdate(ADD_PINNED_ITEM);
             piu.appendItem(is);
             AE2Thing.proxy.netHandler.sendTo(piu, (EntityPlayerMP) this.getPlayerInv().player);

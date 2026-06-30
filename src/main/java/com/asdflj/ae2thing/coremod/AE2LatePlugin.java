@@ -1,11 +1,11 @@
 package com.asdflj.ae2thing.coremod;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import com.gtnewhorizon.gtnhmixins.ILateMixinLoader;
 import com.gtnewhorizon.gtnhmixins.LateMixin;
+import com.gtnewhorizon.gtnhmixins.builders.IMixins;
 
 @LateMixin
 public class AE2LatePlugin implements ILateMixinLoader {
@@ -17,7 +17,6 @@ public class AE2LatePlugin implements ILateMixinLoader {
 
     @Override
     public List<String> getMixins(Set<String> loadedMods) {
-        return Collections.emptyList();
+        return IMixins.getLateMixins(Mixins.class, loadedMods);
     }
-
 }

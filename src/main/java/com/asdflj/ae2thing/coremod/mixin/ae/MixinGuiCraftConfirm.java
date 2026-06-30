@@ -28,7 +28,7 @@ import appeng.util.item.ItemList;
 public abstract class MixinGuiCraftConfirm extends AEBaseGui {
 
     @Shadow(remap = false)
-    private GuiButton start;
+    private GuiAeButton start;
 
     @Shadow(remap = false)
     @Final

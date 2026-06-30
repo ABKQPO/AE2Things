@@ -25,7 +25,6 @@ import appeng.client.gui.widgets.GuiTabButton;
 import appeng.client.gui.widgets.IDropToFillTextField;
 import appeng.client.gui.widgets.MEGuiTextField;
 import appeng.container.AEBaseContainer;
-import appeng.core.localization.GuiColors;
 import appeng.core.localization.GuiText;
 
 public class GuiPatternValueName extends AEBaseGui implements IDropToFillTextField, IGuiDrawSlot {
@@ -82,7 +81,7 @@ public class GuiPatternValueName extends AEBaseGui implements IDropToFillTextFie
     @Override
     public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
         this.fontRendererObj
-            .drawString(I18n.format(NameConst.GUI_PATTERN_RENAME), 12, 8, GuiColors.RenamerTitle.getColor());
+            .drawString(I18n.format(NameConst.GUI_PATTERN_RENAME), 12, 8, 4210752);
     }
 
     @Override
@@ -140,7 +139,7 @@ public class GuiPatternValueName extends AEBaseGui implements IDropToFillTextFie
 
     @Override
     public void func_146977_a(final Slot s) {
-        if (drawSlot(s)) super.func_146977_a(s);
+        if (drawSlot(s, () -> super.func_146977_a(s))) super.func_146977_a(s);
     }
 
     @Override

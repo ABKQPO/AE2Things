@@ -6,9 +6,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IIcon;
 
 import com.asdflj.ae2thing.common.item.IItemInventoryHandler;
-import com.glodblock.github.inventory.InventoryHandler;
-import com.glodblock.github.inventory.gui.GuiType;
-import com.glodblock.github.util.BlockPos;
 
 import appeng.api.implementations.tiles.IChestOrDrive;
 import appeng.api.storage.ICellHandler;
@@ -58,12 +55,7 @@ public class CellHandler implements ICellHandler {
     public void openChestGui(EntityPlayer player, IChestOrDrive chest, ICellHandler cellHandler,
         IMEInventoryHandler inv, ItemStack is, StorageChannel chan) {
         if (chest instanceof TileEntity te) {
-            if (chan == StorageChannel.FLUIDS) {
-                InventoryHandler
-                    .openGui(player, te.getWorldObj(), new BlockPos(te), chest.getUp(), GuiType.FLUID_TERMINAL);
-            } else {
-                Platform.openGUI(player, te, chest.getUp(), GuiBridge.GUI_ME);
-            }
+            Platform.openGUI(player, te, chest.getUp(), GuiBridge.GUI_ME);
         }
     }
 

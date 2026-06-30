@@ -18,6 +18,7 @@ import com.glodblock.github.common.item.ItemFluidPacket;
 
 import appeng.api.AEApi;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IDisplayRepo;
 import appeng.api.storage.data.IItemList;
 import appeng.client.me.ItemRepo;
@@ -48,11 +49,11 @@ public class RenderPatternSlotFake implements ISlotRender {
         if ((slot instanceof SlotPatternFake fake && !fake.isHidden()) || (slot instanceof SlotFakeCraftingMatrix)) {
             IDisplayRepo iDisplayRepo = Util.getDisplayRepo(draw.getAEBaseGui());
             if (iDisplayRepo instanceof ItemRepo repo) {
-                IItemList<IAEItemStack> list = Ae2ReflectClient.getList(repo);
+                IItemList<IAEStack<?>> list = Ae2ReflectClient.getList(repo);
                 IAEItemStack what = (stack.getItem() instanceof ItemFluidPacket)
                     ? AEItemStack.create(ItemFluidDrop.newDisplayStack(ItemFluidPacket.getFluidStack(stack)))
                     : stack;
-                IAEItemStack storedItem = list.findPrecise(what);
+                IAEStack<?> storedItem = list.findPrecise(what);
                 if (storedItem != null && storedItem.isCraftable()) {
                     GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_LIGHTING_BIT);
                     GL11.glPushMatrix();

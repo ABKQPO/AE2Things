@@ -33,6 +33,7 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
+import appeng.util.item.AEItemStackType;
 
 public class InfinityItemStorageCellInventory implements ITCellInventory {
 
@@ -224,7 +225,10 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
         final ItemStack sharedItemStack = input.getItemStack();
 
         if (isStorageCell(sharedItemStack)) {
-            final IMEInventory<IAEItemStack> meInventory = getCell(sharedItemStack, null);
+            final IMEInventory<IAEItemStack> meInventory = (IMEInventory<IAEItemStack>) (IMEInventory<?>) getCell(
+                sharedItemStack,
+                null,
+                AEItemStackType.ITEM_STACK_TYPE);
 
             if (meInventory != null && !this.isEmpty(meInventory)) {
                 return input;

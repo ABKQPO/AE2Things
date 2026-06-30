@@ -1,7 +1,5 @@
 package com.asdflj.ae2thing.client.gui.container.BaseMonitor;
 
-import static com.asdflj.ae2thing.util.TheUtil.itemCraftingAspect2IAEFluidStack;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -13,8 +11,6 @@ import net.minecraft.inventory.ICrafting;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.network.SPacketMEFluidInvUpdate;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
-import com.asdflj.ae2thing.util.TheUtil;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.AEApi;
@@ -35,7 +31,6 @@ public class FluidMonitor implements IMEMonitorHandlerReceiver<IAEFluidStack>, I
     private final IItemList<IAEFluidStack> fluids = AEApi.instance()
         .storage()
         .createFluidList();
-    private final Set<IAEItemStack> craftingAspects = new HashSet<>();
     private final Set<IAEItemStack> craftingFluids = new HashSet<>();
     private final List<ICrafting> crafters;
     private final List<IAEFluidStack> toSend = new ArrayList<>();
@@ -53,10 +48,6 @@ public class FluidMonitor implements IMEMonitorHandlerReceiver<IAEFluidStack>, I
     @Override
     public boolean isValid(Object verificationToken) {
         return this.fluidMonitor != null;
-    }
-
-    public void addItemCraftingAspect(IAEItemStack is) {
-        craftingAspects.add(is);
     }
 
     public void addItemCraftingFluid(IAEItemStack is) {
@@ -104,12 +95,7 @@ public class FluidMonitor implements IMEMonitorHandlerReceiver<IAEFluidStack>, I
             for (final IAEFluidStack is : this.fluids) {
                 IAEFluidStack send = monitorCache.findPrecise(is);
                 if (send != null) {
-                    IAEItemStack item;
-                    if (ModAndClassUtil.THE && TheUtil.isGaseousEssentia(is)) {
-                        item = itemMonitorCache.findPrecise(TheUtil.essentia2CraftingAspect(is));
-                    } else {
-                        item = itemMonitorCache.findPrecise(ItemFluidDrop.newAeStack(send));
-                    }
+                    IAEItemStack item = itemMonitorCache.findPrecise(ItemFluidDrop.newAeStack(send));
                     if (item != null) {
                         send = send.copy();
                         send.setCraftable(item.isCraftable());
@@ -122,23 +108,6 @@ public class FluidMonitor implements IMEMonitorHandlerReceiver<IAEFluidStack>, I
             }
             piu.addAll(toSend);
             this.fluids.resetStatus();
-        }
-        if (!this.craftingAspects.isEmpty() && ModAndClassUtil.THE) {
-            final IItemList<IAEFluidStack> monitorCache = this.fluidMonitor.getStorageList();
-            for (IAEItemStack is : this.craftingAspects) {
-                IAEFluidStack fs = itemCraftingAspect2IAEFluidStack(is);
-                IAEFluidStack send = monitorCache.findPrecise(fs);
-                if (send != null) {
-                    send.setCraftable(is.isCraftable());
-                    toSend.add(send);
-                } else {
-                    fs.setStackSize(0);
-                    fs.setCraftable(is.isCraftable());
-                    toSend.add(fs);
-                }
-            }
-            piu.addAll(toSend);
-            this.craftingAspects.clear();
         }
         if (!this.craftingFluids.isEmpty()) {
             final IItemList<IAEFluidStack> monitorCache = this.fluidMonitor.getStorageList();

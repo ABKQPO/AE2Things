@@ -23,7 +23,6 @@ import com.asdflj.ae2thing.api.adapter.terminal.item.FCBaseItemTerminal;
 import com.asdflj.ae2thing.api.adapter.terminal.item.FCUltraTerminal;
 import com.asdflj.ae2thing.api.adapter.terminal.item.WCTWirelessCraftingTerminal;
 import com.asdflj.ae2thing.api.adapter.terminal.parts.AETerminal;
-import com.asdflj.ae2thing.api.adapter.terminal.parts.FCPatternTerminal;
 import com.asdflj.ae2thing.client.event.AEGuiCloseEvent;
 import com.asdflj.ae2thing.client.event.CraftTracking;
 import com.asdflj.ae2thing.client.event.EncodeEvent;
@@ -49,11 +48,6 @@ import com.asdflj.ae2thing.network.CPacketCraftRequest;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.FindITUtil;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
-import com.glodblock.github.client.gui.GuiFluidCraftingWireless;
-import com.glodblock.github.client.gui.GuiFluidPatternExWireless;
-import com.glodblock.github.client.gui.GuiFluidPatternTerminal;
-import com.glodblock.github.client.gui.GuiFluidPatternTerminalEx;
-import com.glodblock.github.client.gui.GuiFluidPatternWireless;
 
 import appeng.api.events.GuiScrollEvent;
 import appeng.api.storage.data.IAEItemStack;
@@ -62,7 +56,6 @@ import appeng.client.gui.implementations.GuiCraftingTerm;
 import appeng.client.gui.implementations.GuiMEMonitorable;
 import appeng.client.gui.implementations.GuiPatternTerm;
 import appeng.client.gui.implementations.GuiPatternTermEx;
-import appeng.client.gui.implementations.GuiWirelessTerm;
 import codechicken.nei.api.API;
 import codechicken.nei.recipe.GuiOverlayButton;
 import codechicken.nei.recipe.GuiRecipe;
@@ -163,24 +156,6 @@ public class ClientProxy extends CommonProxy {
         AE2ThingAPI.instance()
             .terminal()
             .registerTerminal(GuiPatternTermEx.class);
-        AE2ThingAPI.instance()
-            .terminal()
-            .registerTerminal(GuiFluidPatternTerminalEx.class);
-        AE2ThingAPI.instance()
-            .terminal()
-            .registerTerminal(GuiFluidPatternTerminal.class);
-        AE2ThingAPI.instance()
-            .terminal()
-            .registerTerminal(GuiFluidPatternExWireless.class);
-        AE2ThingAPI.instance()
-            .terminal()
-            .registerTerminal(GuiFluidPatternWireless.class);
-        AE2ThingAPI.instance()
-            .terminal()
-            .registerTerminal(GuiFluidCraftingWireless.class);
-        AE2ThingAPI.instance()
-            .terminal()
-            .registerTerminal(GuiWirelessTerm.class);
         if (ModAndClassUtil.WCT) {
             AE2ThingAPI.instance()
                 .terminal()
@@ -213,9 +188,6 @@ public class ClientProxy extends CommonProxy {
         AE2ThingAPI.instance()
             .terminal()
             .registerTerminalSet(WCTWirelessCraftingTerminal.instance);
-        AE2ThingAPI.instance()
-            .terminal()
-            .registerTerminalSet(new FCPatternTerminal());
         AE2ThingAPI.instance()
             .terminal()
             .registerTerminalSet(new AETerminal());

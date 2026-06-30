@@ -19,7 +19,6 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.client.gui.widgets.GuiImgButton;
 import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.SlotCraftingMatrix;
-import appeng.core.localization.GuiColors;
 import appeng.core.localization.GuiText;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketInventoryAction;
@@ -85,7 +84,7 @@ public class GuiCraftingTerminal extends GuiMonitor {
             GuiText.CraftingTerminal.getLocal(),
             8,
             this.ySize - 96 + 1 - this.getReservedSpace(),
-            GuiColors.CraftingTerminalTitle.getColor());
+            4210752);
         this.fontRendererObj.drawString(this.getGuiDisplayName(GuiText.Terminal.getLocal()), 8, 6, 4210752);
     }
 

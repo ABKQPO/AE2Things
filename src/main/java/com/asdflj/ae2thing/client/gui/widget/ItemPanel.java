@@ -25,30 +25,32 @@ import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTe
 import com.asdflj.ae2thing.client.me.AdvItemRepo;
 import com.asdflj.ae2thing.network.CPacketInventoryAction;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
+import com.asdflj.ae2thing.util.AspectUtil;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.glodblock.github.common.item.ItemFluidDrop;
-import com.glodblock.github.crossmod.thaumcraft.AspectUtil;
 
 import appeng.api.config.SearchBoxMode;
 import appeng.api.config.Settings;
 import appeng.api.config.TerminalStyle;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.util.IConfigManager;
+import appeng.client.gui.implementations.GuiMEMonitorable;
+import appeng.client.gui.slots.VirtualMEMonitorableSlot;
+import appeng.client.gui.slots.VirtualMESlot;
 import appeng.client.gui.widgets.GuiImgButton;
 import appeng.client.gui.widgets.GuiScrollbar;
 import appeng.client.gui.widgets.IDropToFillTextField;
 import appeng.client.gui.widgets.ISortSource;
-import appeng.client.me.InternalSlotME;
-import appeng.client.me.SlotME;
 import appeng.container.AEBaseContainer;
-import appeng.container.slot.SlotPatternTerm;
 import appeng.core.AEConfig;
 import appeng.core.AELog;
 import appeng.core.sync.network.NetworkHandler;
-import appeng.core.sync.packets.PacketInventoryAction;
+import appeng.core.sync.packets.PacketMonitorableAction;
 import appeng.core.sync.packets.PacketValueConfig;
 import appeng.helpers.InventoryAction;
+import appeng.helpers.MonitorableAction;
 import appeng.util.IConfigManagerHost;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
@@ -75,7 +77,6 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     private final boolean showViewBtn = true;
     private GuiImgButton SortByBox;
     private GuiImgButton ViewBox;
-    private GuiImgButton typeFilter;
     private GuiImgButton SortDirBox;
     private GuiImgButton searchBoxSettings;
     private static String memoryText = "";
@@ -132,7 +133,7 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
             && this.parent != null) {
             // draw selection
             List<String> list = Ae2ReflectClient.getHistoryList(this.history);
-            ((IGuiSelection) this.parent).drawHistorySelection(
+            this.parent.drawHistorySelection(
                 searchField.xPosition - offsetX,
                 searchField.yPosition - this.parent.getGuiTop(),
                 searchField.getText(),
@@ -165,19 +166,15 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
         // this.searchField.setMessage(ButtonToolTips.SearchStringTooltip.getLocal());
         this.gui.getMeSlots()
             .clear();
-        final List<Slot> slots = this.getInventorySlots();
-        slots.removeIf(slot -> slot instanceof SlotME);
         for (int y = 0; y < this.rows; y++) {
             for (int x = 0; x < this.perRow; x++) {
-                final InternalSlotME s = new InternalSlotME(
-                    this.repo,
-                    x + y * this.perRow,
-                    (this.absX - this.parent.getGuiLeft() + 5) + x * 18,
-                    (this.absY + 18 - this.parent.getGuiTop()) + y * 18);
-                this.gui.getMeSlots()
-                    .add(s);
-                this.getInventorySlots()
-                    .add(new SlotME(s));
+                this.gui.registerMESlot(
+                    new VirtualMEMonitorableSlot(
+                        (this.absX - this.parent.getGuiLeft() + 5) + x * 18,
+                        (this.absY + 18 - this.parent.getGuiTop()) + y * 18,
+                        this.repo,
+                        x + y * this.perRow,
+                        type -> true));
             }
         }
         this.offsetY = this.absY;
@@ -198,17 +195,6 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
                         this.offsetY,
                         Settings.VIEW_MODE,
                         this.configSrc.getSetting(Settings.VIEW_MODE)));
-            this.offsetY += 20;
-        }
-
-        if (ModAndClassUtil.isTypeFilter) {
-            this.gui.getButtonList()
-                .add(
-                    this.typeFilter = new GuiImgButton(
-                        this.absX - 18,
-                        this.offsetY,
-                        Settings.TYPE_FILTER,
-                        this.configSrc.getSetting(Settings.TYPE_FILTER)));
             this.offsetY += 20;
         }
 
@@ -243,10 +229,6 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
         this.setScrollBar();
     }
 
-    private List<Slot> getInventorySlots() {
-        return this.parent.inventorySlots.inventorySlots;
-    }
-
     @Override
     public boolean hideItemPanelSlot(int tx, int ty, int tw, int th) {
         int rw = 101;
@@ -275,42 +257,6 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
             setSearchString("", true);
         }
         this.scrollbar.click(this.parent, xCoord - this.parent.getGuiLeft(), yCoord - this.parent.getGuiTop());
-        // remove
-        // if (ModAndClassUtil.CORE_MOD && GTUtil.compareVersion(GTUtil.CoreModVersion) == 1) {
-        // return;
-        // }
-        boolean flag = btn == this.parent.mc.gameSettings.keyBindPickBlock.getKeyCode() + 100;
-        Slot slot = this.getSlotAtPosition(xCoord, yCoord);
-        if (slot != null && (btn == 0 || btn == 1 || flag)) {
-            if (btn == this.parent.mc.gameSettings.keyBindPickBlock.getKeyCode() + 100) {
-                this.mouseClick(slot, slot.getSlotIndex(), btn, 3);
-            } else if (isShiftKeyDown()) {
-                this.mouseClick(slot, slot.getSlotIndex(), btn, 1);
-            } else {
-                this.mouseClick(slot, slot.getSlotIndex(), btn, 0);
-            }
-        }
-    }
-
-    private Slot getSlotAtPosition(int mouseX, int mouseY) {
-        Optional<Slot> slot = this.getInventorySlots()
-            .stream()
-            .filter(s -> s instanceof SlotME)
-            .filter(x -> isMouseOverSlot(x, mouseX, mouseY))
-            .findFirst();
-        return slot.orElse(null);
-    }
-
-    private boolean isMouseOverSlot(Slot slotIn, int mouseX, int mouseY) {
-        return this.func_146978_c(slotIn.xDisplayPosition, slotIn.yDisplayPosition, 16, 16, mouseX, mouseY);
-    }
-
-    private boolean func_146978_c(int left, int top, int right, int bottom, int pointX, int pointY) {
-        int k1 = this.parent.getGuiLeft();
-        int l1 = this.parent.getGuiTop();
-        pointX -= k1;
-        pointY -= l1;
-        return pointX >= left - 1 && pointX < left + right + 1 && pointY >= top - 1 && pointY < top + bottom + 1;
     }
 
     public void setSearchString(String memoryText, boolean updateView) {
@@ -351,8 +297,7 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
         this.saveSearchString();
     }
 
-    private boolean mouseClick(Slot slot, int slotIdx, int ctrlDown, int mouseButton) {
-        if (slotIdx < 0) return false;
+    private boolean meSlotClick(VirtualMESlot slot, int ctrlDown, int clickMode) {
         // Temporary solution
         if (lastClickTime == Minecraft.getMinecraft().thePlayer.ticksExisted) {
             return false;
@@ -360,83 +305,72 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
         lastClickTime = Minecraft.getMinecraft().thePlayer.ticksExisted;
         saveSearchString();
         final EntityPlayer player = Minecraft.getMinecraft().thePlayer;
-        if (this.parent.updateFluidContainer(slot, slotIdx, ctrlDown, mouseButton)) return true;
+        if (this.parent.updateFluidContainer(slot, ctrlDown, clickMode)) return true;
+
+        IAEStack<?> aeStack = slot.getAEStack();
+        IAEItemStack stack = aeStack instanceof IAEItemStack ais ? ais : null;
 
         if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
-            if (!(slot instanceof SlotPatternTerm)) {
-                IAEItemStack stack = null;
-                if (slot instanceof SlotME) {
-                    stack = ((SlotME) slot).getAEStack();
-                }
-                int slotNum = Ae2ReflectClient.getInventorySlots(this.parent)
-                    .size();
-                if (!(slot instanceof SlotME) && slot != null) {
-                    slotNum = slot.slotNumber;
-                }
-                this.inventorySlots.setTargetStack(stack);
-                final PacketInventoryAction p = new PacketInventoryAction(InventoryAction.MOVE_REGION, slotNum, -2);
-                NetworkHandler.instance.sendToServer(p);
-                return true;
-            }
-        }
-        if (slot instanceof SlotME) {
-            InventoryAction action = null;
-            IAEItemStack stack = null;
-            switch (mouseButton) {
-                case 0: // pickup / set-down.
-                    action = ctrlDown == 1 ? InventoryAction.SPLIT_OR_PLACE_SINGLE : InventoryAction.PICKUP_OR_SET_DOWN;
-                    stack = ((SlotME) slot).getAEStack();
-                    if (stack != null && action == InventoryAction.PICKUP_OR_SET_DOWN
-                        && stack.getStackSize() == 0
-                        && player.inventory.getItemStack() == null) {
-                        action = InventoryAction.AUTO_CRAFT;
-                    }
-                    break;
-                case 1:
-                    action = ctrlDown == 1 ? InventoryAction.PICKUP_SINGLE : InventoryAction.SHIFT_CLICK;
-                    stack = ((SlotME) slot).getAEStack();
-                    break;
-                case 3: // creative dupe:
-                    stack = ((SlotME) slot).getAEStack();
-                    if (stack != null && stack.isCraftable()) {
-                        action = InventoryAction.AUTO_CRAFT;
-                    } else if (player.capabilities.isCreativeMode) {
-                        final IAEItemStack slotItem = ((SlotME) slot).getAEStack();
-                        if (slotItem != null) {
-                            action = InventoryAction.CREATIVE_DUPLICATE;
-                        }
-                    } else break;
-                default:
-                case 4: // drop item:
-                case 6:
-            }
-            if (action == InventoryAction.AUTO_CRAFT) {
-                this.inventorySlots.setTargetStack(stack);
-                AE2Thing.proxy.netHandler.sendToServer(
-                    new CPacketInventoryAction(
-                        action,
-                        Ae2ReflectClient.getInventorySlots(this.parent)
-                            .size(),
-                        -2,
-                        stack));
-            } else if (action != null) {
-                if (stack != null && stack.getItem() instanceof ItemFluidDrop) stack = null;
-                this.inventorySlots.setTargetStack(stack);
-                final PacketInventoryAction p = new PacketInventoryAction(
-                    action,
-                    Ae2ReflectClient.getInventorySlots(this.parent)
-                        .size(),
-                    -2);
-                NetworkHandler.instance.sendToServer(p);
-            }
+            this.inventorySlots.setTargetStack(stack);
+            final PacketMonitorableAction p = new PacketMonitorableAction(MonitorableAction.MOVE_REGION, -1);
+            NetworkHandler.instance.sendToServer(p);
             return true;
         }
-        return false;
+
+        MonitorableAction action = null;
+        switch (clickMode) {
+            case 0: // pickup / set-down.
+                action = ctrlDown == 1 ? MonitorableAction.SPLIT_OR_PLACE_SINGLE
+                    : MonitorableAction.PICKUP_OR_SET_DOWN;
+                if (stack != null && action == MonitorableAction.PICKUP_OR_SET_DOWN
+                    && stack.getStackSize() == 0
+                    && player.inventory.getItemStack() == null) {
+                    action = MonitorableAction.AUTO_CRAFT;
+                }
+                break;
+            case 1:
+                action = ctrlDown == 1 ? MonitorableAction.PICKUP_SINGLE : MonitorableAction.SHIFT_CLICK;
+                break;
+            case 3: // creative dupe:
+                if (stack != null && stack.isCraftable()) {
+                    action = MonitorableAction.AUTO_CRAFT;
+                } else if (player.capabilities.isCreativeMode) {
+                    if (aeStack instanceof IAEItemStack) {
+                        action = MonitorableAction.CREATIVE_DUPLICATE;
+                    }
+                } else break;
+            default:
+        }
+        if (action == MonitorableAction.AUTO_CRAFT) {
+            this.inventorySlots.setTargetStack(stack);
+            AE2Thing.proxy.netHandler.sendToServer(
+                new CPacketInventoryAction(
+                    InventoryAction.AUTO_CRAFT,
+                    Ae2ReflectClient.getInventorySlots(this.parent)
+                        .size(),
+                    -2,
+                    stack));
+        } else if (action != null) {
+            if (stack != null && stack.getItem() instanceof ItemFluidDrop) stack = null;
+            this.inventorySlots.setTargetStack(stack);
+            final PacketMonitorableAction p = new PacketMonitorableAction(action, -1);
+            NetworkHandler.instance.sendToServer(p);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean handleVirtualSlotClick(VirtualMESlot slot, int mouseButton) {
+        if (!(slot instanceof VirtualMEMonitorableSlot)) return false;
+        final boolean pickBlock = mouseButton == GuiMEMonitorable.keyBindPickBlockAction;
+        final int ctrlDown = pickBlock ? 0 : mouseButton;
+        final int clickMode = pickBlock ? 3 : (isShiftKeyDown() ? 1 : 0);
+        return meSlotClick(slot, ctrlDown, clickMode);
     }
 
     @Override
     public boolean handleMouseClick(Slot slot, int slotIdx, int ctrlDown, int mouseButton) {
-        return slot instanceof SlotME;
+        return false;
     }
 
     @Override
@@ -448,7 +382,7 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
                 final Enum<?> next = Platform.rotateEnum(cv, backwards, iBtn.getSetting().getPossibleValues());
                 if (btn == this.searchBoxSettings) {
                     AEConfig.instance.settings.putSetting(iBtn.getSetting(), next);
-                } else if (btn == this.SortByBox || btn == this.SortDirBox || btn == this.ViewBox || btn == this.typeFilter) {
+                } else if (btn == this.SortByBox || btn == this.SortDirBox || btn == this.ViewBox) {
                     try {
                         NetworkHandler.instance
                             .sendToServer(new PacketValueConfig(iBtn.getSetting().name(), next.name()));
@@ -624,11 +558,6 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     }
 
     @Override
-    public Enum<?> getTypeFilter() {
-        return this.configSrc.getSetting(Settings.TYPE_FILTER);
-    }
-
-    @Override
     public void onGuiClosed() {
         memoryText = this.searchField.getText();
     }
@@ -643,9 +572,6 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
         }
         if (this.ViewBox != null) {
             this.ViewBox.set(this.configSrc.getSetting(Settings.VIEW_MODE));
-        }
-        if (this.typeFilter != null) {
-            this.typeFilter.set(this.configSrc.getSetting(Settings.TYPE_FILTER));
         }
 
         this.repo.updateView();

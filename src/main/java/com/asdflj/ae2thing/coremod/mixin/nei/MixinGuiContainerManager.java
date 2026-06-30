@@ -28,6 +28,7 @@ import com.asdflj.ae2thing.util.Util;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IDisplayRepo;
 import appeng.api.storage.data.IItemList;
 import appeng.client.gui.AEBaseGui;
@@ -72,15 +73,15 @@ public abstract class MixinGuiContainerManager {
                     repo = Util.getDisplayRepo((AEBaseGui) gui.getFirstScreenGeneral());
                 }
             if (!(repo instanceof ItemRepo)) return;
-            IItemList<IAEItemStack> list = Ae2ReflectClient.getList((ItemRepo) repo);
+            IItemList<IAEStack<?>> list = Ae2ReflectClient.getList((ItemRepo) repo);
             FluidStack fs = StackInfo.getFluid(stack);
             if (fs != null) {
                 stack = displayFluid ? ItemFluidDrop.newDisplayStack(fs) : ItemFluidDrop.newStack(fs);
             }
-            IAEItemStack item = list.findPrecise(
+            IAEStack<?> found = list.findPrecise(
                 ae2Thing$lastStack != null && Platform.isSameItemPrecise(ae2Thing$lastStack, stack)
                     && ae2thing$lastAEStack != null ? ae2thing$lastAEStack : AEItemStack.create(stack));
-            if (item != null) {
+            if (found instanceof IAEItemStack item) {
                 ae2thing$render(item, mousex - 8, mousey - 40 < 0 ? mousey + 40 : mousey - 40);
                 ae2thing$lastAEStack = item;
                 ae2Thing$lastStack = stack;

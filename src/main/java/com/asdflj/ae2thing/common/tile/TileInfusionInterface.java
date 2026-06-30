@@ -10,7 +10,6 @@ import net.minecraftforge.common.util.ForgeDirection;
 
 import com.asdflj.ae2thing.common.item.ItemPhial;
 import com.asdflj.ae2thing.inventory.IEssentiaContainer;
-import com.glodblock.github.common.item.ItemFluidPacket;
 import com.glodblock.github.common.tile.TileFluidInterface;
 
 import appeng.tile.TileEvent;
@@ -37,8 +36,8 @@ public class TileInfusionInterface extends TileFluidInterface
         for (Aspect aspect : aspects.getAspectsSorted()) {
             int stored = aspects.getAmount(aspect);
             if (stored > 0) {
-                ItemStack fluidPacket = ItemFluidPacket.newStack(ItemPhial.newEssentiaStack(aspect, stored));
-                drops.add(fluidPacket);
+                // Essentia is no longer a fluid, so spill the buffered essentia as phial items.
+                drops.add(ItemPhial.newStack(aspect, stored));
             }
         }
     }

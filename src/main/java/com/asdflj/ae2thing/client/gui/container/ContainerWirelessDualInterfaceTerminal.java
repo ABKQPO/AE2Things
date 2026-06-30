@@ -46,6 +46,7 @@ import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.storage.IStorageGrid;
+import appeng.api.parts.IInterfaceTerminal;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.util.IConfigurableObject;
 import appeng.api.util.IInterfaceViewable;
@@ -100,7 +101,7 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     public ContainerWirelessDualInterfaceTerminal(InventoryPlayer ip, ITerminalHost monitorable) {
         super(ip, monitorable);
         this.patternPanel = new PatternContainer(ip, monitorable, this);
-        this.delegateContainer = new ContainerInterfaceTerminal(ip, (IActionHost) monitorable);
+        this.delegateContainer = new ContainerInterfaceTerminal(ip, (IInterfaceTerminal) monitorable);
         this.it = (IPatternTerminal) monitorable;
         this.setMonitor();
         this.lockSlot();
@@ -131,7 +132,6 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
                     } else {
                         this.monitor.addListener();
                         this.fluidMonitor.addListener();
-                        this.setCellInventory(this.monitor.getMonitor());
                     }
                 }
             } else {
@@ -194,7 +194,7 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
                         super.doAction(player, InventoryAction.MOVE_REGION, slotId, id);
                         return;
                     }
-                    if (action == InventoryAction.PICKUP_SINGLE) {
+                    if (action == InventoryAction.PLACE_SINGLE) {
                         super.doAction(player, InventoryAction.PICKUP_OR_SET_DOWN, slotId, id);
                         return;
                     }

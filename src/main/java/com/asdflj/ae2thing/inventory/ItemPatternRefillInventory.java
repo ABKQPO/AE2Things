@@ -68,7 +68,7 @@ public class ItemPatternRefillInventory extends AppEngInternalInventory {
             && AEApi.instance()
                 .definitions()
                 .materials()
-                .cardPatternRefiller()
+                .basicCard()
                 .isSameAs(itemstack);
     }
 }

@@ -15,13 +15,11 @@ import org.lwjgl.opengl.GL11;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.client.render.ISlotRender;
 import com.asdflj.ae2thing.client.render.SlotRender;
-import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.mitchej123.hodgepodge.textures.IPatchedTextureAtlasSprite;
 
 import appeng.api.storage.data.IAEItemStack;
 import appeng.client.gui.AEBaseGui;
-import appeng.client.me.SlotME;
 import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotInaccessible;
 import appeng.container.slot.SlotPlayerHotBar;
@@ -30,14 +28,12 @@ import appeng.util.item.AEItemStack;
 
 public interface IGuiDrawSlot {
 
-    default boolean drawSlot(Slot slot) {
+    default boolean drawSlot(Slot slot, Runnable baseDraw) {
         ItemStack drawStack = slot.getStack();
         if (drawStack == null || drawStack.getItem() == null) return true;
         IAEItemStack stack;
         boolean display = false;
-        if (slot instanceof SlotME) {
-            stack = ((SlotME) slot).getAEStack();
-        } else if (slot instanceof SlotInaccessible) {
+        if (slot instanceof SlotInaccessible) {
             stack = AEItemStack.create(drawStack);
             drawStack.stackSize = 0;
             ((SlotInaccessible) slot).setDisplay(true);
@@ -66,7 +62,7 @@ public interface IGuiDrawSlot {
             }
         }
         if (result) {
-            Ae2ReflectClient.drawSlot(this.getAEBaseGui(), slot);
+            baseDraw.run();
         }
 
         for (ISlotRender slotRender : SlotRender.instance()

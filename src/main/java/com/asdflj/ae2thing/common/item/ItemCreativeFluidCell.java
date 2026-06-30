@@ -13,28 +13,31 @@ import net.minecraftforge.fluids.FluidStack;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.common.storage.FluidCellInventoryHandler;
+import com.asdflj.ae2thing.common.storage.ITFluidCellInventory;
 import com.asdflj.ae2thing.common.storage.ITFluidCellInventoryHandler;
 import com.asdflj.ae2thing.common.storage.infinityCell.CreativeFluidCellInventory;
 import com.asdflj.ae2thing.common.tabs.AE2ThingTabs;
+import com.asdflj.ae2thing.util.NameConst;
 import com.glodblock.github.api.FluidCraftAPI;
-import com.glodblock.github.common.storage.IFluidCellInventory;
-import com.glodblock.github.common.storage.IStorageFluidCell;
-import com.glodblock.github.util.NameConst;
 
 import appeng.api.AEApi;
 import appeng.api.config.FuzzyMode;
 import appeng.api.exceptions.AppEngException;
+import appeng.api.implementations.items.IStorageCell;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.ISaveProvider;
 import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.core.features.AEFeature;
 import appeng.items.contents.CellUpgrades;
 import appeng.tile.inventory.AppEngInternalInventory;
+import appeng.util.item.AEFluidStackType;
 import codechicken.nei.recipe.StackInfo;
 import cpw.mods.fml.common.registry.GameRegistry;
 
-public class ItemCreativeFluidCell extends BaseCellItem implements IStorageFluidCell {
+public class ItemCreativeFluidCell extends BaseCellItem implements IStorageCell {
 
     public static final ItemStack water_bucket = new ItemStack(Items.water_bucket, 1);
     public static final ItemStack lava_bucket = new ItemStack(Items.lava_bucket, 1);
@@ -71,7 +74,7 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageFluid
                 .resource(
                     String.format(
                         "%s_%s",
-                        com.asdflj.ae2thing.util.NameConst.ITEM_CREATIVE_FLUID_CELL,
+                        NameConst.ITEM_CREATIVE_FLUID_CELL,
                         fs.getFluid()
                             .getName()))
                 .toString());
@@ -92,8 +95,13 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageFluid
     }
 
     @Override
-    public long getBytes(ItemStack cellItem) {
+    public int getBytes(ItemStack cellItem) {
         return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public int BytePerType(ItemStack cellItem) {
+        return perType;
     }
 
     @Override
@@ -102,12 +110,14 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageFluid
     }
 
     @Override
-    public boolean isBlackListed(ItemStack cellItem, IAEFluidStack requestedAddition) {
-        return requestedAddition == null || requestedAddition.getFluid() == null
-            || FluidCraftAPI.instance()
-                .isBlacklistedInStorage(
-                    requestedAddition.getFluid()
-                        .getClass());
+    public boolean isBlackListed(IAEStack<?> requestedAddition) {
+        if (!(requestedAddition instanceof IAEFluidStack fluidStack)) {
+            return true;
+        }
+        return fluidStack.getFluid() == null || FluidCraftAPI.instance()
+            .isBlacklistedInStorage(
+                fluidStack.getFluid()
+                    .getClass());
     }
 
     @Override
@@ -121,6 +131,11 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageFluid
     }
 
     @Override
+    public double getIdleDrain() {
+        return idleDrain;
+    }
+
+    @Override
     public double getIdleDrain(ItemStack is) {
         return idleDrain;
     }
@@ -128,6 +143,11 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageFluid
     @Override
     public int getTotalTypes(ItemStack cellItem) {
         return 1;
+    }
+
+    @Override
+    public IAEStackType<?> getStackType() {
+        return AEFluidStackType.FLUID_STACK_TYPE;
     }
 
     @Override
@@ -162,7 +182,7 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageFluid
             .getCellInventory(stack, null, StorageChannel.FLUIDS);
 
         if (inventory instanceof final ITFluidCellInventoryHandler handler) {
-            final IFluidCellInventory cellInventory = handler.getCellInv();
+            final ITFluidCellInventory cellInventory = handler.getCellInv();
 
             if (GuiScreen.isCtrlKeyDown()) {
                 if (!cellInventory.getContents().isEmpty()) {

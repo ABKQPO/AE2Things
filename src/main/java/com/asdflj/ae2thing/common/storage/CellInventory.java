@@ -22,7 +22,6 @@ import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.darkona.adventurebackpack.item.ItemAdventureBackpack;
 import com.darkona.adventurebackpack.util.Wearing;
 import com.glodblock.github.common.item.ItemFluidDrop;
-import com.glodblock.github.crossmod.thaumcraft.AspectUtil;
 
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
@@ -205,7 +204,6 @@ public class CellInventory implements ITCellInventory {
     }
 
     private FluidStack injectFluid(FluidStack fs) {
-        if (ModAndClassUtil.THE && AspectUtil.isEssentiaGas(fs)) return fs;
         FluidStack injectFluid = fs.copy();
         for (BaseBackpackHandler inv : this.fluidInv) {
             for (FluidTank ft : inv.getFluidTanks()) {

@@ -11,7 +11,7 @@ import net.minecraftforge.common.util.ForgeDirection;
 import net.p455w0rd.wirelesscraftingterminal.api.IWirelessCraftingTermHandler;
 import net.p455w0rd.wirelesscraftingterminal.client.gui.GuiWirelessCraftingTerminal;
 import net.p455w0rd.wirelesscraftingterminal.common.container.ContainerWirelessCraftingTerminal;
-import net.p455w0rd.wirelesscraftingterminal.helpers.WirelessTerminalGuiObject;
+import net.p455w0rd.wirelesscraftingterminal.helpers.WTCGuiObject;
 import net.p455w0rd.wirelesscraftingterminal.items.ItemWirelessCraftingTerminal;
 
 import com.asdflj.ae2thing.api.adapter.terminal.item.InventoryPlayerWrapper;
@@ -337,17 +337,18 @@ public enum GuiType {
             if (wh == null) {
                 return null;
             }
-            final WirelessTerminalGuiObject term = new WirelessTerminalGuiObject(
+            final WTCGuiObject term = new WTCGuiObject(
                 wh,
                 item,
                 player,
                 player.worldObj,
                 (int) player.posX,
                 (int) player.posY,
-                (int) player.posZ);
+                (int) player.posZ,
+                player.inventory.currentItem);
             AEBaseContainer bc = new ContainerWirelessCraftingTerminal(
-                player,
-                new InventoryPlayerWrapper(player, item));
+                new InventoryPlayerWrapper(player, item),
+                term);
             bc.setOpenContext(new ContainerOpenContext(term));
             bc.getOpenContext()
                 .setWorld(player.worldObj);
@@ -365,8 +366,15 @@ public enum GuiType {
         @Override
         protected Object createClientGui(EntityPlayer player, ItemWirelessCraftingTerminal inv, ItemStack item) {
             if (item == null) return null;
-            return new GuiWirelessCraftingTerminal(
-                new ContainerWirelessCraftingTerminal(player, new InventoryPlayerWrapper(player, item)));
+            final WTCGuiObject term = ContainerWirelessCraftingTerminal.getGuiObject(
+                item,
+                player,
+                player.worldObj,
+                (int) player.posX,
+                (int) player.posY,
+                (int) player.posZ,
+                player.inventory.currentItem);
+            return new GuiWirelessCraftingTerminal(new InventoryPlayerWrapper(player, item), term);
         }
     });
 

@@ -2,12 +2,13 @@ package com.asdflj.ae2thing.util;
 
 import java.lang.reflect.Field;
 
+import com.asdflj.ae2thing.integration.Mods;
+
 import appeng.api.config.ActionItems;
 import appeng.api.config.Settings;
 import appeng.core.localization.ButtonToolTips;
-import cpw.mods.fml.common.Loader;
 
-public final class ModAndClassUtil {
+public class ModAndClassUtil {
 
     public static boolean NEE = false;
     public static boolean GT5NH = false;
@@ -38,12 +39,7 @@ public final class ModAndClassUtil {
 
     @SuppressWarnings("all")
     public static void init() {
-        try {
-            Class<?> filter = Class.forName("appeng.core.features.registries.ItemDisplayRegistry");
-            isTypeFilter = true;
-        } catch (ClassNotFoundException e) {
-            isTypeFilter = false;
-        }
+        isTypeFilter = Mods.hasAe2TypeFilter();
         try {
             Field d = Settings.class.getDeclaredField("CRAFTING_STATUS");
             if (d == null) isCraftStatus = false;
@@ -64,33 +60,27 @@ public final class ModAndClassUtil {
         } catch (NoSuchFieldException e) {
             isBeSubstitutionsButton = false;
         }
-        if (Loader.isModLoaded("gregtech") && !Loader.isModLoaded("gregapi")) {
-            try {
-                Class.forName("gregtech.api.recipe.RecipeMap");
-                GT5NH = true;
-            } catch (ClassNotFoundException e) {
-                GT5 = true;
-            }
-        }
-        if (Loader.isModLoaded("thaumicenergistics")) THE = true;
-        if (Loader.isModLoaded("Forestry")) FTR = true;
-        if (Loader.isModLoaded("Backpack")) BACKPACK = true;
-        if (Loader.isModLoaded("adventurebackpack")) ADVENTURE_BACKPACK = true;
-        if (Loader.isModLoaded("NotEnoughItems")) NEI = true;
-        if (Loader.isModLoaded("hodgepodge")) HODGEPODGE = true;
-        if (Loader.isModLoaded("Waila")) WAILA = true;
-        if (Loader.isModLoaded("IC2")) IC2 = true;
-        if (Loader.isModLoaded("nechar")) NECHAR = true;
-        if (Loader.isModLoaded("nech")) NECH = true;
-        if (Loader.isModLoaded("neenergistics")) NEE = true;
-        if (Loader.isModLoaded("Botania")) BOTANIA = true;
-        if (Loader.isModLoaded("dreamcraft")) CORE_MOD = true;
-        if (Loader.isModLoaded("hbmaeaddon")) HBM_AE_ADDON = true;
-        if (Loader.isModLoaded("TConstruct")) TIC = true;
-        if (Loader.isModLoaded("programmablehatches")) PH = true;
-        if (Loader.isModLoaded("findit")) FIND_IT = true;
-        if (Loader.isModLoaded("ae2wct")) WCT = true;
-        if (Loader.isModLoaded("blockrenderer6343")) BLOCK_RENDER = true;
-        if (Loader.isModLoaded("Baubles")) BAUBLES = true;
+        GT5NH = Mods.isGt5UnofficialLoaded();
+        GT5 = Mods.isLegacyGt5Loaded();
+        THE = Mods.THAUMIC_ENERGISTICS.isModLoaded();
+        FTR = Mods.FORESTRY.isModLoaded();
+        BACKPACK = Mods.BACKPACK.isModLoaded();
+        ADVENTURE_BACKPACK = Mods.ADVENTURE_BACKPACK.isModLoaded();
+        NEI = Mods.NOT_ENOUGH_ITEMS.isModLoaded();
+        HODGEPODGE = Mods.HODGEPODGE.isModLoaded();
+        WAILA = Mods.WAILA.isModLoaded();
+        IC2 = Mods.IC2.isModLoaded();
+        NECHAR = Mods.NECHAR.isModLoaded();
+        NECH = Mods.NECH.isModLoaded();
+        NEE = Mods.NOT_ENOUGH_ENERGISTICS.isModLoaded();
+        BOTANIA = Mods.BOTANIA.isModLoaded();
+        CORE_MOD = Mods.CORE_MOD.isModLoaded();
+        HBM_AE_ADDON = Mods.HBM_AE_ADDON.isModLoaded();
+        TIC = Mods.TINKERS_CONSTRUCT.isModLoaded();
+        PH = Mods.PROGRAMMABLE_HATCHES.isModLoaded();
+        FIND_IT = Mods.FIND_IT.isModLoaded();
+        WCT = Mods.WIRELESS_CRAFTING_TERMINAL.isModLoaded();
+        BLOCK_RENDER = Mods.BLOCK_RENDERER.isModLoaded();
+        BAUBLES = Mods.BAUBLES.isModLoaded();
     }
 }

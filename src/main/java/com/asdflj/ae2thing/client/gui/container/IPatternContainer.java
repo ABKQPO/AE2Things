@@ -34,7 +34,7 @@ public interface IPatternContainer {
 
     default int getStackSize(ItemStack stack) {
         if (stack.getItem() instanceof ItemFluidPacket) {
-            return ItemFluidPacket.getFluidAmount(stack);
+            return (int) ItemFluidPacket.getFluidAmount(stack);
         } else {
             return stack.stackSize;
         }

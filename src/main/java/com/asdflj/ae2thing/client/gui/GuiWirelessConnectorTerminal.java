@@ -297,7 +297,6 @@ public class GuiWirelessConnectorTerminal extends AEBaseGui implements IInfoTerm
         return this;
     }
 
-    @Override
     protected boolean isPowered() {
         return this.container.hasPower;
     }

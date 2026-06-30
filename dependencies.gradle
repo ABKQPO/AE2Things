@@ -19,6 +19,13 @@ dependencies {
     compileOnlyApi("com.github.GTNewHorizons:ForestryMC:4.11.26:dev")
     compileOnlyApi("com.github.GTNewHorizons:TinkersConstruct:1.14.91-GTNH:dev")
 
+    // Transitive API supertypes referenced by classes we touch:
+    // Forestry's ItemBackpack now implements NoHotbarNeeded's ActivatableFromInventoryServerSide,
+    // and AE2's TileChest implements RotaryCraft/Mekanism power interfaces. These jars are compile-only.
+    compileOnlyApi("net.xonich.mc:NoHotbarNeeded:0.0.5:dev")
+    compileOnly(rfg.deobf("curse.maven:mekanism-268560:2475797"))
+    compileOnly("curse.maven:rotarycraft-235596:4721191")
+
     compileOnlyApi("thaumcraft:Thaumcraft:1.7.10-4.2.3.5:dev")
     compileOnlyApi("com.github.GTNewHorizons:ThaumicEnergistics:1.7.53-GTNH:dev") { transitive = false }
     compileOnlyApi("com.github.GTNewHorizons:thaumicinsurgence:0.4.1:dev") { transitive = false }

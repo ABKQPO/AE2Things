@@ -3,23 +3,18 @@ package com.asdflj.ae2thing.coremod.hooker;
 import java.util.HashMap;
 import java.util.List;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
-import net.minecraftforge.fluids.FluidStack;
 
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.asdflj.ae2thing.util.TheUtil;
 import com.asdflj.ae2thing.util.Util;
-import com.glodblock.github.client.gui.GuiDualInterface;
+import com.glodblock.github.client.gui.GuiFluidInterface;
 import com.glodblock.github.common.item.ItemFluidDrop;
-import com.glodblock.github.crossmod.thaumcraft.AspectUtil;
 
 import appeng.api.storage.data.IAEItemStack;
 import appeng.util.Platform;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import thaumcraft.api.aspects.Aspect;
-import thaumicenergistics.common.items.ItemCraftingAspect;
 
 @SideOnly(Side.CLIENT)
 public class CoreModHooksClient {
@@ -79,22 +74,13 @@ public class CoreModHooksClient {
         if (o instanceof IAEItemStack is) {
             if (cache.containsKey(is) && cache.get(is).tooltip != null) {
                 return cache.get(is).tooltip;
-            } else if (is.getItem() instanceof ItemFluidDrop) {
-                FluidStack fs = ItemFluidDrop.getFluidStack(is.getItemStack());
-                if (ModAndClassUtil.THE && AspectUtil.isEssentiaGas(fs)) {
-                    Aspect aspect = AspectUtil.getAspectFromGas(fs);
-                    List<String> tooltip = ItemCraftingAspect.createStackForAspect(aspect, 1)
-                        .getTooltip(Minecraft.getMinecraft().thePlayer, false);
-                    putCache(is, null, null, tooltip);
-                    return tooltip;
-                }
             }
         }
 
         return Platform.getTooltip(o);
     }
 
-    public static String translateToLocal(String displayName, GuiDualInterface dualInterface) {
+    public static String translateToLocal(String displayName, GuiFluidInterface dualInterface) {
         if (ModAndClassUtil.THE) {
             return TheUtil.getGuiDualInterfaceDisplayName(displayName, dualInterface);
         }

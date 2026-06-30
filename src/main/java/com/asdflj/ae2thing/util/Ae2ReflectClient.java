@@ -2,10 +2,8 @@ package com.asdflj.ae2thing.util;
 
 import static com.glodblock.github.util.Ae2Reflect.readField;
 import static com.glodblock.github.util.Ae2Reflect.reflectField;
-import static com.glodblock.github.util.Ae2Reflect.reflectMethod;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -13,15 +11,16 @@ import java.util.Set;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
-import com.glodblock.github.client.gui.GuiDualInterface;
+import com.glodblock.github.client.gui.GuiFluidInterface;
+import com.glodblock.github.client.gui.container.ContainerFluidInterface;
+import com.glodblock.github.inventory.IDualHost;
 
-import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.implementations.GuiCraftingStatus;
 import appeng.client.gui.widgets.GuiTabButton;
 import appeng.client.me.ItemRepo;
-import appeng.helpers.IInterfaceHost;
 import codechicken.nei.SearchField;
 import codechicken.nei.util.TextHistory;
 import cpw.mods.fml.relauncher.Side;
@@ -32,22 +31,18 @@ public class Ae2ReflectClient {
 
     private static final Field fSearchField_history;
     private static final Field fTextHistory_history;
-    private static final Method mAEBaseGui_drawSlot;
     private static final Field fItemRepo_view;
-    private static final Field fItemRepo_dsp;
     private static final Field fItemRepo_list;
-    private static final Field fGuiDualInterface_host;
+    private static final Field fGuiFluidInterface_cont;
 
     static {
         try {
             fItemRepo_view = reflectField(ItemRepo.class, "view");
-            fItemRepo_dsp = reflectField(ItemRepo.class, "dsp");
             fItemRepo_list = reflectField(ItemRepo.class, "list");
-            fGuiDualInterface_host = reflectField(GuiDualInterface.class, "host");
+            fGuiFluidInterface_cont = reflectField(GuiFluidInterface.class, "cont");
             fSearchField_history = reflectField(SearchField.class, "history");
             fTextHistory_history = reflectField(TextHistory.class, "history");
-            mAEBaseGui_drawSlot = reflectMethod(AEBaseGui.class, "drawSlot", Slot.class);
-        } catch (NoSuchFieldException | NoSuchMethodException | SecurityException e) {
+        } catch (NoSuchFieldException | SecurityException e) {
             throw new IllegalStateException("Failed to initialize AE2 reflection hacks!", e);
         }
     }
@@ -77,28 +72,17 @@ public class Ae2ReflectClient {
         return readField(textHistory, fTextHistory_history);
     }
 
-    public static ArrayList<IAEItemStack> getView(ItemRepo repo) {
+    public static ArrayList<IAEStack<?>> getView(ItemRepo repo) {
         return readField(repo, fItemRepo_view);
     }
 
-    public static ArrayList<ItemStack> getDsp(ItemRepo repo) {
-        return readField(repo, fItemRepo_dsp);
-    }
-
-    public static IItemList<IAEItemStack> getList(ItemRepo repo) {
+    public static IItemList<IAEStack<?>> getList(ItemRepo repo) {
         return readField(repo, fItemRepo_list);
     }
 
-    public static void drawSlot(AEBaseGui gui, Slot slot) {
-        try {
-            mAEBaseGui_drawSlot.invoke(gui, slot);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to invoke method: " + mAEBaseGui_drawSlot, e);
-        }
-    }
-
-    public static IInterfaceHost getHost(GuiDualInterface gui) {
-        return readField(gui, fGuiDualInterface_host);
+    public static IDualHost getHost(GuiFluidInterface gui) {
+        ContainerFluidInterface container = readField(gui, fGuiFluidInterface_cont);
+        return container == null ? null : container.getTile();
     }
 
 }

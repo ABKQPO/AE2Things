@@ -11,9 +11,9 @@ import appeng.me.GridAccessException;
 
 public class PartWirelessConnectorTerminal extends THPart implements INetworkTerminal {
 
-    private static final FCPartsTexture FRONT_BRIGHT_ICON = FCPartsTexture.PartFluidPatternTerminal_Bright;
-    private static final FCPartsTexture FRONT_DARK_ICON = FCPartsTexture.PartFluidPatternTerminal_Colored;
-    private static final FCPartsTexture FRONT_COLORED_ICON = FCPartsTexture.PartFluidPatternTerminal_Dark;
+    private static final FCPartsTexture FRONT_BRIGHT_ICON = FCPartsTexture.PartTerminalBroad;
+    private static final FCPartsTexture FRONT_DARK_ICON = FCPartsTexture.PartTerminalBroad;
+    private static final FCPartsTexture FRONT_COLORED_ICON = FCPartsTexture.PartTerminalBroad;
 
     public PartWirelessConnectorTerminal(ItemStack is) {
         super(is, true);
