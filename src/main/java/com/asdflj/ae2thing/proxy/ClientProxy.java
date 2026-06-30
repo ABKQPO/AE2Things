@@ -5,7 +5,6 @@ import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.bdew.ae2stuff.misc.OverlayRenderHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -38,9 +37,9 @@ import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.render.BlockPosHighlighter;
 import com.asdflj.ae2thing.client.render.Notification;
-import com.asdflj.ae2thing.client.render.WirelessOverlayRender;
 import com.asdflj.ae2thing.common.item.ItemPhial;
 import com.asdflj.ae2thing.integration.Mods;
+import com.asdflj.ae2thing.integration.ae2stuff.Ae2StuffIntegration;
 import com.asdflj.ae2thing.loader.KeybindLoader;
 import com.asdflj.ae2thing.loader.ListenerLoader;
 import com.asdflj.ae2thing.loader.RenderLoader;
@@ -191,7 +190,7 @@ public class ClientProxy extends CommonProxy {
         AE2ThingAPI.instance()
             .terminal()
             .registerTerminalSet(new AETerminal());
-        OverlayRenderHandler.register(new WirelessOverlayRender());
+        Ae2StuffIntegration.registerClientOverlayRenderer();
     }
 
     private void placePattern() {

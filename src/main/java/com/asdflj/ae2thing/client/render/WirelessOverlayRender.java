@@ -1,6 +1,5 @@
 package com.asdflj.ae2thing.client.render;
 
-import net.bdew.ae2stuff.misc.WorldOverlayRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.MovingObjectPosition;
@@ -12,7 +11,7 @@ import com.asdflj.ae2thing.util.BlockPos;
 
 import appeng.api.util.DimensionalCoord;
 
-public class WirelessOverlayRender implements WorldOverlayRenderer {
+public class WirelessOverlayRender {
 
     private static TileWirelessDistributor tile;
     private static final int timeout = 1000 * 10;
@@ -23,7 +22,6 @@ public class WirelessOverlayRender implements WorldOverlayRenderer {
         startTime = System.currentTimeMillis();
     }
 
-    @Override
     public void doRender(float partialTicks, double viewX, double viewY, double viewZ) {
         var mop = Minecraft.getMinecraft().objectMouseOver;
         if (mop != null && mop.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {

@@ -2,7 +2,6 @@ package com.asdflj.ae2thing.common.item;
 
 import java.util.EnumSet;
 
-import net.bdew.ae2stuff.machines.wireless.TileWireless;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -13,6 +12,7 @@ import net.minecraftforge.event.ForgeEventFactory;
 
 import com.asdflj.ae2thing.client.gui.GuiWirelessConnectorTerminal;
 import com.asdflj.ae2thing.client.me.WirelessConnectorRepo;
+import com.asdflj.ae2thing.integration.ae2stuff.Ae2StuffIntegration;
 import com.asdflj.ae2thing.inventory.InventoryHandler;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.inventory.item.IItemInventory;
@@ -95,7 +95,8 @@ public abstract class ItemBaseWirelessTerminal extends ToolWirelessTerminal impl
         float hitX, float hitY, float hitZ) {
         if (Platform.isClient()) {
             TileEntity te = world.getTileEntity(x, y, z);
-            if (te instanceof TileWireless) {
+            if (Ae2StuffIntegration.wirelessConnectorBackend()
+                .isWirelessTile(te)) {
                 GuiWirelessConnectorTerminal.memoryText = String
                     .format("%s%s,%s,%s", WirelessConnectorRepo.SearchMode.POS.getPrefix(), x, y, z);
             }
