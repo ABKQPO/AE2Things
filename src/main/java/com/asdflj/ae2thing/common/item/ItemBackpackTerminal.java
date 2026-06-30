@@ -25,6 +25,7 @@ import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.inventory.item.BackpackTerminalInventory;
 import com.asdflj.ae2thing.inventory.item.IItemInventory;
 import com.asdflj.ae2thing.util.BlockPos;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.NameConst;
 
 import appeng.api.config.FuzzyMode;
@@ -152,6 +153,9 @@ public class ItemBackpackTerminal extends BaseItem implements IItemInventory, IS
         toolTip.add(I18n.format(NameConst.MAGNET_CURRENT_MODE) + " " + getMagnetMode(magnetObject));
         if (isShiftKeyDown()) {
             toolTip.add(I18n.format(NameConst.TT_BACKPACK_TERMINAL_DESC));
+            if (Mods.OK_BACKPACK.isModLoaded()) {
+                toolTip.add(I18n.format(NameConst.TT_BACKPACK_TERMINAL_OK_BACKPACK));
+            }
         } else {
             toolTip.add(I18n.format(NameConst.TT_SHIFT_FOR_MORE));
         }

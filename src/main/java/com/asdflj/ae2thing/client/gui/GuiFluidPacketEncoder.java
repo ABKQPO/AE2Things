@@ -102,17 +102,16 @@ public class GuiFluidPacketEncoder extends AEBaseGui implements INEIGuiHandler {
         this.fontRendererObj.drawString(GuiText.inventory.getLocal(), 8, this.ySize - 96 + 3, 4210752);
         this.level.drawTextBox();
         if (isShiftKeyDown() && !isMul) {
-            for (Object btn : this.buttonList) {
-                if (btn instanceof GuiButton && btn != submit) {
-                    ((GuiButton) btn).displayString += "000";
+            for (GuiButton btn : this.buttonList) {
+                if (btn != submit) {
+                    btn.displayString += "000";
                 }
             }
             isMul = true;
         } else if (!isShiftKeyDown() && isMul) {
-            for (Object btn : this.buttonList) {
-                if (btn instanceof GuiButton && btn != submit) {
-                    ((GuiButton) btn).displayString = ((GuiButton) btn).displayString
-                        .substring(0, ((GuiButton) btn).displayString.lastIndexOf("000"));
+            for (GuiButton btn : this.buttonList) {
+                if (btn != submit) {
+                    btn.displayString = btn.displayString.substring(0, btn.displayString.lastIndexOf("000"));
                 }
             }
             isMul = false;

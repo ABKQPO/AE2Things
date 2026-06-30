@@ -26,7 +26,7 @@ import com.asdflj.ae2thing.common.item.ItemPhial;
 import com.asdflj.ae2thing.common.item.ItemWireCutter;
 import com.asdflj.ae2thing.common.item.ItemWirelessConnectorTerminal;
 import com.asdflj.ae2thing.common.item.ItemWirelessDualInterfaceTerminal;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.NameConst;
 
 public class ItemAndBlockHolder implements Runnable {
@@ -73,18 +73,18 @@ public class ItemAndBlockHolder implements Runnable {
 
     @Override
     public void run() {
-        if (ModAndClassUtil.THE) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             INFUSION_PATTERN_TERMINAL = new ItemPartInfusionPatternTerminal().register();
             THAUMATRIUM_INTERFACE = new ItemPartThaumatoriumInterface().register();
             INFUSION_INTERFACE = new BlockInfusionInterface().register();
             PHIAL = new ItemPhial().register();
             ESSENTIA_DISCRETIZER = new BlockEssentiaDiscretizer().register();
         }
-        if (ModAndClassUtil.BOTANIA) {
+        if (Mods.BOTANIA.isModLoaded()) {
             MANA_IMPORT_BUS = new ItemManaImportBus().register();
             MANA_EXPORT_BUS = new ItemManaExportBus().register();
         }
-        if (ModAndClassUtil.GT5 || ModAndClassUtil.GT5NH) {
+        if (Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded()) {
             WIRELESS_DISTRIBUTOR = new BlockWirelessDistributor().register();
             WIRE_CUTTER = new ItemWireCutter().register();
         }

@@ -33,6 +33,7 @@ import appeng.helpers.IPriorityHost;
 import appeng.me.GridAccessException;
 import appeng.me.storage.MEInventoryHandler;
 import appeng.tile.grid.AENetworkTile;
+import appeng.util.IterationCounter;
 import appeng.util.item.AEItemStackType;
 import thaumcraft.api.aspects.Aspect;
 import thaumicenergistics.common.storage.AEEssentiaStack;
@@ -203,7 +204,7 @@ public class TileEssentiaDiscretizer extends AENetworkTile implements IPriorityH
             if (essentiaRequest == null) {
                 return null;
             }
-            AEEssentiaStack available = essentiaGrid.getAvailableItem(essentiaRequest);
+            AEEssentiaStack available = essentiaGrid.getAvailableItem(essentiaRequest, IterationCounter.fetchNewId());
             if (available == null || available.getAspect() == null) {
                 return null;
             }
@@ -235,7 +236,7 @@ public class TileEssentiaDiscretizer extends AENetworkTile implements IPriorityH
                 }
                 getProxy().getGrid()
                     .<IStorageGrid>getCache(IStorageGrid.class)
-                    .postAlterationOfStoredItems(getChannel(), mappedChanges, ownActionSource);
+                    .postAlterationOfStoredItems(AEItemStackType.ITEM_STACK_TYPE, mappedChanges, ownActionSource);
             } catch (GridAccessException e) {
                 // NO-OP
             }

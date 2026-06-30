@@ -9,7 +9,7 @@ import com.asdflj.ae2thing.client.gui.container.ContainerInfusionPatternTerminal
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.inventory.IPatternTerminal;
 import com.asdflj.ae2thing.nei.NEIUtils;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 
 public class PatternTerminalLoader implements Runnable {
 
@@ -49,7 +49,7 @@ public class PatternTerminalLoader implements Runnable {
                     ciw.saveChanges();
                 }
             });
-        if (ModAndClassUtil.THE) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             AE2ThingAPI.instance()
                 .terminal()
                 .registerPatternTerminal(() -> ContainerInfusionPatternTerminal.class)

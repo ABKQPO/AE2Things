@@ -14,7 +14,6 @@ import com.asdflj.ae2thing.client.gui.container.slot.ManaSlotFake;
 import com.glodblock.github.FluidCraft;
 import com.glodblock.github.common.item.ItemFluidPacket;
 import com.glodblock.github.network.SPacketFluidUpdate;
-import com.glodblock.github.util.Ae2Reflect;
 import com.glodblock.github.util.Util;
 
 import appeng.api.config.Upgrades;
@@ -64,7 +63,7 @@ public abstract class ContainerManaConfigurable extends ContainerUpgradeable {
     protected void setupConfig() {
         this.setupUpgrades();
 
-        final IInventory inv = Ae2Reflect.getUpgradeList(this)
+        final IInventory inv = this.getUpgradeable()
             .getInventoryByName("config");
         final int y = 40;
         final int x = 80;
@@ -85,7 +84,7 @@ public abstract class ContainerManaConfigurable extends ContainerUpgradeable {
     protected boolean isValidForConfig(int slot, IAEFluidStack fs) {
         if (this.supportCapacity()) {
             // assumes 4 slots per upgrade
-            final int upgrades = Ae2Reflect.getUpgradeList(this)
+            final int upgrades = this.getUpgradeable()
                 .getInstalledUpgrades(Upgrades.CAPACITY);
 
             if (slot > 0 && upgrades < 1) {

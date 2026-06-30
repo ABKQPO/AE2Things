@@ -13,7 +13,7 @@ import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotTicCraftingTerm;
 import com.asdflj.ae2thing.common.Config;
 import com.asdflj.ae2thing.inventory.item.BackpackTerminalInventory;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.TicUtil;
 import com.asdflj.ae2thing.util.Util;
 import com.glodblock.github.common.item.ItemFluidDrop;
@@ -91,7 +91,7 @@ public class ContainerCraftingTerminal extends ContainerMonitor {
     public void onCraftMatrixChanged(final IInventory par1IInventory) {
         final ContainerNull cn = new ContainerNull();
         final InventoryCrafting ic = new InventoryCrafting(cn, 3, 3);
-        if (ModAndClassUtil.TIC && Config.backpackTerminalAddTicSupport) {
+        if (Mods.TINKERS_CONSTRUCT.isModLoaded() && Config.backpackTerminalAddTicSupport) {
             for (int x = 0; x < 9; x++) {
                 if (TicUtil.isTool(this.craftingSlots[x].getStack())) {
                     ItemStack tool = this.craftingSlots[x].getStack();

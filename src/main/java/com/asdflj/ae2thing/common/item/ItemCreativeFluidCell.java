@@ -178,7 +178,7 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageCell 
     public void addCheckedInformation(final ItemStack stack, final EntityPlayer player, final List<String> lines,
                                       final boolean displayMoreInfo) {
         final IMEInventoryHandler<?> inventory = AEApi.instance().registries().cell()
-            .getCellInventory(stack, null, StorageChannel.FLUIDS);
+            .getCellInventory(stack, null, AEFluidStackType.FLUID_STACK_TYPE);
 
         if (inventory instanceof final ITFluidCellInventoryHandler handler) {
             final ITFluidCellInventory cellInventory = handler.getCellInv();

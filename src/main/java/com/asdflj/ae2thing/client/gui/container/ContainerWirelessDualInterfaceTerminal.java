@@ -34,7 +34,7 @@ import com.asdflj.ae2thing.inventory.item.PatternModifierInventory;
 import com.asdflj.ae2thing.inventory.item.WirelessTerminal;
 import com.asdflj.ae2thing.util.Ae2Reflect;
 import com.asdflj.ae2thing.util.GTUtil;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.glodblock.github.common.item.ItemFluidPacket;
 import com.glodblock.github.util.Util;
 
@@ -287,7 +287,7 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
             host = (IInterfaceViewable) ((TileCableBus) tile).getPart(intMsg.getSide());
         } else if (tile instanceof IInterfaceViewable iv) {
             host = iv;
-        } else if ((ModAndClassUtil.GT5 || ModAndClassUtil.GT5NH)) {
+        } else if ((Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded())) {
             host = GTUtil.getIInterfaceViewable(tile);
             if (host == null) return null;
         } else {
@@ -361,7 +361,7 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     public void setStick(NBTTagCompound tag) {
         Util.DimensionalCoordSide c = Util.DimensionalCoordSide.readFromNBT(tag);
         World w = DimensionManager.getWorld(c.getDimension());
-        if (ModAndClassUtil.GT5 || ModAndClassUtil.GT5NH) {
+        if (Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded()) {
             GTUtil.setDataStick(c.x, c.y, c.z, this.player, w);
         }
     }

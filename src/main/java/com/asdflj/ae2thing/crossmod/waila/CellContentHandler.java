@@ -28,12 +28,13 @@ import com.asdflj.ae2thing.util.NameConst;
 import appeng.api.AEApi;
 import appeng.api.storage.ICellWorkbenchItem;
 import appeng.api.storage.IMEInventoryHandler;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
+import appeng.util.item.AEFluidStackType;
 import appeng.util.item.AEItemStack;
+import appeng.util.item.AEItemStackType;
 import codechicken.lib.gui.GuiDraw;
 
 public class CellContentHandler extends mcp.mobius.waila.handlers.nei.TooltipHandlerWaila {
@@ -103,7 +104,7 @@ public class CellContentHandler extends mcp.mobius.waila.handlers.nei.TooltipHan
                 handler = AEApi.instance()
                     .registries()
                     .cell()
-                    .getCellInventory(cell, null, StorageChannel.ITEMS);
+                    .getCellInventory(cell, null, AEItemStackType.ITEM_STACK_TYPE);
                 if (handler != null) {
                     IItemList<IAEItemStack> itemList = handler.getAvailableItems(
                         AEApi.instance()
@@ -121,7 +122,7 @@ public class CellContentHandler extends mcp.mobius.waila.handlers.nei.TooltipHan
                 handler = AEApi.instance()
                     .registries()
                     .cell()
-                    .getCellInventory(cell, null, StorageChannel.FLUIDS);
+                    .getCellInventory(cell, null, AEFluidStackType.FLUID_STACK_TYPE);
                 if (handler != null) {
                     IItemList<IAEFluidStack> itemList = handler.getAvailableItems(
                         AEApi.instance()

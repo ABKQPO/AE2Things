@@ -3,7 +3,7 @@ package com.asdflj.ae2thing.client.render;
 import java.util.Collection;
 import java.util.HashMap;
 
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 
 public class SlotRender {
 
@@ -15,7 +15,7 @@ public class SlotRender {
         registerSlotRenderHandler(RenderFluidPacketPatternSlot.class, new RenderFluidPacketPatternSlot());
         registerSlotRenderHandler(RenderEncodedPattern.class, new RenderEncodedPattern());
         registerSlotRenderHandler(RenderPatternSlotFake.class, new RenderPatternSlotFake());
-        if (ModAndClassUtil.THE) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             registerSlotRenderHandler(RenderItemPhial.class, new RenderItemPhial());
         }
     }

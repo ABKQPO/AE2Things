@@ -17,6 +17,7 @@ import appeng.api.storage.data.IItemList;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IInterfaceViewable;
 import appeng.container.interfaces.IInventorySlotAware;
+import appeng.util.IterationCounter;
 import appeng.util.Platform;
 
 public class PatternModifierInventory implements ITerminalHost, IInventorySlotAware, IGuiItemObject {
@@ -101,7 +102,8 @@ public class PatternModifierInventory implements ITerminalHost, IInventorySlotAw
             .getAvailableItems(
                 AEApi.instance()
                     .storage()
-                    .createPrimitiveItemList());
+                    .createPrimitiveItemList(),
+                IterationCounter.fetchNewId());
         if (itemList.isEmpty()) return;
         IInventory inv = host.getPatterns();
         for (int i = 0; i < host.rowSize() * host.rows(); i++) {

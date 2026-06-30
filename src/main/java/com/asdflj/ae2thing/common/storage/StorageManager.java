@@ -25,6 +25,8 @@ import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.storage.StorageChannel;
 import appeng.tile.grid.AENetworkInvTile;
 import appeng.util.Platform;
+import appeng.util.item.AEFluidStackType;
+import appeng.util.item.AEItemStackType;
 
 public class StorageManager extends WorldSavedData {
 
@@ -180,9 +182,11 @@ public class StorageManager extends WorldSavedData {
                     if (grid.isEmpty() || grid.equals(curGrid)) continue;
                     IStorageGrid iStorageGrid = grid.getCache(IStorageGrid.class);
                     if (storage.getChannel() == StorageChannel.ITEMS) {
-                        iStorageGrid.postAlterationOfStoredItems(storage.getChannel(), storage.getItems(), null);
+                        iStorageGrid
+                            .postAlterationOfStoredItems(AEItemStackType.ITEM_STACK_TYPE, storage.getItems(), null);
                     } else if (storage.getChannel() == StorageChannel.FLUIDS) {
-                        iStorageGrid.postAlterationOfStoredItems(storage.getChannel(), storage.getFluids(), null);
+                        iStorageGrid
+                            .postAlterationOfStoredItems(AEFluidStackType.FLUID_STACK_TYPE, storage.getFluids(), null);
                     }
                 }
             } catch (Exception ignored) {}

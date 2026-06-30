@@ -13,7 +13,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.api.adapter.terminal.ITerminal;
 import com.asdflj.ae2thing.util.BaublesUtil;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 
 public interface IItemTerminal extends ITerminal {
 
@@ -23,7 +23,7 @@ public interface IItemTerminal extends ITerminal {
 
     default List<TerminalItems> getTerminalItems() {
         List<TerminalItems> terminal = new ArrayList<>(this.getMainInvTerminals());
-        if (ModAndClassUtil.BAUBLES && this.supportBaubles()) {
+        if (Mods.BAUBLES.isModLoaded() && this.supportBaubles()) {
             terminal.addAll(getBaublesInvTerminals(BaublesUtil.getBaublesInv(this.player())));
         }
         return terminal;

@@ -1,5 +1,7 @@
 package com.asdflj.ae2thing.util;
 
+import com.asdflj.ae2thing.integration.Mods;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.regex.Pattern;
@@ -13,9 +15,9 @@ public class NeCharUtil {
 
     public NeCharUtil() {
         try {
-            if (ModAndClassUtil.NECHAR) {
+            if (Mods.NECHAR.isModLoaded()) {
                 notEnoughCharacters(); // 官方版本
-            } else if (ModAndClassUtil.NECH) {
+            } else if (Mods.NECH.isModLoaded()) {
                 try {
                     neverEnoughCharacters(); // 私货版本 1
                 } catch (Exception ignored) {
@@ -58,7 +60,7 @@ public class NeCharUtil {
     }
 
     public boolean contains(String input, String text) {
-        if (ModAndClassUtil.NECHAR || ModAndClassUtil.NECH) {
+        if (Mods.NECHAR.isModLoaded() || Mods.NECH.isModLoaded()) {
             return this._contains(input, text);
         } else {
             return text.contains(input);
@@ -66,7 +68,7 @@ public class NeCharUtil {
     }
 
     public boolean matcher(Pattern p, CharSequence text) {
-        if (ModAndClassUtil.NECHAR || ModAndClassUtil.NECH) {
+        if (Mods.NECHAR.isModLoaded() || Mods.NECH.isModLoaded()) {
             return this._contains(p.pattern(), (String) text);
         } else {
             return p.matcher(text)

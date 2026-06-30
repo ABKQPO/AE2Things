@@ -42,6 +42,7 @@ import com.asdflj.ae2thing.network.CPacketRenamer;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.proxy.ClientProxy;
 import com.asdflj.ae2thing.util.GTUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.asdflj.ae2thing.util.NeCharUtil;
 import com.asdflj.ae2thing.util.Util;
@@ -1543,7 +1544,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui implements IDropToFillTe
                                     "InterfaceTerminal.PatternModifier",
                                     String.valueOf(val),
                                     getDimensionalCoordSide()));
-                        } else if ((ModAndClassUtil.GT5 || ModAndClassUtil.GT5NH) && GTUtil.isDataStick()) {
+                        } else if ((Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded()) && GTUtil.isDataStick()) {
                             AE2Thing.proxy.netHandler.sendToServer(
                                 new CPacketTerminalBtns("InterfaceTerminal.SetStick", "1", getDimensionalCoordSide()));
                         } else {

@@ -38,7 +38,7 @@ import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.common.Config;
 import com.asdflj.ae2thing.loader.recipe.WirelessTerminalEnergyRecipe;
 import com.asdflj.ae2thing.loader.recipe.WirelessTerminalQuantumBridgeRecipe;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.TicUtil;
 import com.glodblock.github.common.storage.CellType;
 
@@ -174,7 +174,7 @@ public class RecipeLoader implements Runnable {
                 'D',
                 DIAMOND,
                 'T',
-                ModAndClassUtil.TIC && Config.backpackTerminalAddTicSupport ? TicUtil.getToolStation()
+                Mods.TINKERS_CONSTRUCT.isModLoaded() && Config.backpackTerminalAddTicSupport ? TicUtil.getToolStation()
                     : CRAFTING_TABLE));
         GameRegistry.addRecipe(
             new ShapedOreRecipe(ITEM_INFINITY_CELL.stack(), "CCC", "CCC", "CCC", 'C', AE2_DIGITAL_SINGULARITY_CELL));
@@ -207,7 +207,7 @@ public class RecipeLoader implements Runnable {
         GameRegistry.addShapelessRecipe(
             com.glodblock.github.loader.ItemAndBlockHolder.DECODER.stack(),
             FLUID_PACKET_ENCODER.stack());
-        if (ModAndClassUtil.THE) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             final ItemStack THAUMIUM_INGOT = new ItemStack(itemResource, 1, 2);
             final ItemStack RUNIC_MATRIX = new ItemStack(ConfigBlocks.blockStoneDevice, 1, 2);
             final ItemStack THAUMONOMICON = new ItemStack(itemThaumonomicon, 1);
@@ -239,7 +239,7 @@ public class RecipeLoader implements Runnable {
             GameRegistry.addShapelessRecipe(THAUMATRIUM_INTERFACE.stack(), INFUSION_INTERFACE.stack());
 
         }
-        if (ModAndClassUtil.BOTANIA) {
+        if (Mods.BOTANIA.isModLoaded()) {
             GameRegistry.addShapelessRecipe(
                 MANA_IMPORT_BUS.stack(),
                 com.glodblock.github.loader.ItemAndBlockHolder.FLUID_IMPORT_BUS.stack());
@@ -253,7 +253,7 @@ public class RecipeLoader implements Runnable {
                 com.glodblock.github.loader.ItemAndBlockHolder.FLUID_EXPORT_BUS.stack(),
                 MANA_EXPORT_BUS.stack());
         }
-        if (ModAndClassUtil.GT5 || ModAndClassUtil.GT5NH) {
+        if (Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded()) {
             GameRegistry
                 .addShapelessRecipe(ItemAndBlockHolder.WIRELESS_DISTRIBUTOR.stack(), AE2_BLOCK_WIRELESS, AE2_WIRELESS);
             for (int i = 0; i < AEColor.values().length; i++) {

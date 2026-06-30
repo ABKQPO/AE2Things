@@ -18,7 +18,7 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 import com.asdflj.ae2thing.util.BaublesUtil;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 
 import appeng.api.features.INetworkEncodable;
 import appeng.api.networking.IGrid;
@@ -82,7 +82,7 @@ public abstract class MixinCraftingCPUCluster {
                 ItemStack stack = this.player.inventory.mainInventory[i];
                 if (isSameNetworkKey(stack)) return;
             }
-            if (ModAndClassUtil.BAUBLES) {
+            if (Mods.BAUBLES.isModLoaded()) {
                 IInventory inv = BaublesUtil.getBaublesInv(this.player);
                 for (int i = 0; i < inv.getSizeInventory(); i++) {
                     ItemStack stack = inv.getStackInSlot(i);

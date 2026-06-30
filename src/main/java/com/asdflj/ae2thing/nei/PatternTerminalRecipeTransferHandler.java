@@ -22,7 +22,7 @@ import com.asdflj.ae2thing.nei.recipes.FluidRecipe;
 import com.asdflj.ae2thing.network.CPacketTransferRecipe;
 import com.asdflj.ae2thing.proxy.ClientProxy;
 import com.asdflj.ae2thing.util.GTUtil;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.PHUtil;
 
 import appeng.api.AEApi;
@@ -107,7 +107,7 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             List<OrderStack<?>> in;
             in = FluidRecipe.getPackageInputs(recipe, recipeIndex, !craft && priority);
             setSuggestion(craft, recipe, (GuiWirelessDualInterfaceTerminal) firstGui, in);
-            if (ModAndClassUtil.PH && !craft) {
+            if (Mods.PROGRAMMABLE_HATCHES.isModLoaded() && !craft) {
                 in = PHUtil.transfer(in);
             }
             List<OrderStack<?>> out = FluidRecipe.getPackageOutputs(recipe, recipeIndex, !notUseOther(recipe));
@@ -129,7 +129,7 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             } else {
                 suggestion = "";
             }
-        } else if (ModAndClassUtil.GT5NH || ModAndClassUtil.GT5) {
+        } else if (Mods.isGt5UnofficialLoaded() || Mods.isLegacyGt5Loaded()) {
             suggestion = GTUtil.getRecipeName(recipe, in);
         } else {
             suggestion = recipe.getRecipeName();

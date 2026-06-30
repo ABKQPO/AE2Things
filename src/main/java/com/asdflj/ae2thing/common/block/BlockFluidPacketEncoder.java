@@ -80,8 +80,6 @@ public class BlockFluidPacketEncoder extends BaseTileBlock implements IRegister<
         final boolean advancedToolTips) {
         if (isShiftKeyDown()) {
             toolTip.addAll(RenderUtil.listFormattedStringToWidth(I18n.format(NameConst.TT_FLUID_PACKET_ENCODER_DESC)));
-        } else {
-            toolTip.add(I18n.format(NameConst.TT_SHIFT_FOR_MORE));
         }
     }
 }

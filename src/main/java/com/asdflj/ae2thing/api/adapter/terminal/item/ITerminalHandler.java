@@ -16,13 +16,13 @@ public interface ITerminalHandler {
             .registries()
             .wireless();
         if (!term.isWirelessTerminal(item)) {
-            player.addChatMessage(PlayerMessages.DeviceNotWirelessTerminal.get());
+            player.addChatMessage(PlayerMessages.DeviceNotWirelessTerminal.toChat());
             return false;
         }
         final IWirelessTermHandler handler = term.getWirelessTerminalHandler(item);
         final String unparsedKey = handler.getEncryptionKey(item);
         if (unparsedKey.isEmpty()) {
-            player.addChatMessage(PlayerMessages.DeviceNotLinked.get());
+            player.addChatMessage(PlayerMessages.DeviceNotLinked.toChat());
             return false;
         }
         final long parsedKey = Long.parseLong(unparsedKey);
@@ -31,13 +31,13 @@ public interface ITerminalHandler {
             .locatable()
             .getLocatableBy(parsedKey);
         if (securityStation == null) {
-            player.addChatMessage(PlayerMessages.StationCanNotBeLocated.get());
+            player.addChatMessage(PlayerMessages.StationCanNotBeLocated.toChat());
             return false;
         }
         if (handler.hasPower(player, 0.5, item)) {
             return true;
         } else {
-            player.addChatMessage(PlayerMessages.DeviceNotPowered.get());
+            player.addChatMessage(PlayerMessages.DeviceNotPowered.toChat());
         }
         return false;
     }

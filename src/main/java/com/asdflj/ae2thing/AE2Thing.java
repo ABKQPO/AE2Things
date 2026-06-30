@@ -10,7 +10,7 @@ import com.asdflj.ae2thing.loader.ChannelLoader;
 import com.asdflj.ae2thing.loader.ItemAndBlockHolder;
 import com.asdflj.ae2thing.loader.RecipeLoader;
 import com.asdflj.ae2thing.proxy.CommonProxy;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 
 import appeng.api.AEApi;
 import cpw.mods.fml.common.Mod;
@@ -55,7 +55,7 @@ public class AE2Thing {
     // load "Do your mod setup. Build whatever data structures you care about. Register recipes." (Remove if not needed)
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
-        if (ModAndClassUtil.WAILA) {
+        if (Mods.WAILA.isModLoaded()) {
             WailaInit.run();
         }
     }

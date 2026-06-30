@@ -11,7 +11,7 @@ import net.minecraftforge.common.util.ForgeDirection;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import com.asdflj.ae2thing.util.BaublesUtil;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 
 public abstract class ItemGuiBridge<T> implements IGuiFactory {
 
@@ -31,7 +31,7 @@ public abstract class ItemGuiBridge<T> implements IGuiFactory {
         ItemStack is = null;
         if (result.left == GuiBridgeInvType.PLAYER_INV) {
             is = player.inventory.getStackInSlot(result.right);
-        } else if (ModAndClassUtil.BAUBLES) {
+        } else if (Mods.BAUBLES.isModLoaded()) {
             is = BaublesUtil.getBaublesInv(player)
                 .getStackInSlot(result.right);
         }
@@ -48,7 +48,7 @@ public abstract class ItemGuiBridge<T> implements IGuiFactory {
         ItemStack is = null;
         if (result.left == GuiBridgeInvType.PLAYER_INV) {
             is = player.inventory.getStackInSlot(result.right);
-        } else if (ModAndClassUtil.BAUBLES) {
+        } else if (Mods.BAUBLES.isModLoaded()) {
             is = BaublesUtil.getBaublesInv(player)
                 .getStackInSlot(result.right);
         }

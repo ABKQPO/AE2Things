@@ -9,7 +9,7 @@ import com.asdflj.ae2thing.common.tile.TileExIOPort;
 import com.asdflj.ae2thing.common.tile.TileInfusionInterface;
 import com.asdflj.ae2thing.inventory.EssentiaInventoryAdaptor;
 import com.asdflj.ae2thing.inventory.ThaumatoriumInventoryAdapter;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 
 import appeng.api.parts.IPart;
 import appeng.tile.storage.TileIOPort;
@@ -22,7 +22,7 @@ public class CoreModHooks {
         if (tile == null) return null;
         TileEntity inter = tile.getWorldObj()
             .getTileEntity(tile.xCoord + face.offsetX, tile.yCoord + face.offsetY, tile.zCoord + face.offsetZ);
-        if (ModAndClassUtil.THE) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             if (inter instanceof TileInfusionInterface) {
                 return EssentiaInventoryAdaptor.getAdaptor(tile, face);
             } else if (com.glodblock.github.util.Util
@@ -38,7 +38,7 @@ public class CoreModHooks {
             .getTileEntity(tile.xCoord + face.offsetX, tile.yCoord + face.offsetY + y, tile.zCoord + face.offsetZ);
         if (cable == null) return;
         IPart part = com.glodblock.github.util.Util.getPart(cable, face.getOpposite());
-        if (ModAndClassUtil.THE && part instanceof PartThaumatoriumInterface pti) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded() && part instanceof PartThaumatoriumInterface pti) {
             int ess = pti.takeEssentia(tile.currentSuction, 1, face);
             if (ess > 0) {
                 tile.addToContainer(tile.currentSuction, ess);

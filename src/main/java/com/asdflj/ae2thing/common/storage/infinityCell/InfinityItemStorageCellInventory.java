@@ -31,6 +31,7 @@ import appeng.api.storage.ISaveProvider;
 import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
+import appeng.util.IterationCounter;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.AEItemStackType;
@@ -299,7 +300,8 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
         return meInventory.getAvailableItems(
             AEApi.instance()
                 .storage()
-                .createItemList())
+                .createItemList(),
+            IterationCounter.fetchNewId())
             .isEmpty();
     }
 

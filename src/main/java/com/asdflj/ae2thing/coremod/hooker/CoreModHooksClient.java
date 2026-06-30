@@ -5,7 +5,7 @@ import java.util.List;
 
 import net.minecraft.client.resources.I18n;
 
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.TheUtil;
 import com.asdflj.ae2thing.util.Util;
 import com.glodblock.github.client.gui.GuiFluidInterface;
@@ -81,7 +81,7 @@ public class CoreModHooksClient {
     }
 
     public static String translateToLocal(String displayName, GuiFluidInterface dualInterface) {
-        if (ModAndClassUtil.THE) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             return TheUtil.getGuiDualInterfaceDisplayName(displayName, dualInterface);
         }
         return I18n.format(displayName);

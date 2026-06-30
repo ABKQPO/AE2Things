@@ -16,7 +16,10 @@ import appeng.api.networking.IGridNode;
 import appeng.api.storage.IMEInventory;
 import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.util.IterationCounter;
 import appeng.util.item.AEFluidStack;
+import appeng.util.item.AEFluidStackType;
+import appeng.util.item.AEItemStackType;
 import codechicken.nei.recipe.StackInfo;
 
 public interface IFindItAdapter {
@@ -46,11 +49,11 @@ public interface IFindItAdapter {
     default boolean findStack(IMEInventory inv, boolean isFluid, IAEItemStack request) {
         if (inv == null) return false;
         boolean result = false;
-        if (isFluid && inv.getChannel() == StorageChannel.FLUIDS) {
+        if (isFluid && inv.getStackType() == AEFluidStackType.FLUID_STACK_TYPE) {
             FluidStack fs = Util.getFluidFromItem(request.getItemStack());
-            result = inv.getAvailableItem(AEFluidStack.create(fs)) != null;
-        } else if (inv.getChannel() == StorageChannel.ITEMS) {
-            result = inv.getAvailableItem(request) != null;
+            result = inv.getAvailableItem(AEFluidStack.create(fs), IterationCounter.fetchNewId()) != null;
+        } else if (inv.getStackType() == AEItemStackType.ITEM_STACK_TYPE) {
+            result = inv.getAvailableItem(request, IterationCounter.fetchNewId()) != null;
         }
         return result;
     }
@@ -65,12 +68,12 @@ public interface IFindItAdapter {
             return AEApi.instance()
                 .registries()
                 .cell()
-                .getCellInventory(is, null, StorageChannel.ITEMS);
+                .getCellInventory(is, null, AEItemStackType.ITEM_STACK_TYPE);
         } else if (channel == StorageChannel.FLUIDS) {
             return AEApi.instance()
                 .registries()
                 .cell()
-                .getCellInventory(is, null, StorageChannel.FLUIDS);
+                .getCellInventory(is, null, AEFluidStackType.FLUID_STACK_TYPE);
         }
         return null;
     }

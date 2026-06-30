@@ -43,6 +43,32 @@ public abstract class BaseBackpackHandler implements IInventory {
 
     }
 
+    public ItemStack injectItem(ItemStack stack) {
+        ItemStack remaining = stack.copy();
+        for (int i = 0; i < this.getSizeInventory(); i++) {
+            if (this.isItemValidForSlot(i, remaining)) {
+                ItemStack added = remaining.copy();
+                ItemStack slotItem = this.getStackInSlot(i);
+                if (slotItem == null) {
+                    added.stackSize = Math.min(added.getMaxStackSize(), remaining.stackSize);
+                    this.setInventorySlotContents(i, added);
+                } else {
+                    ItemStack updated = slotItem.copy();
+                    added.stackSize = Math.min(added.getMaxStackSize() - updated.stackSize, remaining.stackSize);
+                    updated.stackSize += added.stackSize;
+                    this.setInventorySlotContents(i, updated);
+                }
+                remaining.stackSize -= added.stackSize;
+                if (remaining.stackSize <= 0) {
+                    return remaining;
+                }
+            } else if (this.getStackInSlot(i) == null) {
+                break;
+            }
+        }
+        return remaining;
+    }
+
     @Override
     public ItemStack getStackInSlotOnClosing(int index) {
         return this.inv.getStackInSlotOnClosing(index);

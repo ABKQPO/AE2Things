@@ -25,7 +25,7 @@ import com.asdflj.ae2thing.inventory.item.INetworkTerminal;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 import com.asdflj.ae2thing.network.SPacketTypeFilter;
 import com.asdflj.ae2thing.util.HBMAeAddonUtil;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.glodblock.github.common.item.ItemFluidPacket;
 import com.glodblock.github.util.Util;
 
@@ -292,12 +292,12 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
         if (targetStack == null) return;
         // The primary output itemstack
         if (fluid != null
-            && ((ModAndClassUtil.HBM_AE_ADDON && HBMAeAddonUtil.getItemIsEmptyContainer(targetStack, fluid))
+            && ((Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemIsEmptyContainer(targetStack, fluid))
                 || Util.FluidUtil.isEmpty(targetStack))) {
             // Situation 1.a: Empty fluid container, and nonnull slot
             extractFluid(fluid, player, slotIndex, shift);
         } else if ((Util.FluidUtil.isFluidContainer(targetStack) && !Util.FluidUtil.isEmpty(targetStack))
-            || (ModAndClassUtil.HBM_AE_ADDON && HBMAeAddonUtil.getItemHasFluidType(targetStack))) {
+            || (Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemHasFluidType(targetStack))) {
                 // Situation 2.a: We are holding a non-empty container.
                 insertFluid(player, slotIndex, shift);
                 // End of situation 2.a
@@ -350,7 +350,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
             fluidStackPerContainer = FluidContainerRegistry.getFluidForFilledItem(targetStack);
             fluidPerContainer = fluidStackPerContainer.amount;
             partialInsertSupported = false;
-        } else if (ModAndClassUtil.HBM_AE_ADDON && HBMAeAddonUtil.getItemHasFluidType(targetStack)) {
+        } else if (Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemHasFluidType(targetStack)) {
             ItemStack emptyTank = com.hbm.inventory.FluidContainerRegistry.getEmptyContainer(targetStack);
             if (emptyTank == null) {
                 return;
@@ -431,7 +431,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
             } else {
                 partialTanksStack = null;
             }
-        } else if (ModAndClassUtil.HBM_AE_ADDON && HBMAeAddonUtil.getItemHasFluidType(targetStack)) {
+        } else if (Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemHasFluidType(targetStack)) {
             if (emptiedTanks > 0) {
                 emptiedTanksStack = com.hbm.inventory.FluidContainerRegistry.getEmptyContainer(targetStack);
                 emptiedTanksStack.stackSize = emptiedTanks;
@@ -532,7 +532,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
         } else if (FluidContainerRegistry.isContainer(targetStack)) {
             fluidPerContainer = FluidContainerRegistry.getContainerCapacity(clientRequestedFluidStack, targetStack);
             partialInsertSupported = false;
-        } else if (ModAndClassUtil.HBM_AE_ADDON
+        } else if (Mods.HBM_AE_ADDON.isModLoaded()
             && HBMAeAddonUtil.getItemIsEmptyContainer(targetStack, clientRequestedFluid)) {
                 fluidPerContainer = HBMAeAddonUtil.getEmptyContainerAmount(targetStack, clientRequestedFluid);
                 partialInsertSupported = false;
@@ -589,7 +589,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
             } else {
                 partialTanksStack = null;
             }
-        } else if (ModAndClassUtil.HBM_AE_ADDON
+        } else if (Mods.HBM_AE_ADDON.isModLoaded()
             && HBMAeAddonUtil.getItemIsEmptyContainer(targetStack, clientRequestedFluid)) {
                 if (filledTanks > 0) {
                     filledTanksStack = targetStack.copy();

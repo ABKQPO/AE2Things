@@ -47,7 +47,7 @@ import com.asdflj.ae2thing.nei.recipes.DefaultExtractorLoader;
 import com.asdflj.ae2thing.network.CPacketCraftRequest;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.FindITUtil;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 
 import appeng.api.events.GuiScrollEvent;
 import appeng.api.storage.data.IAEItemStack;
@@ -85,13 +85,13 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void onLoadComplete(FMLLoadCompleteEvent event) {
         super.onLoadComplete(event);
-        if (ModAndClassUtil.NEI) {
+        if (Mods.NOT_ENOUGH_ITEMS.isModLoaded()) {
             new DefaultExtractorLoader().run();
-            if (ModAndClassUtil.THE) {
+            if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
                 ItemPhial.getItems()
                     .forEach(API::hideItem);
             }
-            if (ModAndClassUtil.FIND_IT) {
+            if (Mods.FIND_IT.isModLoaded()) {
                 FindITUtil.instance.run();
             }
         }
@@ -156,12 +156,12 @@ public class ClientProxy extends CommonProxy {
         AE2ThingAPI.instance()
             .terminal()
             .registerTerminal(GuiPatternTermEx.class);
-        if (ModAndClassUtil.WCT) {
+        if (Mods.WIRELESS_CRAFTING_TERMINAL.isModLoaded()) {
             AE2ThingAPI.instance()
                 .terminal()
                 .registerTerminal(GuiWirelessCraftingTerminal.class);
         }
-        if (ModAndClassUtil.THE) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             AE2ThingAPI.instance()
                 .terminal()
                 .registerTerminal(GuiInfusionPatternTerminal.class);
@@ -308,7 +308,7 @@ public class ClientProxy extends CommonProxy {
         if (!(screen instanceof GuiContainer)) {
             return;
         }
-        if (ModAndClassUtil.FIND_IT) {
+        if (Mods.FIND_IT.isModLoaded()) {
             FindITUtil.instance.highlighter();
         }
     }

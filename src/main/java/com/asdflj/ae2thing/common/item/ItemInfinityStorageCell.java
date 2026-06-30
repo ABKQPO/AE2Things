@@ -65,7 +65,7 @@ public class ItemInfinityStorageCell extends BaseCellItem implements IStorageCel
         final IMEInventoryHandler<?> inventory = AEApi.instance()
             .registries()
             .cell()
-            .getCellInventory(stack, null, StorageChannel.ITEMS);
+            .getCellInventory(stack, null, AEItemStackType.ITEM_STACK_TYPE);
 
         if (inventory instanceof ICellInventoryHandler handler) {
             final ITCellInventory cellInventory = handler.getCellInv();

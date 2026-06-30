@@ -1,5 +1,7 @@
 package com.asdflj.ae2thing.client.gui;
 
+import static com.asdflj.ae2thing.client.render.RenderHelper.drawPinnedSlots;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +29,7 @@ import com.asdflj.ae2thing.network.CPacketFluidUpdate;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.AspectUtil;
 import com.asdflj.ae2thing.util.HBMAeAddonUtil;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.NameConst;
 import com.glodblock.github.common.item.ItemFluidDrop;
 import com.glodblock.github.hbmaeaddon.util.HBMUtil;
@@ -78,13 +80,13 @@ public abstract class BaseMEGui extends AEBaseGui implements IGuiSelection {
     }
 
     protected String getContainerDisplayName(ItemStack is) {
-        if (ModAndClassUtil.THE && AspectUtil.isEssentiaContainer(is)) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.isEssentiaContainer(is)) {
             Aspect aspect = AspectUtil.getAspectFromJar(is);
             return aspect.getName();
         } else if (Util.FluidUtil.isFluidContainer(is)) {
             FluidStack fs = Util.FluidUtil.getFluidFromContainer(is);
             return fs.getLocalizedName();
-        } else if (ModAndClassUtil.HBM_AE_ADDON && HBMAeAddonUtil.getItemHasFluidType(is)) {
+        } else if (Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemHasFluidType(is)) {
             return HBMUtil.getFluidType(is)
                 .getLocalizedName();
         } else {
@@ -99,15 +101,15 @@ public abstract class BaseMEGui extends AEBaseGui implements IGuiSelection {
     protected boolean isFilledContainer(ItemStack is) {
         if (is == null) return false;
         return (Util.FluidUtil.isFluidContainer(is) && Util.FluidUtil.isFilled(is))
-            || (ModAndClassUtil.THE && AspectUtil.isEssentiaContainer(is) && !AspectUtil.isEmptyEssentiaContainer(is))
-            || (ModAndClassUtil.HBM_AE_ADDON && HBMAeAddonUtil.getItemHasFluidType(is));
+            || (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.isEssentiaContainer(is) && !AspectUtil.isEmptyEssentiaContainer(is))
+            || (Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemHasFluidType(is));
     }
 
     private boolean isEmptyContainer(ItemStack is, IAEFluidStack fs) {
         if (is == null) return false;
         return Util.FluidUtil.isEmpty(is)
-            || (ModAndClassUtil.THE && AspectUtil.isEssentiaContainer(is) && AspectUtil.isEmptyEssentiaContainer(is))
-            || (ModAndClassUtil.HBM_AE_ADDON && HBMAeAddonUtil.getItemIsEmptyContainer(is, fs));
+            || (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.isEssentiaContainer(is) && AspectUtil.isEmptyEssentiaContainer(is))
+            || (Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemIsEmptyContainer(is, fs));
     }
 
     @SideOnly(Side.CLIENT)
@@ -228,6 +230,9 @@ public abstract class BaseMEGui extends AEBaseGui implements IGuiSelection {
     @Override
     public void drawScreen(int mouseX, int mouseY, float btn) {
         super.drawScreen(mouseX, mouseY, btn);
+        boolean topRowVisible = this.getScrollBar() == null || this.getScrollBar()
+            .getCurrentScroll() == 0;
+        drawPinnedSlots(this, this.meSlots, this.guiLeft, this.guiTop, topRowVisible);
         this.drawFluidContainerTooltip(mouseX, mouseY);
     }
 

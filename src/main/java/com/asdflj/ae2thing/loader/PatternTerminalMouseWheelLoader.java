@@ -10,7 +10,7 @@ import com.asdflj.ae2thing.api.adapter.pattern.IRecipeHandler;
 import com.asdflj.ae2thing.api.adapter.pattern.THDualInterfacePatternTerminal;
 import com.asdflj.ae2thing.client.gui.container.ContainerInfusionPatternTerminal;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
@@ -72,7 +72,7 @@ public class PatternTerminalMouseWheelLoader implements Runnable {
             .registerPatternTerminal(new FCPatternTerminal(ContainerPatternTermEx.class))
             .registerIdentifier(Constants.NEI_MOUSE_WHEEL, handler);
 
-        if (ModAndClassUtil.THE) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             AE2ThingAPI.instance()
                 .terminal()
                 .registerPatternTerminal(() -> ContainerInfusionPatternTerminal.class)

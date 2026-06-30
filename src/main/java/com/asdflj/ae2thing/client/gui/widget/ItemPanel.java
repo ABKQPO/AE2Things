@@ -26,7 +26,7 @@ import com.asdflj.ae2thing.client.me.AdvItemRepo;
 import com.asdflj.ae2thing.network.CPacketInventoryAction;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.AspectUtil;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.config.SearchBoxMode;
@@ -103,7 +103,7 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     }
 
     public void saveSearchString() {
-        if (ModAndClassUtil.NEI && isNEISearch()
+        if (Mods.NOT_ENOUGH_ITEMS.isModLoaded() && isNEISearch()
             && !this.searchField.getText()
                 .isEmpty()) {
             this.history.add(this.searchField.getText());
@@ -127,7 +127,7 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
         GL11.glTranslatef(0f, 0f, -100f);
         if (AEConfig.instance.preserveSearchBar && searchField != null && searchField.isMouseIn(mouseX, mouseY))
             this.parent.drawTooltip(this.absX - offsetX, this.absY - 20, 0, searchField.getMessage());
-        if (ModAndClassUtil.NEI && searchField != null
+        if (Mods.NOT_ENOUGH_ITEMS.isModLoaded() && searchField != null
             && this.searchField.isMouseIn(mouseX, mouseY)
             && this.isNEISearch()
             && this.parent != null) {
@@ -286,7 +286,7 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     @Override
     public void setTextFieldValue(String displayName, int mousex, int mousey, ItemStack stack) {
         if (!searchField.isMouseIn(mousex, mousey)) return;
-        if (ModAndClassUtil.THE && AspectUtil.getAspectFromJar(stack) != null) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.getAspectFromJar(stack) != null) {
             setSearchString(
                 Objects.requireNonNull(AspectUtil.getAspectFromJar(stack))
                     .getName(),
@@ -412,7 +412,7 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
 
     @Override
     public boolean mouseWheelEvent(int mouseX, int mouseY, int wheel) {
-        if (ModAndClassUtil.NEI && this.searchField.isMouseIn(mouseX, mouseY) && isNEISearch()) {
+        if (Mods.NOT_ENOUGH_ITEMS.isModLoaded() && this.searchField.isMouseIn(mouseX, mouseY) && isNEISearch()) {
             TextHistory.Direction direction;
             switch (wheel) {
                 case -1:
@@ -441,7 +441,7 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     }
 
     private void updateSuggestion() {
-        if (ModAndClassUtil.NEI && this.isNEISearch()) {
+        if (Mods.NOT_ENOUGH_ITEMS.isModLoaded() && this.isNEISearch()) {
             if (this.searchField.getText()
                 .isEmpty()) {
                 this.setSuggestion("");
@@ -465,7 +465,7 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
 
     @Override
     public boolean keyTyped(char character, int key) {
-        if (ModAndClassUtil.NEI && this.isNEISearch()) {
+        if (Mods.NOT_ENOUGH_ITEMS.isModLoaded() && this.isNEISearch()) {
             if (key == Keyboard.KEY_TAB && this.searchField.isFocused()) {
                 Optional<String> history = Ae2ReflectClient.getHistoryList(this.history)
                     .stream()

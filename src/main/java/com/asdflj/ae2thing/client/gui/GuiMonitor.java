@@ -27,6 +27,7 @@ import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.network.CPacketInventoryAction;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.AspectUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
@@ -117,7 +118,7 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
     }
 
     protected void saveSearchString() {
-        if (ModAndClassUtil.NEI && isNEISearch()
+        if (Mods.NOT_ENOUGH_ITEMS.isModLoaded() && isNEISearch()
             && !this.searchField.getText()
                 .isEmpty()) {
             this.history.add(this.searchField.getText());
@@ -462,7 +463,7 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
 
     @Override
     protected void keyTyped(final char character, final int key) {
-        if (ModAndClassUtil.NEI && this.isNEISearch()) {
+        if (Mods.NOT_ENOUGH_ITEMS.isModLoaded() && this.isNEISearch()) {
             if (key == Keyboard.KEY_TAB) {
                 Optional<String> history = Ae2ReflectClient.getHistoryList(this.history)
                     .stream()
@@ -498,7 +499,7 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
     }
 
     private void updateSuggestion() {
-        if (ModAndClassUtil.NEI && this.isNEISearch()) {
+        if (Mods.NOT_ENOUGH_ITEMS.isModLoaded() && this.isNEISearch()) {
             if (this.searchField.getText()
                 .isEmpty()) {
                 this.setSuggestion("");
@@ -654,7 +655,7 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
         }
         if (searchField == null) return;
         if (AEConfig.instance.preserveSearchBar) handleTooltip(mouseX, mouseY, searchField.getTooltipProvider());
-        if (ModAndClassUtil.NEI && this.searchField.isMouseIn(mouseX, mouseY) && this.isNEISearch()) {
+        if (Mods.NOT_ENOUGH_ITEMS.isModLoaded() && this.searchField.isMouseIn(mouseX, mouseY) && this.isNEISearch()) {
             // draw selection
             List<String> list = Ae2ReflectClient.getHistoryList(this.history);
             drawHistorySelection(
@@ -679,7 +680,7 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
 
     @Override
     public void setTextFieldValue(String displayName, int mousex, int mousey, ItemStack stack) {
-        if (ModAndClassUtil.THE && AspectUtil.getAspectFromJar(stack) != null) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.getAspectFromJar(stack) != null) {
             setSearchString(
                 Objects.requireNonNull(AspectUtil.getAspectFromJar(stack))
                     .getName(),
@@ -692,7 +693,7 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
 
     @Override
     protected boolean mouseWheelEvent(int x, int y, int wheel) {
-        if (ModAndClassUtil.NEI && this.searchField.isMouseIn(x, y) && isNEISearch()) {
+        if (Mods.NOT_ENOUGH_ITEMS.isModLoaded() && this.searchField.isMouseIn(x, y) && isNEISearch()) {
             TextHistory.Direction direction;
             switch (wheel) {
                 case -1:

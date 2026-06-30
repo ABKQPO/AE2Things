@@ -9,10 +9,10 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.storage.IMEInventoryHandler;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.util.DimensionalCoord;
 import thaumicenergistics.common.parts.PartEssentiaStorageBus;
+import thaumicenergistics.common.storage.AEEssentiaStackType;
 
 public class EssentiaStorageBusAdapter implements IFindItAdapter {
 
@@ -30,7 +30,7 @@ public class EssentiaStorageBusAdapter implements IFindItAdapter {
     public List<StorageProvider> getStorageProver(IGrid grid, IGridNode node, IAEItemStack item, boolean isFluid) {
         List<StorageProvider> list = new ArrayList<>();
         if (node.getMachine() instanceof PartEssentiaStorageBus bus) {
-            List<IMEInventoryHandler> handlers = bus.getCellArray(StorageChannel.FLUIDS);
+            List<IMEInventoryHandler> handlers = bus.getCellArray(AEEssentiaStackType.ESSENTIA_STACK_TYPE);
             for (IMEInventoryHandler handler : handlers) {
                 if (findStack(handler, isFluid, item)) {
                     list.add(

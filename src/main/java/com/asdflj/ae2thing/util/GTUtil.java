@@ -1,5 +1,7 @@
 package com.asdflj.ae2thing.util;
 
+import com.asdflj.ae2thing.integration.Mods;
+
 import static com.asdflj.ae2thing.api.Constants.MessageType.UPDATE_PLAYER_ITEM;
 import static com.asdflj.ae2thing.nei.NEI_TH_Config.getConfigValue;
 
@@ -53,7 +55,7 @@ public class GTUtil {
 
     public static String getRecipeName(IRecipeHandler recipe, List<OrderStack<?>> in) {
         if (recipe instanceof GTNEIDefaultHandler) {
-            if (ModAndClassUtil.PH && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT)) {
+            if (Mods.PROGRAMMABLE_HATCHES.isModLoaded() && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT)) {
                 return recipe.getRecipeName();
             }
             for (OrderStack<?> stack : in) {

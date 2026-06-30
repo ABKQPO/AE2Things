@@ -11,7 +11,7 @@ import com.asdflj.ae2thing.inventory.gui.GuiBridgeInvType;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.util.BaublesUtil;
 import com.asdflj.ae2thing.util.BlockPos;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 
 import appeng.util.Platform;
 
@@ -27,7 +27,7 @@ public class WCTWirelessCraftingTerminalHandler implements ITerminalHandler {
                     return;
                 }
             }
-            if (!ModAndClassUtil.BAUBLES) return;
+            if (!Mods.BAUBLES.isModLoaded()) return;
             IInventory handler = BaublesUtil.getBaublesInv(player);
             if (handler == null) return;
             for (int i = 0; i < handler.getSizeInventory(); ++i) {

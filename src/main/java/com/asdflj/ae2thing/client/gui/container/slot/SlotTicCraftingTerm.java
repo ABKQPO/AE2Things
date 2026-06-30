@@ -9,7 +9,7 @@ import net.minecraft.item.ItemStack;
 
 import com.asdflj.ae2thing.common.Config;
 import com.asdflj.ae2thing.util.Ae2Reflect;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.TicUtil;
 
 import appeng.api.networking.energy.IEnergySource;
@@ -33,7 +33,7 @@ public class SlotTicCraftingTerm extends SlotCraftingTerm {
     }
 
     public void doClick(final InventoryAction action, final EntityPlayer who) {
-        if (ModAndClassUtil.TIC && Config.backpackTerminalAddTicSupport) {
+        if (Mods.TINKERS_CONSTRUCT.isModLoaded() && Config.backpackTerminalAddTicSupport) {
             if (this.getStack() == null) {
                 return;
             }

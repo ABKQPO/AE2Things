@@ -38,6 +38,7 @@ public enum Mods implements IMod, ITargetMod {
     NECH("nech"),
     NOT_ENOUGH_ENERGISTICS("neenergistics"),
     NOT_ENOUGH_ITEMS("NotEnoughItems"),
+    OK_BACKPACK("okbackpack"),
     PROGRAMMABLE_HATCHES("programmablehatches"),
     THAUMCRAFT("Thaumcraft"),
     THAUMIC_ENERGISTICS("thaumicenergistics"),

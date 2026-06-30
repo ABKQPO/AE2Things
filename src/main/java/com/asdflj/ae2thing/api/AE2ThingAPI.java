@@ -36,7 +36,7 @@ import com.asdflj.ae2thing.network.CPacketFindCellItem;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.util.Ae2Reflect;
 import com.asdflj.ae2thing.util.AspectUtil;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.NameConst;
 import com.glodblock.github.util.Util;
 
@@ -70,7 +70,7 @@ public final class AE2ThingAPI implements IAE2ThingAPI {
     }
 
     private static ItemStack createEmptyPhial() {
-        if (ModAndClassUtil.THE) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             return AspectUtil.HELPER.createEmptyPhial();
         }
         return null;

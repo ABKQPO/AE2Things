@@ -406,7 +406,7 @@ public class PatternPanel implements IAEBasePanel {
             if (action == InventoryAction.SPLIT_OR_PLACE_SINGLE) {
                 action = InventoryAction.MOVE_REGION;
             } else {
-                action = InventoryAction.PLACE_SINGLE;
+                action = InventoryAction.SPLIT_OR_PLACE_SINGLE;
             }
         }
         if (Ae2ReflectClient.getDragClick(this.parent)

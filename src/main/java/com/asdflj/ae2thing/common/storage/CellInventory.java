@@ -18,7 +18,8 @@ import com.asdflj.ae2thing.common.storage.backpack.AdventureBackpackHandler;
 import com.asdflj.ae2thing.common.storage.backpack.BackPackHandler;
 import com.asdflj.ae2thing.common.storage.backpack.BaseBackpackHandler;
 import com.asdflj.ae2thing.common.storage.backpack.FTRBackpackHandler;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.common.storage.backpack.OKBackpackHandler;
+import com.asdflj.ae2thing.integration.Mods;
 import com.darkona.adventurebackpack.item.ItemAdventureBackpack;
 import com.darkona.adventurebackpack.util.Wearing;
 import com.glodblock.github.common.item.ItemFluidDrop;
@@ -58,7 +59,7 @@ public class CellInventory implements ITCellInventory {
     }
 
     private void getAllInv() {
-        if (ModAndClassUtil.FTR) {
+        if (Mods.FORESTRY.isModLoaded()) {
             this.modInv.addAll(
                 getModInv(
                     (player) -> Arrays.stream(player.inventory.mainInventory)
@@ -66,7 +67,7 @@ public class CellInventory implements ITCellInventory {
                         .map(x -> new FTRBackpackHandler(player, x))
                         .collect(Collectors.toList())));
         }
-        if (ModAndClassUtil.ADVENTURE_BACKPACK) {
+        if (Mods.ADVENTURE_BACKPACK.isModLoaded()) {
             this.modInv.addAll(
                 getModInv(
                     (player) -> Arrays.stream(player.inventory.mainInventory)
@@ -78,7 +79,7 @@ public class CellInventory implements ITCellInventory {
                 modInv.add(new AdventureBackpackHandler(wearingBackpack));
             }
         }
-        if (ModAndClassUtil.BACKPACK) {
+        if (Mods.BACKPACK.isModLoaded()) {
             this.modInv.addAll(
                 getModInv(
                     (player) -> Arrays.stream(player.inventory.mainInventory)
@@ -87,6 +88,11 @@ public class CellInventory implements ITCellInventory {
                                 && !BackpackUtil.isEnderBackpack(x))
                         .map(x -> new BackPackHandler(player, x))
                         .collect(Collectors.toList())));
+        }
+        if (Mods.OK_BACKPACK.isModLoaded()) {
+            List<BaseBackpackHandler> backpacks = new ArrayList<>();
+            OKBackpackHandler.addPlayerBackpacks(player, backpacks);
+            this.modInv.addAll(backpacks);
         }
         this.modInv.addAll(
             getModInv(
@@ -222,6 +228,13 @@ public class CellInventory implements ITCellInventory {
     private ItemStack injectItem(ItemStack is) {
         ItemStack injectItem = is.copy();
         for (IInventory inv : this.modInv) {
+            if (inv instanceof BaseBackpackHandler backpackHandler) {
+                injectItem = backpackHandler.injectItem(injectItem);
+                if (injectItem == null || injectItem.stackSize <= 0) {
+                    return injectItem;
+                }
+                continue;
+            }
             for (int i = 0; i < inv.getSizeInventory(); i++) {
                 if (inv.isItemValidForSlot(i, injectItem)) {
                     ItemStack added = injectItem.copy();

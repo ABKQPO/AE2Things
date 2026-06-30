@@ -64,7 +64,7 @@ public class WirelessObject implements IActionHost {
             this.gridNode = getWirelessGrid();
             if (gridNode == null || !rangeCheck()) {
                 throw new AppEngException(
-                    PlayerMessages.OutOfRange.get()
+                    PlayerMessages.OutOfRange.toChat()
                         .toString());
             }
             this.grid = this.gridNode.getGrid();
@@ -160,7 +160,7 @@ public class WirelessObject implements IActionHost {
     }
 
     private void closeGui() {
-        this.player.addChatMessage(PlayerMessages.DeviceNotPowered.get());
+        this.player.addChatMessage(PlayerMessages.DeviceNotPowered.toChat());
         this.player.closeScreen();
     }
 

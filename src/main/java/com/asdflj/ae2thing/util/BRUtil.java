@@ -1,5 +1,7 @@
 package com.asdflj.ae2thing.util;
 
+import com.asdflj.ae2thing.integration.Mods;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +46,7 @@ public class BRUtil {
         ItemStack item;
         for (int i = 0; i < ingredients.size(); i++) {
             item = ingredients.get(i);
-            if (!((ModAndClassUtil.GT5 || ModAndClassUtil.GT5NH)
+            if (!((Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded())
                 && NEI_TH_Config.getConfigValue(ButtonConstants.BLOCK_RENDER)
                 && GTUtil.isHatchItem(item))) {
                 in.add(new OrderStack<>(item, i));

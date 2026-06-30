@@ -15,7 +15,7 @@ import org.lwjgl.opengl.GL11;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.client.render.ISlotRender;
 import com.asdflj.ae2thing.client.render.SlotRender;
-import com.asdflj.ae2thing.util.ModAndClassUtil;
+import com.asdflj.ae2thing.integration.Mods;
 import com.mitchej123.hodgepodge.textures.IPatchedTextureAtlasSprite;
 
 import appeng.api.storage.data.IAEItemStack;
@@ -98,7 +98,7 @@ public interface IGuiDrawSlot {
         IIcon icon = fluid.getIcon();
         if (icon == null) return;
 
-        if (ModAndClassUtil.HODGEPODGE && icon instanceof IPatchedTextureAtlasSprite) {
+        if (Mods.HODGEPODGE.isModLoaded() && icon instanceof IPatchedTextureAtlasSprite) {
             ((IPatchedTextureAtlasSprite) icon).markNeedsAnimationUpdate();
         }
 
