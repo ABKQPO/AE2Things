@@ -10,7 +10,7 @@ import appeng.api.networking.IGrid;
 public class NoOpWirelessConnectorBackend implements WirelessConnectorBackend {
 
     @Override
-    public void collectTiles(EntityPlayer player, IGrid grid, NBTTagList output) {}
+    public void writeTiles(EntityPlayer player, IGrid grid, NBTTagList output) {}
 
     @Override
     public void setName(EntityPlayer player, IGrid grid, String name, NBTTagCompound tag) {}

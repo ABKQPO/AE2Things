@@ -1,8 +1,5 @@
 package com.asdflj.ae2thing.integration.ae2stuff;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.bdew.ae2stuff.grid.Security;
 import net.bdew.ae2stuff.machines.wireless.BlockWireless;
 import net.bdew.ae2stuff.machines.wireless.TileWireless;
@@ -29,10 +26,11 @@ import scala.Option;
 public class Ae2StuffWirelessConnectorBackend implements WirelessConnectorBackend {
 
     @Override
-    public void collectTiles(EntityPlayer player, IGrid grid, NBTTagList output) {
-        for (TileWireless tile : getAvailableTiles(player, grid)) {
+    public void writeTiles(EntityPlayer player, IGrid grid, NBTTagList output) {
+        visitAvailableTiles(player, grid, tile -> {
             output.appendTag(writeTile(tile));
-        }
+            return false;
+        });
     }
 
     @Override
@@ -40,7 +38,7 @@ public class Ae2StuffWirelessConnectorBackend implements WirelessConnectorBacken
         if (tag == null) {
             return;
         }
-        TileWireless tile = findTile(player, grid, DimensionalCoord.readFromNBT(tag));
+        TileWireless tile = findTile(player, grid, DimensionalCoord.readFromNBT(tag), null);
         if (tile != null) {
             tile.setCustomName(name);
         }
@@ -53,10 +51,9 @@ public class Ae2StuffWirelessConnectorBackend implements WirelessConnectorBacken
         }
         DimensionalCoord leftCoord = DimensionalCoord.readFromNBT((NBTTagCompound) tag.getTag("#0"));
         DimensionalCoord rightCoord = DimensionalCoord.readFromNBT((NBTTagCompound) tag.getTag("#1"));
-        TileWireless left = findTile(player, grid, leftCoord);
-        TileWireless right = findTile(player, grid, rightCoord);
-        if (left != null && right != null) {
-            link(player, left, right);
+        TileWireless[] tiles = findTiles(player, grid, leftCoord, rightCoord);
+        if (tiles[0] != null && tiles[1] != null) {
+            link(player, tiles[0], tiles[1]);
         }
     }
 
@@ -66,7 +63,7 @@ public class Ae2StuffWirelessConnectorBackend implements WirelessConnectorBacken
             return;
         }
         DimensionalCoord coord = DimensionalCoord.readFromNBT((NBTTagCompound) tag.getTag("#0"));
-        TileWireless tile = findTile(player, grid, coord);
+        TileWireless tile = findTile(player, grid, coord, null);
         if (tile != null && tile.isLinked()) {
             tile.doUnlink();
         }
@@ -83,7 +80,7 @@ public class Ae2StuffWirelessConnectorBackend implements WirelessConnectorBacken
         if (colorIndex < 0 || colorIndex >= AEColor.values().length) {
             return;
         }
-        TileWireless tile = findTile(player, grid, coord);
+        TileWireless tile = findTile(player, grid, coord, null);
         if (tile != null) {
             tile.color_$eq(AEColor.values()[colorIndex]);
             tile.getWorldObject()
@@ -96,10 +93,9 @@ public class Ae2StuffWirelessConnectorBackend implements WirelessConnectorBacken
         return tile instanceof TileWireless;
     }
 
-    private List<TileWireless> getAvailableTiles(EntityPlayer player, IGrid currentGrid) {
-        List<TileWireless> tiles = new ArrayList<>();
+    private void visitAvailableTiles(EntityPlayer player, IGrid currentGrid, TileVisitor visitor) {
         if (player == null || currentGrid == null) {
-            return tiles;
+            return;
         }
         int playerID = Security.getPlayerId(player.getGameProfile());
         for (Grid grid : TickHandler.INSTANCE.getGridList()) {
@@ -107,29 +103,53 @@ public class Ae2StuffWirelessConnectorBackend implements WirelessConnectorBacken
             if (set.isEmpty()) {
                 continue;
             }
+            boolean sameGrid = currentGrid.equals(grid);
             for (IGridNode node : set) {
                 TileWireless tile = (TileWireless) node.getGridBlock();
-                if (currentGrid.equals(grid)) {
-                    tiles.add(tile);
+                if (sameGrid) {
+                    if (visitor.visit(tile)) {
+                        return;
+                    }
                     continue;
                 }
                 int id = node.getPlayerID();
                 if (id == -1 || id != playerID) {
                     continue;
                 }
-                tiles.add(tile);
+                if (visitor.visit(tile)) {
+                    return;
+                }
             }
         }
-        return tiles;
     }
 
-    private TileWireless findTile(EntityPlayer player, IGrid grid, DimensionalCoord coord) {
-        for (TileWireless tile : getAvailableTiles(player, grid)) {
-            if (Util.isSameDimensionalCoord(tile.getLocation(), coord)) {
-                return tile;
+    private TileWireless findTile(EntityPlayer player, IGrid grid, DimensionalCoord coord, TileWireless excluded) {
+        TileWireless[] result = new TileWireless[1];
+        visitAvailableTiles(player, grid, tile -> {
+            if (tile != excluded && Util.isSameDimensionalCoord(tile.getLocation(), coord)) {
+                result[0] = tile;
+                return true;
             }
+            return false;
+        });
+        return result[0];
+    }
+
+    private TileWireless[] findTiles(EntityPlayer player, IGrid grid, DimensionalCoord leftCoord,
+        DimensionalCoord rightCoord) {
+        TileWireless[] result = new TileWireless[2];
+        visitAvailableTiles(player, grid, tile -> {
+            if (result[0] == null && Util.isSameDimensionalCoord(tile.getLocation(), leftCoord)) {
+                result[0] = tile;
+            } else if (result[1] == null && Util.isSameDimensionalCoord(tile.getLocation(), rightCoord)) {
+                result[1] = tile;
+            }
+            return result[0] != null && result[1] != null;
+        });
+        if (result[0] != null && result[0] == result[1]) {
+            result[1] = findTile(player, grid, rightCoord, result[0]);
         }
-        return null;
+        return result;
     }
 
     private NBTTagCompound writeTile(TileWireless tile) {
@@ -180,5 +200,11 @@ public class Ae2StuffWirelessConnectorBackend implements WirelessConnectorBacken
                 .setColor(EnumChatFormatting.RED);
             player.addChatComponentMessage(message);
         }
+    }
+
+    @FunctionalInterface
+    private interface TileVisitor {
+
+        boolean visit(TileWireless tile);
     }
 }

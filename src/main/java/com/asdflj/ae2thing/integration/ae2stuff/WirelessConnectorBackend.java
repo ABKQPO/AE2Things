@@ -9,7 +9,7 @@ import appeng.api.networking.IGrid;
 
 public interface WirelessConnectorBackend {
 
-    void collectTiles(EntityPlayer player, IGrid grid, NBTTagList output);
+    void writeTiles(EntityPlayer player, IGrid grid, NBTTagList output);
 
     void setName(EntityPlayer player, IGrid grid, String name, NBTTagCompound tag);
 

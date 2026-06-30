@@ -1,8 +1,5 @@
 package com.asdflj.ae2thing.client.gui.container;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.ICrafting;
@@ -23,7 +20,6 @@ import appeng.util.Platform;
 
 public class ContainerWirelessConnectorTerminal extends BaseNetworkContainer implements INetworkTerminal {
 
-    private final List<NBTTagCompound> wirelessTiles = new ArrayList<>();
     private final WirelessConnectorBackend backend = Ae2StuffIntegration.wirelessConnectorBackend();
 
     public ContainerWirelessConnectorTerminal(InventoryPlayer ip, ITerminalHost host) {
@@ -32,32 +28,23 @@ public class ContainerWirelessConnectorTerminal extends BaseNetworkContainer imp
 
     public void updateData() {
         if (Platform.isServer()) {
-            wirelessTiles.clear();
             if (!hasPower) return;
-            if (this.getGrid() == null) return;
-            NBTTagList tiles = new NBTTagList();
-            this.backend.collectTiles(player, this.getGrid(), tiles);
-            for (int i = 0; i < tiles.tagCount(); i++) {
-                if (tiles.getCompoundTagAt(i) != null) {
-                    wirelessTiles.add(tiles.getCompoundTagAt(i));
-                }
-            }
-            sendToPlayer();
+            IGrid grid = this.getGrid();
+            if (grid == null) return;
+            sendToPlayer(grid);
         }
     }
 
-    private void sendToPlayer() {
+    private void sendToPlayer(IGrid grid) {
         NBTTagCompound data = new NBTTagCompound();
-        this.writeToNBT(data);
+        this.writeToNBT(data, grid);
         AE2Thing.proxy.netHandler.sendTo(new SPacketNBTDataUpdate(data), (EntityPlayerMP) player);
     }
 
-    private void writeToNBT(NBTTagCompound tag) {
+    private void writeToNBT(NBTTagCompound tag, IGrid grid) {
         NBTTagList list = new NBTTagList();
         tag.setTag(Constants.TILE_ENTRIES, list);
-        for (NBTTagCompound tile : this.wirelessTiles) {
-            list.appendTag(tile);
-        }
+        this.backend.writeTiles(player, grid, list);
     }
 
     @Override
@@ -67,23 +54,33 @@ public class ContainerWirelessConnectorTerminal extends BaseNetworkContainer imp
     }
 
     public void setName(String name, NBTTagCompound tag) {
-        this.backend.setName(player, this.getGrid(), name, tag);
-        updateData();
+        IGrid grid = this.getGrid();
+        this.backend.setName(player, grid, name, tag);
+        updateData(grid);
     }
 
     public void bind(NBTTagCompound tag) {
-        this.backend.bind(player, this.getGrid(), tag);
-        updateData();
+        IGrid grid = this.getGrid();
+        this.backend.bind(player, grid, tag);
+        updateData(grid);
     }
 
     public void unBind(NBTTagCompound tag) {
-        this.backend.unbind(player, this.getGrid(), tag);
-        updateData();
+        IGrid grid = this.getGrid();
+        this.backend.unbind(player, grid, tag);
+        updateData(grid);
     }
 
     public void setColor(NBTTagCompound tag) {
-        this.backend.setColor(player, this.getGrid(), tag);
-        updateData();
+        IGrid grid = this.getGrid();
+        this.backend.setColor(player, grid, tag);
+        updateData(grid);
+    }
+
+    private void updateData(IGrid grid) {
+        if (Platform.isServer() && hasPower && grid != null) {
+            sendToPlayer(grid);
+        }
     }
 
     @Override
