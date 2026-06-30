@@ -1,10 +1,8 @@
 package com.asdflj.ae2thing.common.storage;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
@@ -30,6 +28,7 @@ import appeng.api.config.FuzzyMode;
 import appeng.api.exceptions.AppEngException;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.ISaveProvider;
+import appeng.api.storage.IStorageHelper;
 import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
@@ -59,62 +58,62 @@ public class CellInventory implements ITCellInventory {
     }
 
     private void getAllInv() {
-        if (Mods.FORESTRY.isModLoaded()) {
-            this.modInv.addAll(
-                getModInv(
-                    (player) -> Arrays.stream(player.inventory.mainInventory)
-                        .filter(x -> x != null && x.getItem() instanceof ItemBackpack)
-                        .map(x -> new FTRBackpackHandler(player, x))
-                        .collect(Collectors.toList())));
+        boolean hasForestry = Mods.FORESTRY.isModLoaded();
+        boolean hasAdventureBackpack = Mods.ADVENTURE_BACKPACK.isModLoaded();
+        boolean hasBackpack = Mods.BACKPACK.isModLoaded();
+        AE2ThingAPI api = AE2ThingAPI.instance();
+
+        List<IInventory> forestryBackpacks = hasForestry ? new ArrayList<>() : null;
+        List<IInventory> adventureBackpacks = hasAdventureBackpack ? new ArrayList<>() : null;
+        List<IInventory> regularBackpacks = hasBackpack ? new ArrayList<>() : null;
+        List<IInventory> apiBackpacks = new ArrayList<>();
+
+        for (ItemStack stack : player.inventory.mainInventory) {
+            if (stack == null) {
+                continue;
+            }
+            if (hasForestry && stack.getItem() instanceof ItemBackpack) {
+                forestryBackpacks.add(new FTRBackpackHandler(player, stack));
+            }
+            if (hasAdventureBackpack && stack.getItem() instanceof ItemAdventureBackpack) {
+                adventureBackpacks.add(new AdventureBackpackHandler(stack));
+            }
+            if (hasBackpack && stack.getItem() instanceof ItemBackpackBase && !BackpackUtil.isEnderBackpack(stack)) {
+                regularBackpacks.add(new BackPackHandler(player, stack));
+            }
+            if (api.isBackpackItemInv(stack)) {
+                IInventory inventory = api.getBackpackInv(stack);
+                if (inventory != null) {
+                    apiBackpacks.add(inventory);
+                }
+            }
         }
-        if (Mods.ADVENTURE_BACKPACK.isModLoaded()) {
-            this.modInv.addAll(
-                getModInv(
-                    (player) -> Arrays.stream(player.inventory.mainInventory)
-                        .filter(x -> x != null && x.getItem() instanceof ItemAdventureBackpack)
-                        .map(AdventureBackpackHandler::new)
-                        .collect(Collectors.toList())));
+
+        if (hasForestry) {
+            this.modInv.addAll(forestryBackpacks);
+        }
+        if (hasAdventureBackpack) {
+            this.modInv.addAll(adventureBackpacks);
             ItemStack wearingBackpack = Wearing.getWearingBackpack(player);
             if (wearingBackpack != null) {
                 modInv.add(new AdventureBackpackHandler(wearingBackpack));
             }
         }
-        if (Mods.BACKPACK.isModLoaded()) {
-            this.modInv.addAll(
-                getModInv(
-                    (player) -> Arrays.stream(player.inventory.mainInventory)
-                        .filter(
-                            x -> x != null && x.getItem() instanceof ItemBackpackBase
-                                && !BackpackUtil.isEnderBackpack(x))
-                        .map(x -> new BackPackHandler(player, x))
-                        .collect(Collectors.toList())));
+        if (hasBackpack) {
+            this.modInv.addAll(regularBackpacks);
         }
         if (Mods.OK_BACKPACK.isModLoaded()) {
             List<BaseBackpackHandler> backpacks = new ArrayList<>();
             OKBackpackHandler.addPlayerBackpacks(player, backpacks);
             this.modInv.addAll(backpacks);
         }
-        this.modInv.addAll(
-            getModInv(
-                (player) -> Arrays.stream(player.inventory.mainInventory)
-                    .filter(
-                        x -> AE2ThingAPI.instance()
-                            .isBackpackItemInv(x))
-                    .map(
-                        x -> AE2ThingAPI.instance()
-                            .getBackpackInv(x))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList())));
+        this.modInv.addAll(apiBackpacks);
 
         for (IInventory inv : this.modInv) {
             if (inv instanceof BaseBackpackHandler bbh && bbh.hasFluidTank()) {
                 this.fluidInv.add(bbh);
             }
         }
-    }
-
-    private List<IInventory> getModInv(IModInv inv) {
-        return inv.getInv(this.player);
     }
 
     @Override
@@ -146,8 +145,9 @@ public class CellInventory implements ITCellInventory {
     public boolean canHoldNewItem(ItemStack is) {
         for (IInventory inv : this.modInv) {
             for (int i = 0; i < inv.getSizeInventory(); i++) {
+                ItemStack slotStack = inv.getStackInSlot(i);
                 if (inv.isItemValidForSlot(i, is)) return true;
-                else if (inv.getStackInSlot(i) == null) break;
+                else if (slotStack == null) break;
             }
         }
         return false;
@@ -213,8 +213,8 @@ public class CellInventory implements ITCellInventory {
         for (BaseBackpackHandler inv : this.fluidInv) {
             for (FluidTank ft : inv.getFluidTanks()) {
                 int added = ft.fill(injectFluid, true);
-                inv.markFluidAsDirty();
                 if (added > 0) {
+                    inv.markFluidAsDirty();
                     injectFluid.amount -= added;
                 }
                 if (injectFluid.amount <= 0) {
@@ -416,15 +416,14 @@ public class CellInventory implements ITCellInventory {
                 .storage()
                 .createPrimitiveItemList();
         }
+        IStorageHelper storage = AEApi.instance()
+            .storage();
         cellItems.resetStatus();
         for (IInventory inv : this.modInv) {
             for (int i = 0; i < inv.getSizeInventory(); i++) {
                 ItemStack is = inv.getStackInSlot(i);
                 if (is == null) continue;
-                cellItems.add(
-                    AEApi.instance()
-                        .storage()
-                        .createItemStack(is));
+                cellItems.add(storage.createItemStack(is));
             }
         }
         for (BaseBackpackHandler inv : this.fluidInv) {

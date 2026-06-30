@@ -43,7 +43,9 @@ public class OKBackpackHandler extends BaseBackpackHandler {
     public ItemStack injectItem(ItemStack stack) {
         ItemStack remaining = this.context.getWrapper()
             .insertItem(stack.copy(), false);
-        BackpackEntityHelpers.persistBackpack(this.context);
+        if (remaining == null || remaining.stackSize < stack.stackSize) {
+            BackpackEntityHelpers.persistBackpack(this.context);
+        }
         return remaining == null ? null : remaining;
     }
 
