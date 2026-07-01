@@ -42,7 +42,6 @@ public class NameConst {
     public static final String TT_WIRELESS_DISTRIBUTOR_DESC = TT_WIRELESS_DISTRIBUTOR + "desc";
     public static final String TT_BACKPACK_TERMINAL = TT_KEY + "backpack_terminal.";
     public static final String TT_BACKPACK_TERMINAL_DESC = TT_BACKPACK_TERMINAL + "desc";
-    public static final String TT_BACKPACK_TERMINAL_OK_BACKPACK = TT_BACKPACK_TERMINAL + "okbackpack";
     public static final String TT_TOGGLEABLE_VIEW_CELL = TT_KEY + "toggleable_view_cell.desc";
     public static final String TT_CELL_LINK = TT_KEY + "cell_link.";
     public static final String TT_CELL_LINK_DISABLE = TT_CELL_LINK + "disable";
