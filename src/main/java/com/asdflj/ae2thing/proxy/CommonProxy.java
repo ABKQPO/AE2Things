@@ -124,6 +124,13 @@ public class CommonProxy {
             AE2ThingAPI.instance()
                 .addBackpackItem(OKBackpackHandler.getBackpackItemClass());
         }
+        Upgrades.ORE_FILTER.registerItem(ItemAndBlockHolder.ITEM_INFINITY_CELL.stack(), 1);
+        Upgrades.FUZZY.registerItem(ItemAndBlockHolder.ITEM_INFINITY_CELL.stack(), 1);
+        Upgrades.INVERTER.registerItem(ItemAndBlockHolder.ITEM_INFINITY_CELL.stack(), 1);
+        Upgrades.ORE_FILTER.registerItem(ItemAndBlockHolder.ITEM_INFINITY_FLUID_CELL.stack(), 1);
+        Upgrades.FUZZY.registerItem(ItemAndBlockHolder.ITEM_INFINITY_FLUID_CELL.stack(), 1);
+        Upgrades.INVERTER.registerItem(ItemAndBlockHolder.ITEM_INFINITY_FLUID_CELL.stack(), 1);
+
         // Upgrades.ORE_FILTER.registerItem(ItemAndBlockHolder.TOGGLE_VIEW_CELL.stack(), 1);
         // Upgrades.FUZZY.registerItem(ItemAndBlockHolder.TOGGLE_VIEW_CELL.stack(), 1);
         // Upgrades.INVERTER.registerItem(ItemAndBlockHolder.TOGGLE_VIEW_CELL.stack(), 1);
