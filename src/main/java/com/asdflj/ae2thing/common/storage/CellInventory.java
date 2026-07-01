@@ -58,6 +58,9 @@ public class CellInventory implements ITCellInventory {
     }
 
     private void getAllInv() {
+        this.modInv.clear();
+        this.fluidInv.clear();
+
         boolean hasForestry = Mods.FORESTRY.isModLoaded();
         boolean hasAdventureBackpack = Mods.ADVENTURE_BACKPACK.isModLoaded();
         boolean hasBackpack = Mods.BACKPACK.isModLoaded();
@@ -143,6 +146,7 @@ public class CellInventory implements ITCellInventory {
 
     @Override
     public boolean canHoldNewItem(ItemStack is) {
+        this.loadCellItems();
         for (IInventory inv : this.modInv) {
             for (int i = 0; i < inv.getSizeInventory(); i++) {
                 ItemStack slotStack = inv.getStackInSlot(i);
@@ -261,9 +265,7 @@ public class CellInventory implements ITCellInventory {
     }
 
     private void tryToLoadCellItems() {
-        if (this.cellItems == null) {
-            this.loadCellItems();
-        }
+        this.loadCellItems();
     }
 
     @Override
@@ -318,6 +320,7 @@ public class CellInventory implements ITCellInventory {
         if (request == null) {
             return null;
         }
+        this.loadCellItems();
         IAEItemStack result = null;
 
         final IAEItemStack l = this.getCellItems()
@@ -367,6 +370,14 @@ public class CellInventory implements ITCellInventory {
     private ItemStack extractItem(ItemStack extractItem) {
         ItemStack extItem = extractItem.copy();
         for (IInventory inv : this.modInv) {
+            if (inv instanceof BaseBackpackHandler backpackHandler) {
+                ItemStack extracted = backpackHandler.extractItem(extItem);
+                extItem.stackSize -= extracted.stackSize;
+                if (extItem.stackSize <= 0) {
+                    return extractItem;
+                }
+                continue;
+            }
             for (int i = 0; i < inv.getSizeInventory(); i++) {
                 ItemStack is = inv.getStackInSlot(i);
                 if (Platform.isSameItemPrecise(is, extItem)) {
@@ -391,6 +402,7 @@ public class CellInventory implements ITCellInventory {
 
     @Override
     public IItemList<IAEItemStack> getAvailableItems(IItemList<IAEItemStack> out) {
+        this.loadCellItems();
         for (final IAEItemStack i : this.getCellItems()) {
             out.add(i);
         }
@@ -411,11 +423,11 @@ public class CellInventory implements ITCellInventory {
     @Override
     public void loadCellItems() {
         if (this.cellItems == null) {
-            this.getAllInv();
             this.cellItems = AEApi.instance()
                 .storage()
                 .createPrimitiveItemList();
         }
+        this.getAllInv();
         IStorageHelper storage = AEApi.instance()
             .storage();
         cellItems.resetStatus();

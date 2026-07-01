@@ -13,6 +13,8 @@ import ruiseki.okbackpack.common.helpers.BackpackEntityHelpers;
 import ruiseki.okbackpack.common.helpers.BackpackEntityHelpers.BackpackContext;
 import ruiseki.okbackpack.common.helpers.BackpackEntityHelpers.SearchOrder;
 
+import appeng.util.Platform;
+
 public class OKBackpackHandler extends BaseBackpackHandler {
 
     private final BackpackContext context;
@@ -41,12 +43,47 @@ public class OKBackpackHandler extends BaseBackpackHandler {
 
     @Override
     public ItemStack injectItem(ItemStack stack) {
-        ItemStack remaining = this.context.getWrapper()
-            .insertItem(stack.copy(), false);
+        BackpackWrapper wrapper = this.context.getWrapper();
+        ItemStack remaining = stack.copy();
+        for (int slot = 0; slot < wrapper.getSlots() && remaining != null && remaining.stackSize > 0; slot++) {
+            if (!wrapper.canInsert(slot, remaining)) {
+                continue;
+            }
+            remaining = wrapper.insertItem(slot, remaining, false);
+        }
         if (remaining == null || remaining.stackSize < stack.stackSize) {
             BackpackEntityHelpers.persistBackpack(this.context);
         }
         return remaining == null ? null : remaining;
+    }
+
+    @Override
+    public ItemStack extractItem(ItemStack stack) {
+        BackpackWrapper wrapper = this.context.getWrapper();
+        int remaining = stack.stackSize;
+        int extractedAmount = 0;
+        for (int slot = 0; slot < wrapper.getSlots() && remaining > 0; slot++) {
+            ItemStack slotStack = wrapper.getStackInSlot(slot);
+            if (slotStack == null || !Platform.isSameItemPrecise(slotStack, stack)
+                || !wrapper.canExtract(slot, slotStack)) {
+                continue;
+            }
+            ItemStack extracted = wrapper.extractItem(slot, Math.min(slotStack.stackSize, remaining), false);
+            if (extracted == null || extracted.stackSize <= 0) {
+                continue;
+            }
+            extractedAmount += extracted.stackSize;
+            remaining -= extracted.stackSize;
+        }
+        if (extractedAmount > 0) {
+            BackpackEntityHelpers.persistBackpack(this.context);
+            ItemStack extracted = stack.copy();
+            extracted.stackSize = extractedAmount;
+            return extracted;
+        }
+        ItemStack empty = stack.copy();
+        empty.stackSize = 0;
+        return empty;
     }
 
     public static class OKBackpackInventory implements IInventory {
@@ -137,9 +174,16 @@ public class OKBackpackHandler extends BaseBackpackHandler {
             if (stack == null) {
                 return true;
             }
-            ItemStack single = stack.copy();
-            single.stackSize = 1;
-            return this.wrapper.canInsert(slot, single) && this.wrapper.insertItem(slot, single, true) == null;
+            for (int index = 0; index < this.wrapper.getSlots(); index++) {
+                if (!this.wrapper.canInsert(index, stack)) {
+                    continue;
+                }
+                ItemStack remaining = this.wrapper.insertItem(index, stack.copy(), true);
+                if (remaining == null || remaining.stackSize < stack.stackSize) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

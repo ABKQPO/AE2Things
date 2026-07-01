@@ -8,6 +8,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.ICrafting;
 
 import com.asdflj.ae2thing.AE2Thing;
+import com.asdflj.ae2thing.common.storage.RefreshableStorageMonitor;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
@@ -76,6 +77,9 @@ public class ItemMonitor implements IMEMonitorHandlerReceiver<IAEItemStack>, IPr
 
     @Override
     public void processItemList() {
+        if (this.itemMonitor instanceof RefreshableStorageMonitor refreshable) {
+            refreshable.refreshExternalChanges(null);
+        }
         if (!this.items.isEmpty()) {
             final IItemList<IAEItemStack> monitorCache = this.itemMonitor.getStorageList();
             List<IAEItemStack> toSend = new ArrayList<>();

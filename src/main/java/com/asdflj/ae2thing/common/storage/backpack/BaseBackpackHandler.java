@@ -8,6 +8,8 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidTank;
 
+import appeng.util.Platform;
+
 public abstract class BaseBackpackHandler implements IInventory {
 
     protected final IInventory inv;
@@ -66,6 +68,29 @@ public abstract class BaseBackpackHandler implements IInventory {
                 break;
             }
         }
+        return remaining;
+    }
+
+    public ItemStack extractItem(ItemStack stack) {
+        ItemStack remaining = stack.copy();
+        for (int i = 0; i < this.getSizeInventory(); i++) {
+            ItemStack slotStack = this.getStackInSlot(i);
+            if (slotStack == null || !Platform.isSameItemPrecise(slotStack, remaining)) {
+                continue;
+            }
+            int size = slotStack.stackSize;
+            if (size > remaining.stackSize) {
+                slotStack.splitStack(remaining.stackSize);
+                this.setInventorySlotContents(i, slotStack.copy());
+                return stack;
+            }
+            this.setInventorySlotContents(i, null);
+            remaining.stackSize -= size;
+            if (remaining.stackSize <= 0) {
+                return stack;
+            }
+        }
+        remaining.stackSize = stack.stackSize - remaining.stackSize;
         return remaining;
     }
 
