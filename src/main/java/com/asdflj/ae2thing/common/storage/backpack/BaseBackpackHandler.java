@@ -48,27 +48,55 @@ public abstract class BaseBackpackHandler implements IInventory {
     public ItemStack injectItem(ItemStack stack) {
         ItemStack remaining = stack.copy();
         for (int i = 0; i < this.getSizeInventory(); i++) {
-            if (this.isItemValidForSlot(i, remaining)) {
-                ItemStack added = remaining.copy();
-                ItemStack slotItem = this.getStackInSlot(i);
-                if (slotItem == null) {
-                    added.stackSize = Math.min(added.getMaxStackSize(), remaining.stackSize);
-                    this.setInventorySlotContents(i, added);
-                } else {
-                    ItemStack updated = slotItem.copy();
-                    added.stackSize = Math.min(added.getMaxStackSize() - updated.stackSize, remaining.stackSize);
-                    updated.stackSize += added.stackSize;
-                    this.setInventorySlotContents(i, updated);
-                }
-                remaining.stackSize -= added.stackSize;
-                if (remaining.stackSize <= 0) {
-                    return remaining;
-                }
-            } else if (this.getStackInSlot(i) == null) {
-                break;
+            ItemStack slotItem = this.getStackInSlot(i);
+            if (slotItem == null || !Platform.isSameItemPrecise(slotItem, remaining)
+                || !this.isItemValidForSlot(i, remaining)) {
+                continue;
+            }
+            int moved = Math.min(this.getInsertableAmount(i, slotItem), remaining.stackSize);
+            if (moved <= 0) {
+                continue;
+            }
+            ItemStack updated = slotItem.copy();
+            updated.stackSize += moved;
+            this.setInventorySlotContents(i, updated);
+            remaining.stackSize -= moved;
+            if (remaining.stackSize <= 0) {
+                return remaining;
+            }
+        }
+        for (int i = 0; i < this.getSizeInventory(); i++) {
+            if (this.getStackInSlot(i) != null || !this.isItemValidForSlot(i, remaining)) {
+                continue;
+            }
+            ItemStack added = remaining.copy();
+            added.stackSize = Math.min(this.getSlotStackLimit(i, added), remaining.stackSize);
+            if (added.stackSize <= 0) {
+                continue;
+            }
+            this.setInventorySlotContents(i, added);
+            remaining.stackSize -= added.stackSize;
+            if (remaining.stackSize <= 0) {
+                return remaining;
             }
         }
         return remaining;
+    }
+
+    protected int getSlotStackLimit(int slot, ItemStack stack) {
+        int itemLimit = stack.getMaxStackSize();
+        if (itemLimit <= 1) {
+            return itemLimit;
+        }
+        int inventoryLimit = this.getInventoryStackLimit();
+        if (inventoryLimit > itemLimit) {
+            return inventoryLimit;
+        }
+        return Math.min(itemLimit, inventoryLimit);
+    }
+
+    private int getInsertableAmount(int slot, ItemStack stack) {
+        return this.getSlotStackLimit(slot, stack) - stack.stackSize;
     }
 
     public ItemStack extractItem(ItemStack stack) {

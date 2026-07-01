@@ -77,11 +77,14 @@ public class ItemMonitor implements IMEMonitorHandlerReceiver<IAEItemStack>, IPr
 
     @Override
     public void processItemList() {
+        IItemList<IAEItemStack> monitorCache = null;
         if (this.itemMonitor instanceof RefreshableStorageMonitor refreshable) {
-            refreshable.refreshExternalChanges(null);
+            monitorCache = refreshable.refreshExternalChanges(null, false);
         }
         if (!this.items.isEmpty()) {
-            final IItemList<IAEItemStack> monitorCache = this.itemMonitor.getStorageList();
+            if (monitorCache == null) {
+                monitorCache = this.itemMonitor.getStorageList();
+            }
             List<IAEItemStack> toSend = new ArrayList<>();
             for (final IAEItemStack is : this.items) {
                 IAEItemStack send = monitorCache.findPrecise(is);
@@ -107,7 +110,9 @@ public class ItemMonitor implements IMEMonitorHandlerReceiver<IAEItemStack>, IPr
     @Override
     public void queueInventory(ICrafting c) {
         if (Platform.isServer() && c instanceof EntityPlayer && this.itemMonitor != null) {
-            final IItemList<IAEItemStack> monitorCache = this.itemMonitor.getStorageList();
+            final IItemList<IAEItemStack> monitorCache = this.itemMonitor instanceof RefreshableStorageMonitor refreshable
+                ? refreshable.refreshExternalChanges(null, true)
+                : this.itemMonitor.getStorageList();
             List<IAEItemStack> toSend = new ArrayList<>();
             for (final IAEItemStack is : monitorCache) {
                 fluidHandler(is.copy());

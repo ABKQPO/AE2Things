@@ -45,12 +45,15 @@ public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack>
     implements ITerminalHost, IInventorySlotAware, IGuiItemObject, IEnergySource, ITerminalTypeFilterProvider,
     RefreshableStorageMonitor {
 
+    private static final int EXTERNAL_REFRESH_INTERVAL = 5;
+
     private final ItemStack target;
     private final int inventorySlot;
     protected AppEngInternalInventory crafting;
     protected EntityPlayer player;
     private final MonitorableTypeFilter typeFilters = new MonitorableTypeFilter();
     private IItemList<IAEItemStack> lastExternalSnapshot;
+    private int lastExternalRefreshTick = Integer.MIN_VALUE;
 
     @SuppressWarnings("unchecked")
     public BackpackTerminalInventory(ItemStack is, int slot, EntityPlayer player, IMEInventoryHandler<?> monitor) {
@@ -96,17 +99,16 @@ public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack>
     }
 
     @Override
-    public IItemList<IAEItemStack> getStorageList() {
-        this.refreshExternalChanges(null);
-        return super.getStorageList();
-    }
+    public IItemList<IAEItemStack> refreshExternalChanges(BaseActionSource source, boolean force) {
+        if (!force && !this.shouldRefreshExternalChanges()) {
+            return this.lastExternalSnapshot;
+        }
 
-    @Override
-    public void refreshExternalChanges(BaseActionSource source) {
         IItemList<IAEItemStack> current = this.createCurrentSnapshot();
+        this.lastExternalRefreshTick = this.getExternalRefreshTick();
         if (this.lastExternalSnapshot == null) {
             this.lastExternalSnapshot = this.copySnapshot(current);
-            return;
+            return current;
         }
 
         List<IAEStack<?>> changes = this.calculateChanges(this.lastExternalSnapshot, current);
@@ -114,6 +116,7 @@ public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack>
         if (!changes.isEmpty()) {
             this.postChangesToListeners(changes, source);
         }
+        return current;
     }
 
     @Override
@@ -167,6 +170,7 @@ public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack>
 
     private void syncExternalSnapshot() {
         this.lastExternalSnapshot = this.copySnapshot(this.createCurrentSnapshot());
+        this.lastExternalRefreshTick = this.getExternalRefreshTick();
     }
 
     private IItemList<IAEItemStack> createCurrentSnapshot() {
@@ -208,5 +212,20 @@ public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack>
             }
         }
         return changes;
+    }
+
+    private boolean shouldRefreshExternalChanges() {
+        if (this.lastExternalSnapshot == null || this.player == null) {
+            return true;
+        }
+        int currentTick = this.getExternalRefreshTick();
+        if (currentTick == this.lastExternalRefreshTick) {
+            return false;
+        }
+        return currentTick - this.lastExternalRefreshTick >= EXTERNAL_REFRESH_INTERVAL;
+    }
+
+    private int getExternalRefreshTick() {
+        return this.player == null ? 0 : this.player.ticksExisted;
     }
 }

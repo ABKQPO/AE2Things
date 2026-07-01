@@ -149,9 +149,9 @@ public class CellInventory implements ITCellInventory {
         this.loadCellItems();
         for (IInventory inv : this.modInv) {
             for (int i = 0; i < inv.getSizeInventory(); i++) {
-                ItemStack slotStack = inv.getStackInSlot(i);
-                if (inv.isItemValidForSlot(i, is)) return true;
-                else if (slotStack == null) break;
+                if (this.canInsertIntoSlot(inv, i, is)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -240,24 +240,36 @@ public class CellInventory implements ITCellInventory {
                 continue;
             }
             for (int i = 0; i < inv.getSizeInventory(); i++) {
-                if (inv.isItemValidForSlot(i, injectItem)) {
-                    ItemStack added = injectItem.copy();
-                    if (inv.getStackInSlot(i) == null) {
-                        added.stackSize = Math.min(added.getMaxStackSize(), injectItem.stackSize);
-                        inv.setInventorySlotContents(i, added);
-                    } else {
-                        ItemStack slotItem = inv.getStackInSlot(i)
-                            .copy();
-                        added.stackSize = Math.min(added.getMaxStackSize() - slotItem.stackSize, injectItem.stackSize);
-                        slotItem.stackSize += added.stackSize;
-                        inv.setInventorySlotContents(i, slotItem);
-                    }
-                    injectItem.stackSize -= added.stackSize;
-                    if (injectItem.stackSize <= 0) {
-                        return injectItem;
-                    }
-                } else if (inv.getStackInSlot(i) == null) {
-                    break;
+                ItemStack slotItem = inv.getStackInSlot(i);
+                if (slotItem == null || !Platform.isSameItemPrecise(slotItem, injectItem)
+                    || !inv.isItemValidForSlot(i, injectItem)) {
+                    continue;
+                }
+                int moved = Math.min(this.getInsertableAmount(inv, slotItem), injectItem.stackSize);
+                if (moved <= 0) {
+                    continue;
+                }
+                ItemStack updated = slotItem.copy();
+                updated.stackSize += moved;
+                inv.setInventorySlotContents(i, updated);
+                injectItem.stackSize -= moved;
+                if (injectItem.stackSize <= 0) {
+                    return injectItem;
+                }
+            }
+            for (int i = 0; i < inv.getSizeInventory(); i++) {
+                if (inv.getStackInSlot(i) != null || !inv.isItemValidForSlot(i, injectItem)) {
+                    continue;
+                }
+                ItemStack added = injectItem.copy();
+                added.stackSize = Math.min(this.getSlotStackLimit(inv, added), injectItem.stackSize);
+                if (added.stackSize <= 0) {
+                    continue;
+                }
+                inv.setInventorySlotContents(i, added);
+                injectItem.stackSize -= added.stackSize;
+                if (injectItem.stackSize <= 0) {
+                    return injectItem;
                 }
             }
         }
@@ -444,5 +456,30 @@ public class CellInventory implements ITCellInventory {
                 if (is != null) cellItems.add(is);
             }
         }
+    }
+
+    private boolean canInsertIntoSlot(IInventory inv, int slot, ItemStack stack) {
+        ItemStack slotItem = inv.getStackInSlot(slot);
+        if (slotItem == null) {
+            return inv.isItemValidForSlot(slot, stack);
+        }
+        return Platform.isSameItemPrecise(slotItem, stack) && inv.isItemValidForSlot(slot, stack)
+            && this.getInsertableAmount(inv, slotItem) > 0;
+    }
+
+    private int getInsertableAmount(IInventory inv, ItemStack stack) {
+        return this.getSlotStackLimit(inv, stack) - stack.stackSize;
+    }
+
+    private int getSlotStackLimit(IInventory inv, ItemStack stack) {
+        int itemLimit = stack.getMaxStackSize();
+        if (itemLimit <= 1) {
+            return itemLimit;
+        }
+        int inventoryLimit = inv.getInventoryStackLimit();
+        if (inventoryLimit > itemLimit) {
+            return inventoryLimit;
+        }
+        return Math.min(itemLimit, inventoryLimit);
     }
 }
