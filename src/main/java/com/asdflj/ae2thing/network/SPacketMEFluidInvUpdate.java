@@ -1,7 +1,5 @@
 package com.asdflj.ae2thing.network;
 
-import java.util.List;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 
@@ -19,10 +17,6 @@ public class SPacketMEFluidInvUpdate extends SPacketMEBaseInvUpdate implements I
 
     public SPacketMEFluidInvUpdate() {}
 
-    public void addAll(final List<IAEFluidStack> list) {
-        this.list.addAll(list);
-    }
-
     public void appendFluid(final IAEFluidStack is) {
         this.list.add(is);
     }
@@ -30,11 +24,10 @@ public class SPacketMEFluidInvUpdate extends SPacketMEBaseInvUpdate implements I
     public static class Handler implements IMessageHandler<SPacketMEFluidInvUpdate, IMessage> {
 
         @Override
-        @SuppressWarnings({ "unchecked", "rawtypes" })
         public IMessage onMessage(SPacketMEFluidInvUpdate message, MessageContext ctx) {
             final GuiScreen gs = Minecraft.getMinecraft().currentScreen;
             if (gs instanceof IGuiMonitorTerminal gpt) {
-                gpt.postFluidUpdate((List) message.list);
+                gpt.postStackUpdate(message.list);
             }
             return null;
         }

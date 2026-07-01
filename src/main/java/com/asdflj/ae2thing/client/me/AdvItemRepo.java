@@ -56,7 +56,7 @@ public class AdvItemRepo extends ItemRepo implements Runnable {
     protected final IItemList<IAEStack<?>> list = Ae2ReflectClient.getList(this);
 
     protected AdvItemRepo repo;
-    protected final Set<IAEItemStack> cache = Collections.synchronizedSet(new HashSet<>());
+    protected final Set<IAEStack<?>> cache = Collections.synchronizedSet(new HashSet<>());
     protected IGuiMonitor gui;
     private static final Lock lock = new ReentrantLock();
 
@@ -102,6 +102,11 @@ public class AdvItemRepo extends ItemRepo implements Runnable {
 
     @Override
     public void postUpdate(IAEItemStack is) {
+        this.postUpdate((IAEStack<?>) is);
+    }
+
+    @Override
+    public void postUpdate(IAEStack<?> is) {
         if (this.hasCache()) {
             lock.lock();
             this.cache.remove(is);
@@ -128,7 +133,7 @@ public class AdvItemRepo extends ItemRepo implements Runnable {
     public void run() {
         try {
             lock.lock();
-            for (IAEItemStack is : this.cache) {
+            for (IAEStack<?> is : this.cache) {
                 this.repo.postUpdate(is);
             }
             this.cache.clear();

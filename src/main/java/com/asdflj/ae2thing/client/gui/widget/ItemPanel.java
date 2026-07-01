@@ -32,7 +32,6 @@ import com.glodblock.github.common.item.ItemFluidDrop;
 import appeng.api.config.SearchBoxMode;
 import appeng.api.config.Settings;
 import appeng.api.config.TerminalStyle;
-import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.util.IConfigManager;
@@ -53,7 +52,6 @@ import appeng.helpers.InventoryAction;
 import appeng.helpers.MonitorableAction;
 import appeng.util.IConfigManagerHost;
 import appeng.util.Platform;
-import appeng.util.item.AEItemStack;
 import codechicken.nei.LayoutManager;
 import codechicken.nei.util.TextHistory;
 
@@ -516,24 +514,10 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     }
 
     @Override
-    public void postFluidUpdate(List<IAEFluidStack> list) {
-        for (IAEFluidStack is : list) {
-            IAEItemStack stack = AEItemStack.create(ItemFluidDrop.newDisplayStack(is.getFluidStack()));
-            stack.setStackSize(is.getStackSize());
-            stack.setCraftable(is.isCraftable());
+    public void postStackUpdate(List<? extends IAEStack<?>> list) {
+        for (IAEStack<?> stack : list) {
+            if (stack instanceof IAEItemStack item && item.getItem() instanceof ItemFluidDrop) continue;
             this.repo.postUpdate(stack);
-        }
-        this.repo.updateView();
-        if (!this.repo.hasCache()) {
-            this.setScrollBar();
-        }
-    }
-
-    @Override
-    public void postUpdate(List<IAEItemStack> list) {
-        for (IAEItemStack ias : list) {
-            if (ias.getItem() instanceof ItemFluidDrop) continue;
-            this.repo.postUpdate(ias);
         }
         this.repo.updateView();
         if (!this.repo.hasCache()) {

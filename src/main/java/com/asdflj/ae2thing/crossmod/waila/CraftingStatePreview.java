@@ -19,7 +19,6 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.api.InventoryActionExtend;
-import com.asdflj.ae2thing.client.render.RenderHelper;
 import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.network.CPacketInventoryActionExtend;
 import com.asdflj.ae2thing.util.CPUCraftingPreview;
@@ -27,11 +26,13 @@ import com.asdflj.ae2thing.util.CPUCraftingPreview;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.util.item.AEItemStack;
 import codechicken.lib.gui.GuiDraw;
+import mcp.mobius.waila.handlers.nei.TooltipHandlerWaila;
 
-public class CraftingStatePreview extends mcp.mobius.waila.handlers.nei.TooltipHandlerWaila {
+public class CraftingStatePreview extends TooltipHandlerWaila {
 
     private static final List<CPUCraftingPreview> cpus = new ArrayList<>();
     private static final FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+    private static final int maxStacksPerRow = CPUCraftingPreview.maxSize;
     private static int width;
     private static final GuiDraw.ITooltipLineHandler tooltipLineHandler = new GuiDraw.ITooltipLineHandler() {
 
@@ -48,11 +49,8 @@ public class CraftingStatePreview extends mcp.mobius.waila.handlers.nei.TooltipH
                 int j = 0;
                 for (CPUCraftingPreview cpu : cpus) {
                     fontRenderer.drawStringWithShadow(cpu.name, x, y + j * HEIGHT, 0xffffff);
-                    for (int i = 0; i < cpu.itemList.size() && i < CPUCraftingPreview.maxSize; i++) {
-                        IAEItemStack item = cpu.itemList.get(i);
-                        RenderHelper
-                            .renderAEStack(item, x + (i * 18), y + (fontRenderer.FONT_HEIGHT) + j * HEIGHT, 500f);
-                    }
+                    new TooltipStackGridRenderer(cpu.itemList, maxStacksPerRow, true)
+                        .draw(x, y + fontRenderer.FONT_HEIGHT + j * HEIGHT, 500f);
                     j++;
                 }
             }
@@ -92,9 +90,9 @@ public class CraftingStatePreview extends mcp.mobius.waila.handlers.nei.TooltipH
         for (int i = 0; i < list.tagCount(); i++) {
             NBTTagCompound data = list.getCompoundTagAt(i);
             CPUCraftingPreview cpu = CPUCraftingPreview.readFromNBT(data);
-            size = Math.max(cpu.itemList.size(), size);
+            size = Math.max(new TooltipStackGridRenderer(cpu.itemList, maxStacksPerRow, true).getWidth(), size);
             cpus.add(cpu);
         }
-        width = size * 20;
+        width = size;
     }
 }

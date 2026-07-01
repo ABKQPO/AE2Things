@@ -722,7 +722,7 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
         return this.zLevel;
     }
 
-    public abstract void postUpdate(List<IAEItemStack> list);
+    public abstract void postStackUpdate(List<? extends IAEStack<?>> list);
 
     public void setPlayerInv(ItemStack is) {
         this.container.getPlayerInv()

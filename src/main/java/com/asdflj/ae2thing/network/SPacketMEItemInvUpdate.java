@@ -1,5 +1,6 @@
 package com.asdflj.ae2thing.network;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
@@ -41,53 +42,53 @@ public class SPacketMEItemInvUpdate extends SPacketMEBaseInvUpdate implements IM
         list.add(is);
     }
 
-    public void appendStack(final IAEStack<?> is) {
-        list.add(is);
-    }
-
-    public void addAll(final List<IAEItemStack> list) {
-        this.list.addAll(list);
+    public List<IAEItemStack> getItemStacks() {
+        List<IAEItemStack> items = new ArrayList<>();
+        for (IAEStack<?> stack : this.list) {
+            if (stack instanceof IAEItemStack item) {
+                items.add(item);
+            }
+        }
+        return items;
     }
 
     public static class Handler implements IMessageHandler<SPacketMEItemInvUpdate, IMessage> {
 
         @Override
-        @SuppressWarnings({ "unchecked", "rawtypes" })
         public IMessage onMessage(SPacketMEItemInvUpdate message, MessageContext ctx) {
             final GuiScreen gs = Minecraft.getMinecraft().currentScreen;
             if (message.ref == Constants.MessageType.UPDATE_ITEMS.type && gs instanceof IGuiMonitorTerminal gmt) {
-                gmt.postUpdate((List) message.list);
+                gmt.postStackUpdate(message.list);
             } else if (message.ref == Constants.MessageType.UPDATE_PLAYER_ITEM.type
                 && gs instanceof IGuiMonitorTerminal gmt) {
-                    ItemStack is = null;
-                    if (!message.isEmpty()) {
-                        is = ((IAEItemStack) message.list.get(0)).getItemStack();
-                    }
-                    gmt.setPlayerInv(is);
-                } else if (message.ref == Constants.MessageType.UPDATE_PLAYER_CURRENT_ITEM.type) {
-                    if (gs == null) {
-                        Minecraft mc = Minecraft.getMinecraft();
-                        EntityClientPlayerMP player = mc.thePlayer;
-                        IAEItemStack is = (IAEItemStack) message.list.get(0);
-                        if (is == null) return null;
-                        player.inventory.setInventorySlotContents(player.inventory.currentItem, is.getItemStack());
-                    }
-                } else if (message.ref == Constants.MessageType.UPDATE_PINNED_ITEMS.type) {
+                ItemStack is = null;
+                if (!message.isEmpty() && message.list.get(0) instanceof IAEItemStack item) {
+                    is = item.getItemStack();
+                }
+                gmt.setPlayerInv(is);
+            } else if (message.ref == Constants.MessageType.UPDATE_PLAYER_CURRENT_ITEM.type) {
+                if (gs == null) {
+                    Minecraft mc = Minecraft.getMinecraft();
+                    EntityClientPlayerMP player = mc.thePlayer;
+                    if (message.isEmpty() || !(message.list.get(0) instanceof IAEItemStack item)) return null;
+                    player.inventory.setInventorySlotContents(player.inventory.currentItem, item.getItemStack());
+                }
+            } else if (message.ref == Constants.MessageType.UPDATE_PINNED_ITEMS.type) {
+                AE2ThingAPI.instance()
+                    .getPinned()
+                    .updatePinnedItems(message.getItemStacks());
+            } else if (message.ref == Constants.MessageType.ADD_PINNED_ITEM.type) {
+                if (!message.isEmpty() && message.list.get(0) instanceof IAEItemStack item) {
                     AE2ThingAPI.instance()
                         .getPinned()
-                        .updatePinnedItems((List) message.list);
-                } else if (message.ref == Constants.MessageType.ADD_PINNED_ITEM.type) {
-                    if (!message.isEmpty()) {
-                        AE2ThingAPI.instance()
-                            .getPinned()
-                            .add(((IAEItemStack) message.list.get(0)));
-                    }
-                } else if (message.ref == Constants.MessageType.NOTIFICATION.type) {
-                    if (!message.isEmpty()) {
-                        AE2ThingAPI.instance()
-                            .addCraftingCompleteNotification(((IAEItemStack) message.list.get(0)));
-                    }
+                        .add(item);
                 }
+            } else if (message.ref == Constants.MessageType.NOTIFICATION.type) {
+                if (!message.isEmpty() && message.list.get(0) instanceof IAEItemStack item) {
+                    AE2ThingAPI.instance()
+                        .addCraftingCompleteNotification(item);
+                }
+            }
             return null;
         }
     }

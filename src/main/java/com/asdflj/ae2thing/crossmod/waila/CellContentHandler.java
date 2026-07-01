@@ -6,10 +6,12 @@ import static codechicken.lib.gui.GuiDraw.getTipLineId;
 
 import java.awt.Dimension;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import net.minecraft.client.Minecraft;
@@ -19,7 +21,6 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
-import com.asdflj.ae2thing.client.render.RenderHelper;
 import com.asdflj.ae2thing.common.item.ItemBackpackTerminal;
 import com.asdflj.ae2thing.common.item.ItemInfinityStorageCell;
 import com.asdflj.ae2thing.common.item.ItemInfinityStorageFluidCell;
@@ -28,49 +29,40 @@ import com.asdflj.ae2thing.util.NameConst;
 import appeng.api.AEApi;
 import appeng.api.storage.ICellWorkbenchItem;
 import appeng.api.storage.IMEInventoryHandler;
-import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
-import appeng.util.item.AEFluidStackType;
+import appeng.util.IterationCounter;
 import appeng.util.item.AEItemStack;
-import appeng.util.item.AEItemStackType;
 import codechicken.lib.gui.GuiDraw;
+import mcp.mobius.waila.handlers.nei.TooltipHandlerWaila;
 
-public class CellContentHandler extends mcp.mobius.waila.handlers.nei.TooltipHandlerWaila {
+public class CellContentHandler extends TooltipHandlerWaila {
 
     public static HashSet<Class<? extends Item>> blackList = new HashSet<>();
     private static final List<IAEStack<?>> cellContent = new ArrayList<>();
     private static final List<IAEItemStack> upgradeCard = new ArrayList<>();
-    private static final int limit = 5;
-    private static final int width = 100;
-    private static final int height = 20;
+    private static final int maxStacksPerRow = 5;
     private static final GuiDraw.ITooltipLineHandler cellItemStackHandler = new GuiDraw.ITooltipLineHandler() {
 
         @Override
         public Dimension getSize() {
-            return new Dimension(width, height);
+            return new TooltipStackGridRenderer(cellContent, maxStacksPerRow, true).getSize();
         }
 
         @Override
         public void draw(int x, int y) {
-            if (!cellContent.isEmpty()) {
-                for (int i = 0; i < cellContent.size() && i < limit; i++) {
-                    IAEStack<?> item = cellContent.get(i);
-                    RenderHelper.renderAEStack(item, x + (i * 18), y, 500f);
-                }
-                if (cellContent.size() > limit) {
-                    Minecraft.getMinecraft().fontRenderer
-                        .drawStringWithShadow("...", x + (limit * 18) + 1, y + 2, 0xffffff);
-                }
-            }
+            new TooltipStackGridRenderer(cellContent, maxStacksPerRow, true).draw(x, y, 500f);
         }
     };
     private static final GuiDraw.ITooltipLineHandler cellUpgradeCardHandler = new GuiDraw.ITooltipLineHandler() {
 
         @Override
         public Dimension getSize() {
-            return new Dimension(width, height + fontRenderer.FONT_HEIGHT);
+            Dimension stacksSize = new TooltipStackGridRenderer(upgradeCard, maxStacksPerRow, false).getSize();
+            return new Dimension(stacksSize.width, stacksSize.height + fontRenderer.FONT_HEIGHT);
         }
 
         @Override
@@ -78,10 +70,7 @@ public class CellContentHandler extends mcp.mobius.waila.handlers.nei.TooltipHan
             if (!upgradeCard.isEmpty()) {
                 Minecraft.getMinecraft().fontRenderer
                     .drawStringWithShadow(I18n.format(NameConst.TT_INSTALLED_CARD), x, y, 0xA8A8A8);
-                for (int i = 0; i < upgradeCard.size() && i < limit; i++) {
-                    IAEStack<?> item = upgradeCard.get(i);
-                    RenderHelper.renderAEStack(item, x + (i * 18), y + fontRenderer.FONT_HEIGHT, 500f, false);
-                }
+                new TooltipStackGridRenderer(upgradeCard, maxStacksPerRow, false).draw(x, y + fontRenderer.FONT_HEIGHT, 500f);
             }
         }
     };
@@ -100,41 +89,20 @@ public class CellContentHandler extends mcp.mobius.waila.handlers.nei.TooltipHan
             try {
                 cellContent.clear();
                 upgradeCard.clear();
-                IMEInventoryHandler handler;
-                handler = AEApi.instance()
-                    .registries()
-                    .cell()
-                    .getCellInventory(cell, null, AEItemStackType.ITEM_STACK_TYPE);
-                if (handler != null) {
-                    IItemList<IAEItemStack> itemList = handler.getAvailableItems(
-                        AEApi.instance()
-                            .storage()
-                            .createPrimitiveItemList(),
-                        0);
-                    List<IAEStack<?>> list = Arrays.stream(itemList.toArray(new IAEItemStack[0]))
-                        .sorted(
-                            Comparator.comparingLong(IAEItemStack::getStackSize)
-                                .reversed())
-                        .collect(Collectors.toList());
-                    addTooltip(list, cell, currentToolTip);
-                    return currentToolTip;
+                Set<IMEInventoryHandler<?>> seenHandlers = Collections.newSetFromMap(new IdentityHashMap<>());
+                List<IAEStack<?>> contents = new ArrayList<>();
+                for (IAEStackType<?> type : AEStackTypeRegistry.getSortedTypes()) {
+                    IMEInventoryHandler<?> handler = AEApi.instance()
+                        .registries()
+                        .cell()
+                        .getCellInventory(cell, null, type);
+                    if (handler == null || !seenHandlers.add(handler)) {
+                        continue;
+                    }
+                    contents.addAll(this.getContents(handler));
                 }
-                handler = AEApi.instance()
-                    .registries()
-                    .cell()
-                    .getCellInventory(cell, null, AEFluidStackType.FLUID_STACK_TYPE);
-                if (handler != null) {
-                    IItemList<IAEFluidStack> itemList = handler.getAvailableItems(
-                        AEApi.instance()
-                            .storage()
-                            .createFluidList(),
-                        0);
-                    List<IAEStack<?>> list = Arrays.stream(itemList.toArray(new IAEFluidStack[0]))
-                        .sorted(
-                            Comparator.comparingLong(IAEFluidStack::getStackSize)
-                                .reversed())
-                        .collect(Collectors.toList());
-                    addTooltip(list, cell, currentToolTip);
+                if (!seenHandlers.isEmpty()) {
+                    addTooltip(this.sortContents(contents), cell, currentToolTip);
                     return currentToolTip;
                 }
             } catch (Exception ignored) {}
@@ -164,6 +132,29 @@ public class CellContentHandler extends mcp.mobius.waila.handlers.nei.TooltipHan
             }
 
         }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private List<IAEStack<?>> getContents(IMEInventoryHandler<?> handler) {
+        IItemList list = handler.getAvailableItems(
+            (IItemList) handler.getStackType()
+                .createList(),
+            IterationCounter.fetchNewId());
+        List<IAEStack<?>> stacks = new ArrayList<>();
+        for (Object stack : list) {
+            if (stack instanceof IAEStack<?> aeStack) {
+                stacks.add(aeStack);
+            }
+        }
+        return stacks;
+    }
+
+    private List<IAEStack<?>> sortContents(List<IAEStack<?>> stacks) {
+        return stacks.stream()
+            .sorted(
+                Comparator.comparingLong((IAEStack<?> stack) -> stack.getStackSize())
+                    .reversed())
+            .collect(Collectors.toList());
     }
 
     static {

@@ -1,17 +1,14 @@
 package com.asdflj.ae2thing.client.render;
 
-import static appeng.client.gui.AEBaseGui.aeRenderItem;
 import static net.minecraft.client.gui.Gui.drawRect;
+import static net.minecraft.client.renderer.RenderHelper.enableGUIStandardItemLighting;
 
 import java.awt.Color;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.RenderItem;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
-import net.minecraftforge.fluids.Fluid;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -20,12 +17,8 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.api.Pinned;
 import com.asdflj.ae2thing.client.gui.BaseMEGui;
-import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.util.Util;
-import com.glodblock.github.common.item.ItemFluidDrop;
-import com.mitchej123.hodgepodge.textures.IPatchedTextureAtlasSprite;
 
-import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.client.gui.slots.VirtualMEMonitorableSlot;
@@ -46,7 +39,7 @@ public class RenderHelper {
     public static void renderItemStack(ItemStack stack, int x, int y, float z) {
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         GL11.glPushMatrix();
-        net.minecraft.client.renderer.RenderHelper.enableGUIStandardItemLighting();
+        enableGUIStandardItemLighting();
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -63,81 +56,21 @@ public class RenderHelper {
     }
 
     public static void renderAEStack(IAEStack<?> stack, int x, int y, float z, boolean renderStackSize) {
-        if (stack instanceof IAEItemStack itemStack) {
-            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-            GL11.glPushMatrix();
-            net.minecraft.client.renderer.RenderHelper.enableGUIStandardItemLighting();
-            GL11.glEnable(GL11.GL_DEPTH_TEST);
-            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glTranslatef(0f, 0f, z);
-            itemRender.renderItemAndEffectIntoGUI(
-                Minecraft.getMinecraft().fontRenderer,
-                Minecraft.getMinecraft()
-                    .getTextureManager(),
-                itemStack.getItemStack(),
-                x,
-                y);
-            GL11.glTranslatef(0f, 0f, 150);
-            if (renderStackSize) {
-                drawStackSize(itemStack, x, y);
-            }
-            GL11.glPopMatrix();
-            GL11.glPopAttrib();
-        } else if (stack instanceof IAEFluidStack fluidStack) {
-            IAEItemStack fluidDrop = ItemFluidDrop.newAeStack(fluidStack);
-            if (fluidDrop == null) return;
-            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-            GL11.glPushMatrix();
-            net.minecraft.client.renderer.RenderHelper.enableGUIStandardItemLighting();
-            GL11.glEnable(GL11.GL_DEPTH_TEST);
-            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glTranslatef(0f, 0f, z);
-            drawFluid(x, y, fluidStack.getFluid());
-            GL11.glTranslatef(0f, 0f, 150f);
-            if (renderStackSize) {
-                drawStackSize(fluidDrop, x, y);
-            }
-            GL11.glPopMatrix();
-            GL11.glPopAttrib();
+        if (stack == null) return;
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+        enableGUIStandardItemLighting();
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GL11.glTranslatef(0f, 0f, z);
+        Minecraft mc = Minecraft.getMinecraft();
+        stack.drawInGui(mc, x, y);
+        if (renderStackSize) {
+            stack.drawOverlayInGui(mc, x, y, true, true, true, true);
         }
-    }
-
-    private static void drawStackSize(IAEItemStack item, int x, int y) {
-        aeRenderItem.setAeStack(item);
-        aeRenderItem.renderItemOverlayIntoGUI(
-            Minecraft.getMinecraft().fontRenderer,
-            Minecraft.getMinecraft()
-                .getTextureManager(),
-            item.getItemStack(),
-            x,
-            y);
-    }
-
-    private static void drawFluid(int posX, int posY, Fluid fluid) {
-        if (fluid == null) return;
-        IIcon icon = fluid.getIcon();
-        if (icon == null) return;
-
-        if (Mods.HODGEPODGE.isModLoaded() && icon instanceof IPatchedTextureAtlasSprite) {
-            ((IPatchedTextureAtlasSprite) icon).markNeedsAnimationUpdate();
-        }
-
-        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.locationBlocksTexture);
-        GL11.glTranslatef(0f, 0f, 100.0f);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glColor3f(
-            (fluid.getColor() >> 16 & 0xFF) / 255.0F,
-            (fluid.getColor() >> 8 & 0xFF) / 255.0F,
-            (fluid.getColor() & 0xFF) / 255.0F);
-        Minecraft.getMinecraft().currentScreen.drawTexturedModelRectFromIcon(posX, posY, fluid.getIcon(), 16, 16);
-        GL11.glEnable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glColor3f(1, 1, 1);
-        GL11.glTranslatef(0.0f, 0.0f, -100.0f);
+        GL11.glPopMatrix();
+        GL11.glPopAttrib();
     }
 
     public static void updateColor() {

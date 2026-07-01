@@ -24,14 +24,13 @@ import com.asdflj.ae2thing.network.CPacketInventoryActionExtend;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.glodblock.github.client.gui.GuiFCImgButton;
-import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.config.ActionItems;
 import appeng.api.config.Settings;
 import appeng.api.implementations.tiles.IViewCellStorage;
 import appeng.api.storage.ITerminalHost;
-import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.client.gui.widgets.GuiImgButton;
 import appeng.client.gui.widgets.GuiScrollbar;
 import appeng.client.gui.widgets.GuiTabButton;
@@ -291,10 +290,9 @@ public class GuiInfusionPatternTerminal extends GuiMonitor implements IGuiMonito
     }
 
     @Override
-    public void postUpdate(List<IAEItemStack> list) {
-        for (IAEItemStack ias : list) {
-            if (ias.getItem() instanceof ItemFluidDrop) continue;
-            this.repo.postUpdate(ias);
+    public void postStackUpdate(List<? extends IAEStack<?>> list) {
+        for (IAEStack<?> stack : list) {
+            this.repo.postUpdate(stack);
         }
         this.repo.updateView();
         if (!this.repo.hasCache()) {
@@ -347,21 +345,6 @@ public class GuiInfusionPatternTerminal extends GuiMonitor implements IGuiMonito
         if (currentScroll != this.processingScrollBar.getCurrentScroll()) {
             changeActivePage();
         }
-    }
-
-    @Override
-    public void postFluidUpdate(List<IAEFluidStack> list) {
-        for (IAEFluidStack is : list) {
-            IAEItemStack stack = AEItemStack.create(ItemFluidDrop.newDisplayStack(is.getFluidStack()));
-            stack.setStackSize(is.getStackSize());
-            stack.setCraftable(is.isCraftable());
-            this.repo.postUpdate(stack);
-        }
-        this.repo.updateView();
-        if (!this.repo.hasCache()) {
-            this.setScrollBar();
-        }
-
     }
 
     protected boolean isPowered() {

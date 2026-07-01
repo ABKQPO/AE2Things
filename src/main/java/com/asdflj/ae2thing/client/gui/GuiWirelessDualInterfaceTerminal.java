@@ -34,8 +34,7 @@ import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 
 import appeng.api.config.Settings;
 import appeng.api.storage.ITerminalHost;
-import appeng.api.storage.data.IAEFluidStack;
-import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
 import appeng.api.util.IConfigManager;
 import appeng.client.gui.AEBaseGui;
@@ -335,11 +334,11 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     @Override
-    public void postUpdate(List<IAEItemStack> list) {
+    public void postStackUpdate(List<? extends IAEStack<?>> list) {
         this.getActivePanels()
             .stream()
             .filter(p -> p instanceof IGuiMonitor)
-            .forEach(p -> ((IGuiMonitor) p).postUpdate(list));
+            .forEach(p -> ((IGuiMonitor) p).postStackUpdate(list));
     }
 
     @Override
@@ -353,14 +352,6 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     @Override
     public AdvItemRepo getRepo() {
         return this.itemPanel.getRepo();
-    }
-
-    @Override
-    public void postFluidUpdate(List<IAEFluidStack> list) {
-        this.getActivePanels()
-            .stream()
-            .filter(p -> p instanceof IGuiMonitor)
-            .forEach(p -> ((IGuiMonitor) p).postFluidUpdate(list));
     }
 
     @Override
