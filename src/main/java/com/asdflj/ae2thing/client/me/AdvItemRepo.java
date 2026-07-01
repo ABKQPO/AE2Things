@@ -101,6 +101,7 @@ public class AdvItemRepo extends ItemRepo implements Runnable {
     }
 
     @Override
+    @Deprecated
     public void postUpdate(IAEItemStack is) {
         this.postUpdate((IAEStack<?>) is);
     }

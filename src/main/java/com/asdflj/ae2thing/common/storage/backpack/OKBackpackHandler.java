@@ -7,13 +7,12 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
+import appeng.util.Platform;
 import ruiseki.okbackpack.common.block.BackpackWrapper;
 import ruiseki.okbackpack.common.block.BlockBackpack.ItemBackpack;
 import ruiseki.okbackpack.common.helpers.BackpackEntityHelpers;
 import ruiseki.okbackpack.common.helpers.BackpackEntityHelpers.BackpackContext;
 import ruiseki.okbackpack.common.helpers.BackpackEntityHelpers.SearchOrder;
-
-import appeng.util.Platform;
 
 public class OKBackpackHandler extends BaseBackpackHandler {
 

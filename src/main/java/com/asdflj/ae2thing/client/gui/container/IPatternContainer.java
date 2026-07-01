@@ -1,9 +1,5 @@
 package com.asdflj.ae2thing.client.gui.container;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
@@ -61,10 +57,8 @@ public interface IPatternContainer {
 
     default void doubleStacksInternal(SlotFake[] slots, int mult) {
         if (mult == 0) return;
-        List<SlotFake> enabledSlots = Arrays.stream(slots)
-            .filter(SlotFake::isEnabled)
-            .collect(Collectors.toList());
-        for (final Slot s : enabledSlots) {
+        for (final SlotFake s : slots) {
+            if (!s.isEnabled()) continue;
             ItemStack st = s.getStack();
             if (st != null) {
                 if (mult < 0) {

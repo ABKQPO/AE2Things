@@ -2,11 +2,9 @@ package com.asdflj.ae2thing.crossmod.waila;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -118,12 +116,13 @@ public class EncodedPattern extends mcp.mobius.waila.handlers.nei.TooltipHandler
         final ItemStack unknownItem = new ItemStack(Blocks.fire);
         boolean recipeIsBroken = false;
         boolean first = true;
-        List<IAEItemStack> itemsList = Arrays.asList(items);
-        List<IAEItemStack> sortedItems = itemsList.stream()
-            .sorted(
-                Comparator.comparingLong(IAEItemStack::getStackSize)
-                    .reversed())
-            .collect(Collectors.toList());
+        List<IAEItemStack> sortedItems = new ArrayList<>(items.length);
+        for (IAEItemStack item : items) {
+            sortedItems.add(item);
+        }
+        sortedItems.sort(
+            Comparator.comparingLong(IAEItemStack::getStackSize)
+                .reversed());
         boolean isFluid = false;
 
         for (final IAEItemStack item : sortedItems) {

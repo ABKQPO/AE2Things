@@ -4,7 +4,6 @@ import static com.asdflj.ae2thing.api.Constants.TC_CRAFTING;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -431,11 +430,13 @@ public class ContainerInfusionPatternTerminal extends BasePatternContainerMonito
 
     protected ItemStack[] getInputs() {
         final ArrayList<ItemStack> input = new ArrayList<>();
+        boolean hasInput = false;
         for (SlotFake craftingSlot : this.craftingSlots) {
-            input.add(craftingSlot.getStack());
+            ItemStack stack = craftingSlot.getStack();
+            input.add(stack);
+            hasInput |= stack != null;
         }
-        if (input.stream()
-            .anyMatch(Objects::nonNull)) {
+        if (hasInput) {
             return input.toArray(new ItemStack[0]);
         }
         return null;
@@ -443,11 +444,13 @@ public class ContainerInfusionPatternTerminal extends BasePatternContainerMonito
 
     protected ItemStack[] getOutputs() {
         final ArrayList<ItemStack> output = new ArrayList<>();
+        boolean hasOutput = false;
         for (final SlotFake outputSlot : this.outputSlots) {
-            output.add(outputSlot.getStack());
+            ItemStack stack = outputSlot.getStack();
+            output.add(stack);
+            hasOutput |= stack != null;
         }
-        if (output.stream()
-            .anyMatch(Objects::nonNull)) {
+        if (hasOutput) {
             return output.toArray(new ItemStack[0]);
         }
         return null;

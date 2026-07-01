@@ -3,7 +3,6 @@ package com.asdflj.ae2thing.client.gui;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.renderer.entity.RenderItem;
@@ -81,8 +80,10 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     @Override
     public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
         super.drawFG(offsetX, offsetY, mouseX, mouseY);
-        for (IAEBasePanel panel : this.getActivePanels()) {
-            panel.drawFG(offsetX, offsetY, mouseX, mouseY);
+        for (IAEBasePanel panel : this.panels) {
+            if (panel.isActive()) {
+                panel.drawFG(offsetX, offsetY, mouseX, mouseY);
+            }
         }
     }
 
@@ -90,15 +91,11 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     public void drawBG(int offsetX, int offsetY, int mouseX, int mouseY) {
         super.drawBG(offsetX, offsetY, mouseX, mouseY);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        for (IAEBasePanel panel : this.getActivePanels()) {
-            panel.drawBG(offsetX, offsetY, mouseX, mouseY);
+        for (IAEBasePanel panel : this.panels) {
+            if (panel.isActive()) {
+                panel.drawBG(offsetX, offsetY, mouseX, mouseY);
+            }
         }
-    }
-
-    private List<IAEBasePanel> getActivePanels() {
-        return this.panels.stream()
-            .filter(IAEBasePanel::isActive)
-            .collect(Collectors.toList());
     }
 
     @Override
@@ -123,8 +120,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             if (activePanel != null && this.mouse != null) {
                 activePanel.move(mouseX - mouse.x, mouseY - mouse.y);
             } else {
-                for (IAEBasePanel panel : this.getActivePanels()) {
-                    if (panel.draggable()) {
+                for (IAEBasePanel panel : this.panels) {
+                    if (panel.isActive() && panel.draggable()) {
                         rectangle = panel.getRectangle();
                         if (mouseX > rectangle.x() && mouseX < rectangle.x() + rectangle.width()
                             && mouseY > rectangle.y()
@@ -137,8 +134,10 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                 }
             }
         }
-        for (IAEBasePanel panel : this.getActivePanels()) {
-            panel.drawScreen(mouseX, mouseY, btn);
+        for (IAEBasePanel panel : this.panels) {
+            if (panel.isActive()) {
+                panel.drawScreen(mouseX, mouseY, btn);
+            }
         }
         if (this.itemPanel.getRepo()
             .hasCache()) {
@@ -160,15 +159,21 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     protected void mouseClicked(int xCoord, int yCoord, int btn) {
-        this.getActivePanels()
-            .forEach(p -> p.mouseClicked(xCoord, yCoord, btn));
+        for (IAEBasePanel panel : this.panels) {
+            if (panel.isActive()) {
+                panel.mouseClicked(xCoord, yCoord, btn);
+            }
+        }
         super.mouseClicked(xCoord, yCoord, btn);
     }
 
     @Override
     protected void mouseClickMove(final int x, final int y, final int c, final long d) {
-        this.getActivePanels()
-            .forEach(panel -> panel.mouseClickMove(x, y, c, d));
+        for (IAEBasePanel panel : this.panels) {
+            if (panel.isActive()) {
+                panel.mouseClickMove(x, y, c, d);
+            }
+        }
         this.dragging = true;
         super.mouseClickMove(x, y, c, d);
     }
@@ -185,7 +190,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     protected void handleMouseClick(Slot slot, int slotIdx, int ctrlDown, int mouseButton) {
-        for (IAEBasePanel panel : this.getActivePanels()) {
+        for (IAEBasePanel panel : this.panels) {
+            if (!panel.isActive()) continue;
             if (panel.handleMouseClick(slot, slotIdx, ctrlDown, mouseButton)) return;
         }
         if (slotIdx < 0) return;
@@ -194,7 +200,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     protected boolean handleVirtualSlotClick(VirtualMESlot slot, int mouseButton) {
-        for (IAEBasePanel panel : this.getActivePanels()) {
+        for (IAEBasePanel panel : this.panels) {
+            if (!panel.isActive()) continue;
             if (panel.handleVirtualSlotClick(slot, mouseButton)) return true;
         }
         return super.handleVirtualSlotClick(slot, mouseButton);
@@ -202,7 +209,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     protected boolean mouseWheelEvent(int mouseX, int mouseY, int wheel) {
-        for (IAEBasePanel panel : this.getActivePanels()) {
+        for (IAEBasePanel panel : this.panels) {
+            if (!panel.isActive()) continue;
             if (panel.mouseWheelEvent(mouseX, mouseY, wheel)) return true;
         }
         return super.mouseWheelEvent(mouseX, mouseY, wheel);
@@ -211,7 +219,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     @Override
     protected void keyTyped(char character, int key) {
         this.xSize = baseXSize;
-        for (IAEBasePanel panel : this.getActivePanels()) {
+        for (IAEBasePanel panel : this.panels) {
+            if (!panel.isActive()) continue;
             if (!this.checkHotbarKeys(key) && panel.keyTyped(character, key)) return;
         }
         super.keyTyped(character, key);
@@ -249,13 +258,16 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     @Override
     public void onGuiClosed() {
         super.onGuiClosed();
-        this.panels.forEach(IAEBasePanel::onGuiClosed);
+        for (IAEBasePanel panel : this.panels) {
+            panel.onGuiClosed();
+        }
         Keyboard.enableRepeatEvents(false);
     }
 
     @Override
     public boolean hideItemPanelSlot(int x, int y, int w, int h) {
-        for (IAEBasePanel panel : this.getActivePanels()) {
+        for (IAEBasePanel panel : this.panels) {
+            if (!panel.isActive()) continue;
             if (panel.hideItemPanelSlot(x, y, w, h)) return true;
         }
         return false;
@@ -335,18 +347,20 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     public void postStackUpdate(List<? extends IAEStack<?>> list) {
-        this.getActivePanels()
-            .stream()
-            .filter(p -> p instanceof IGuiMonitor)
-            .forEach(p -> ((IGuiMonitor) p).postStackUpdate(list));
+        for (IAEBasePanel panel : this.panels) {
+            if (panel.isActive() && panel instanceof IGuiMonitor monitor) {
+                monitor.postStackUpdate(list);
+            }
+        }
     }
 
     @Override
     public void setScrollBar() {
-        this.getActivePanels()
-            .stream()
-            .filter(p -> p instanceof IGuiMonitor)
-            .forEach(p -> ((IGuiMonitor) p).setScrollBar());
+        for (IAEBasePanel panel : this.panels) {
+            if (panel.isActive() && panel instanceof IGuiMonitor monitor) {
+                monitor.setScrollBar();
+            }
+        }
     }
 
     @Override
@@ -394,10 +408,11 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     public void updateSetting(IConfigManager manager, Enum settingName, Enum newValue) {
-        this.getActivePanels()
-            .stream()
-            .filter(p -> p instanceof IConfigManagerHost)
-            .forEach(p -> ((IConfigManagerHost) p).updateSetting(manager, settingName, newValue));
+        for (IAEBasePanel panel : this.panels) {
+            if (panel.isActive() && panel instanceof IConfigManagerHost host) {
+                host.updateSetting(manager, settingName, newValue);
+            }
+        }
     }
 
     @Override

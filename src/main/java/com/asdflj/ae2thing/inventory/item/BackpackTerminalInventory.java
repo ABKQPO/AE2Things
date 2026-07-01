@@ -28,8 +28,8 @@ import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.ITerminalTypeFilterProvider;
 import appeng.api.storage.MEMonitorHandler;
 import appeng.api.storage.data.IAEFluidStack;
-import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
 import appeng.api.util.IConfigManager;
@@ -41,9 +41,8 @@ import appeng.util.MonitorableTypeFilter;
 import appeng.util.Platform;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
-public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack>
-    implements ITerminalHost, IInventorySlotAware, IGuiItemObject, IEnergySource, ITerminalTypeFilterProvider,
-    RefreshableStorageMonitor {
+public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack> implements ITerminalHost,
+    IInventorySlotAware, IGuiItemObject, IEnergySource, ITerminalTypeFilterProvider, RefreshableStorageMonitor {
 
     private static final int EXTERNAL_REFRESH_INTERVAL = 5;
 

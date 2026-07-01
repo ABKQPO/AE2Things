@@ -3,7 +3,6 @@ package com.asdflj.ae2thing.client.gui;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
@@ -465,11 +464,10 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
     protected void keyTyped(final char character, final int key) {
         if (Mods.NOT_ENOUGH_ITEMS.isModLoaded() && this.isNEISearch()) {
             if (key == Keyboard.KEY_TAB) {
-                Optional<String> history = Ae2ReflectClient.getHistoryList(this.history)
-                    .stream()
-                    .filter(s -> s.startsWith(this.searchField.getText()))
-                    .findFirst();
-                history.ifPresent(s -> setSearchString(s, true));
+                String history = this.findHistoryPrefix(this.searchField.getText());
+                if (history != null) {
+                    setSearchString(history, true);
+                }
                 return;
             } else if (key == Keyboard.KEY_DELETE) {
                 String next = this.history.getNext(this.searchField.getText())
@@ -505,16 +503,22 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
                 this.setSuggestion("");
                 return;
             }
-            Optional<String> history = Ae2ReflectClient.getHistoryList(this.history)
-                .stream()
-                .filter(s -> s.startsWith(this.searchField.getText()))
-                .findFirst();
-            if (history.isPresent()) {
-                this.setSuggestion(history.get());
+            String history = this.findHistoryPrefix(this.searchField.getText());
+            if (history != null) {
+                this.setSuggestion(history);
             } else {
                 this.setSuggestion("");
             }
         }
+    }
+
+    private String findHistoryPrefix(String prefix) {
+        for (String value : Ae2ReflectClient.getHistoryList(this.history)) {
+            if (value.startsWith(prefix)) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private void setSuggestion(String suggestion) {

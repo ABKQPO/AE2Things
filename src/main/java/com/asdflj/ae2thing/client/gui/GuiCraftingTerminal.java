@@ -8,6 +8,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 
 import com.asdflj.ae2thing.client.gui.container.ContainerCraftingTerminal;
+
 import appeng.api.config.ActionItems;
 import appeng.api.config.Settings;
 import appeng.api.storage.ITerminalHost;

@@ -1,10 +1,7 @@
 package com.asdflj.ae2thing.client.gui.container.widget;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -194,20 +191,26 @@ public class PatternContainer implements IPatternContainer, IOptionalSlotHost, I
     private void updateOrderOfOutputSlots() {
         if (this.container.isCraftingMode()) {
             this.craftSlot.xDisplayPosition = this.craftSlot.getX();
-            Arrays.stream(this.craftingSlots)
-                .forEach(s -> s.xDisplayPosition = s.getX());
-            Arrays.stream(this.outputExSlots)
-                .forEach(s -> s.setHidden(true));
-            Arrays.stream(this.craftingExSlots)
-                .forEach(s -> s.setHidden(true));
+            for (SlotFake slot : this.craftingSlots) {
+                slot.xDisplayPosition = slot.getX();
+            }
+            for (SlotPatternFake slot : this.outputExSlots) {
+                slot.setHidden(true);
+            }
+            for (SlotPatternFake slot : this.craftingExSlots) {
+                slot.setHidden(true);
+            }
         } else {
             this.craftSlot.xDisplayPosition = -9000;
-            Arrays.stream(this.craftingSlots)
-                .forEach(s -> s.xDisplayPosition = -9000);
-            Arrays.stream(this.outputExSlots)
-                .forEach(s -> s.setHidden(false));
-            Arrays.stream(this.craftingExSlots)
-                .forEach(s -> s.setHidden(false));
+            for (SlotFake slot : this.craftingSlots) {
+                slot.xDisplayPosition = -9000;
+            }
+            for (SlotPatternFake slot : this.outputExSlots) {
+                slot.setHidden(false);
+            }
+            for (SlotPatternFake slot : this.craftingExSlots) {
+                slot.setHidden(false);
+            }
             offsetSlots();
         }
     }
@@ -349,41 +352,42 @@ public class PatternContainer implements IPatternContainer, IOptionalSlotHost, I
     }
 
     protected static boolean containsFluid(SlotFake[] slots) {
-        List<SlotFake> enabledSlots = Arrays.stream(slots)
-            .filter(SlotFake::isEnabled)
-            .collect(Collectors.toList());
-        long fluid = enabledSlots.stream()
-            .filter(s -> Util.isFluidPacket(s.getStack()))
-            .count();
-        return fluid > 0;
+        for (SlotFake slot : slots) {
+            if (slot.isEnabled() && Util.isFluidPacket(slot.getStack())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected static boolean nonNullSlot(SlotFake[] slots) {
-        List<SlotFake> enabledSlots = Arrays.stream(slots)
-            .filter(SlotFake::isEnabled)
-            .collect(Collectors.toList());
-        long object = enabledSlots.stream()
-            .filter(s -> s.getStack() != null)
-            .count();
-        return object > 0;
+        for (SlotFake slot : slots) {
+            if (slot.isEnabled() && slot.getStack() != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected ItemStack[] getInputs() {
         final ArrayList<ItemStack> input = new ArrayList<>();
+        boolean hasInput = false;
         if (this.container.isCraftingMode()) {
             for (SlotFake craftingSlot : this.craftingSlots) {
-                input.add(craftingSlot.getStack());
+                ItemStack stack = craftingSlot.getStack();
+                input.add(stack);
+                hasInput |= stack != null;
             }
-            if (input.stream()
-                .anyMatch(Objects::nonNull)) {
+            if (hasInput) {
                 return input.toArray(new ItemStack[0]);
             }
         } else {
             for (SlotFake craftingSlot : this.craftingExSlots) {
-                input.add(craftingSlot.getStack());
+                ItemStack stack = craftingSlot.getStack();
+                input.add(stack);
+                hasInput |= stack != null;
             }
-            if (input.stream()
-                .anyMatch(Objects::nonNull)) {
+            if (hasInput) {
                 return input.toArray(new ItemStack[0]);
             }
         }
@@ -399,11 +403,13 @@ public class PatternContainer implements IPatternContainer, IOptionalSlotHost, I
                 return new ItemStack[] { out };
             }
         } else {
+            boolean hasOutput = false;
             for (final SlotFake outputSlot : this.outputExSlots) {
-                output.add(outputSlot.getStack());
+                ItemStack stack = outputSlot.getStack();
+                output.add(stack);
+                hasOutput |= stack != null;
             }
-            if (output.stream()
-                .anyMatch(Objects::nonNull)) {
+            if (hasOutput) {
                 return output.toArray(new ItemStack[0]);
             }
         }

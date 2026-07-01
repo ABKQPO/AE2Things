@@ -3,11 +3,10 @@ package com.asdflj.ae2thing.network;
 import static appeng.api.networking.crafting.CraftingItemList.ACTIVE;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -201,7 +200,7 @@ public class CPacketInventoryActionExtend implements IMessage {
                                 if(message.stack.hashCode() == ccc.getFinalOutput().hashCode()){
                                     IItemList<IAEItemStack> list =  AEApi.instance().storage().createPrimitiveItemList();
                                     ccc.getListOfItem(list,ACTIVE);
-                                    List<IAEItemStack> activeItems = Arrays.stream(list.toArray(list.toArray(new IAEItemStack[0]))).limit(CPUCraftingPreview.maxSize).sorted(Comparator.comparingLong(IAEItemStack::getStackSize).reversed()).collect(Collectors.toList());
+                                    List<IAEItemStack> activeItems = getActiveCraftingItems(list);
                                     if(activeItems.isEmpty()){
                                         continue;
                                     }
@@ -255,6 +254,20 @@ public class CPacketInventoryActionExtend implements IMessage {
                 }
             }
             return null;
+        }
+
+        private List<IAEItemStack> getActiveCraftingItems(IItemList<IAEItemStack> list) {
+            List<IAEItemStack> activeItems = new ArrayList<>();
+            for (IAEItemStack item : list) {
+                activeItems.add(item);
+            }
+            activeItems.sort(
+                Comparator.comparingLong(IAEItemStack::getStackSize)
+                    .reversed());
+            if (activeItems.size() <= CPUCraftingPreview.maxSize) {
+                return activeItems;
+            }
+            return new ArrayList<>(activeItems.subList(0, CPUCraftingPreview.maxSize));
         }
     }
 

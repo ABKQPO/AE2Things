@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -70,7 +69,8 @@ public class CellContentHandler extends TooltipHandlerWaila {
             if (!upgradeCard.isEmpty()) {
                 Minecraft.getMinecraft().fontRenderer
                     .drawStringWithShadow(I18n.format(NameConst.TT_INSTALLED_CARD), x, y, 0xA8A8A8);
-                new TooltipStackGridRenderer(upgradeCard, maxStacksPerRow, false).draw(x, y + fontRenderer.FONT_HEIGHT, 500f);
+                new TooltipStackGridRenderer(upgradeCard, maxStacksPerRow, false)
+                    .draw(x, y + fontRenderer.FONT_HEIGHT, 500f);
             }
         }
     };
@@ -142,7 +142,7 @@ public class CellContentHandler extends TooltipHandlerWaila {
             IterationCounter.fetchNewId());
         List<IAEStack<?>> stacks = new ArrayList<>();
         for (Object stack : list) {
-            if (stack instanceof IAEStack<?> aeStack) {
+            if (stack instanceof IAEStack<?>aeStack) {
                 stacks.add(aeStack);
             }
         }
@@ -150,11 +150,10 @@ public class CellContentHandler extends TooltipHandlerWaila {
     }
 
     private List<IAEStack<?>> sortContents(List<IAEStack<?>> stacks) {
-        return stacks.stream()
-            .sorted(
-                Comparator.comparingLong((IAEStack<?> stack) -> stack.getStackSize())
-                    .reversed())
-            .collect(Collectors.toList());
+        stacks.sort(
+            Comparator.comparingLong((IAEStack<?> stack) -> stack.getStackSize())
+                .reversed());
+        return stacks;
     }
 
     static {

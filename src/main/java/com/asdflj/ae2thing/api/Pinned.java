@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -86,9 +85,11 @@ public class Pinned {
     public List<IAEItemStack> getSortedPinnedItems() {
         List<Map.Entry<IAEItemStack, PinInfo>> list = new ArrayList<>(pinInfo.entrySet());
         list.sort(TIME_COMPARATOR);
-        return list.stream()
-            .map(Map.Entry::getKey)
-            .collect(Collectors.toList());
+        List<IAEItemStack> pinnedItems = new ArrayList<>(list.size());
+        for (Map.Entry<IAEItemStack, PinInfo> entry : list) {
+            pinnedItems.add(entry.getKey());
+        }
+        return pinnedItems;
     }
 
     @Nullable
@@ -112,8 +113,9 @@ public class Pinned {
             .terminal()
             .isPinTerminal(gui)) return;
         if (items == null || items.isEmpty()) {
-            pinInfo.values()
-                .forEach(i -> i.canPrune = true);
+            for (PinInfo info : pinInfo.values()) {
+                info.canPrune = true;
+            }
             return;
         }
         HashSet<IAEItemStack> set = new HashSet<>(items);

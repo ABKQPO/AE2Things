@@ -1,8 +1,5 @@
 package com.asdflj.ae2thing.client.gui.container;
 
-import java.util.Arrays;
-import java.util.Objects;
-
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
@@ -121,12 +118,16 @@ public class ContainerPatternModifier extends AEBaseContainer implements IPatter
     }
 
     protected boolean checkHasFluidPattern(IAEItemStack[] in, IAEItemStack[] out) {
-        return Arrays.stream(in)
-            .filter(Objects::nonNull)
-            .anyMatch(x -> ItemFluidDrop.isFluidStack(x.getItemStack()))
-            || Arrays.stream(out)
-                .filter(Objects::nonNull)
-                .anyMatch(x -> ItemFluidDrop.isFluidStack(x.getItemStack()));
+        return hasFluidPatternStack(in) || hasFluidPatternStack(out);
+    }
+
+    private boolean hasFluidPatternStack(IAEItemStack[] stacks) {
+        for (IAEItemStack stack : stacks) {
+            if (stack != null && ItemFluidDrop.isFluidStack(stack.getItemStack())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void replacePattern() {
