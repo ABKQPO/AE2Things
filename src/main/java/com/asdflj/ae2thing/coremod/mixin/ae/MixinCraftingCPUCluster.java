@@ -54,8 +54,9 @@ public abstract class MixinCraftingCPUCluster {
                 networkKey = ((TileSecurity) iterator.next()
                     .getMachine()).getLocatableSerial();
                 player = ps.player;
-                output = (IAEItemStack) job.getOutput()
-                    .copy();
+                // 2.9.0: ICraftingJob.getOutput() is now generic IAEStack (can be a fluid job);
+                // only item outputs feed the "crafted X" notification, skip others instead of CCE.
+                output = (job.getOutput() instanceof IAEItemStack out) ? (IAEItemStack) out.copy() : null;
             } else {
                 setAsNull();
             }
