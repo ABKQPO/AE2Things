@@ -22,7 +22,6 @@ import appeng.api.storage.data.IItemList;
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.implementations.GuiCraftConfirm;
 import appeng.client.gui.widgets.GuiAeButton;
-import appeng.util.item.ItemList;
 
 @Mixin(GuiCraftConfirm.class)
 public abstract class MixinGuiCraftConfirm extends AEBaseGui {
@@ -57,9 +56,9 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
             clickStart = false;
             start.enabled = false;
             replan.visible = false;
-            ((ItemList) this.storage).clear();
-            ((ItemList) this.pending).clear();
-            ((ItemList) this.missing).clear();
+            this.storage.resetStatus();
+            this.pending.resetStatus();
+            this.missing.resetStatus();
             this.visual.clear();
             AE2Thing.proxy.netHandler.sendToServer(new CPacketTerminalBtns("GuiCraftConfirm.replan", true));
         }
