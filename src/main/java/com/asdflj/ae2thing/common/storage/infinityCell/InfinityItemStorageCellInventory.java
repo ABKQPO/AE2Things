@@ -252,14 +252,16 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
 
                 if (mode == Actionable.MODULATE) {
                     l.setStackSize(l.getStackSize() + remainingItemSlots);
-                    this.saveChanges();
+                    IAEItemStack change = input.copy();
+                    change.setStackSize(remainingItemSlots);
+                    this.saveChanges(change);
                 }
 
                 return r;
             } else {
                 if (mode == Actionable.MODULATE) {
                     l.setStackSize(l.getStackSize() + input.getStackSize());
-                    this.saveChanges();
+                    this.saveChanges(input.copy());
                 }
 
                 return null;
@@ -279,14 +281,14 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
                         final IAEItemStack toWrite = AEItemStack.create(sharedItemStack);
                         toWrite.setStackSize(remainingItemCount);
                         this.cellItems.add(toWrite);
-                        this.saveChanges();
+                        this.saveChanges(toWrite.copy());
                     }
                     return toReturn;
                 }
 
                 if (mode == Actionable.MODULATE) {
                     this.cellItems.add(input);
-                    this.saveChanges();
+                    this.saveChanges(input.copy());
                 }
 
                 return null;
@@ -326,14 +328,18 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
 
                 if (mode == Actionable.MODULATE) {
                     l.setStackSize(0);
-                    this.saveChanges();
+                    IAEItemStack change = results.copy();
+                    change.setStackSize(-results.getStackSize());
+                    this.saveChanges(change);
                 }
             } else {
                 results.setStackSize(size);
 
                 if (mode == Actionable.MODULATE) {
                     l.setStackSize(l.getStackSize() - size);
-                    this.saveChanges();
+                    IAEItemStack change = results.copy();
+                    change.setStackSize(-results.getStackSize());
+                    this.saveChanges(change);
                 }
             }
         }
@@ -341,14 +347,14 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
         return results;
     }
 
-    private void saveChanges() {
+    private void saveChanges(IAEItemStack change) {
         this.data.setBoolean(Constants.IS_EMPTY, this.cellItems.isEmpty());
         if (this.container != null) {
             this.container.saveChanges(this);
         }
         AE2ThingAPI.instance()
             .getStorageManager()
-            .postChanges(this.cellItem, this.storage, this.drive);
+            .postItemChange(this.storage, this.drive, change);
         AE2ThingAPI.instance()
             .getStorageManager()
             .setDirty(true);

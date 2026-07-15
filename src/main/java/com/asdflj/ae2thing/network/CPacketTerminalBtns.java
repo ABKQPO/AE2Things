@@ -1,6 +1,5 @@
 package com.asdflj.ae2thing.network;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -22,6 +21,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 public class CPacketTerminalBtns implements IMessage {
+
+    private static final int MAX_PACKET_NAME_LENGTH = 128;
+    private static final int MAX_PACKET_VALUE_LENGTH = 1024;
 
     private String name = "";
     private String value;
@@ -51,24 +53,13 @@ public class CPacketTerminalBtns implements IMessage {
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        int leName = buf.readInt();
-        int leVal = buf.readInt();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < leName; i++) {
-            sb.append(buf.readChar());
-        }
-        name = sb.toString();
-        sb = new StringBuilder();
-        for (int i = 0; i < leVal; i++) {
-            sb.append(buf.readChar());
-        }
-        value = sb.toString();
+        int nameLength = buf.readInt();
+        int valueLength = buf.readInt();
+        name = PacketDecodeUtil.readUtf16(buf, nameLength, MAX_PACKET_NAME_LENGTH, "terminal action name");
+        value = PacketDecodeUtil.readUtf16(buf, valueLength, MAX_PACKET_VALUE_LENGTH, "terminal action value");
         if (buf.readBoolean()) {
             try {
-                ByteArrayInputStream bytes = new ByteArrayInputStream(
-                    buf.readBytes(buf.readableBytes())
-                        .array());
-                tag = CompressedStreamTools.readCompressed(bytes);
+                tag = PacketDecodeUtil.readCompressedNbt(buf);
             } catch (IOException ignored) {
 
             }
@@ -106,6 +97,14 @@ public class CPacketTerminalBtns implements IMessage {
 
     public static class Handler implements IMessageHandler<CPacketTerminalBtns, IMessage> {
 
+        private static Integer parseInt(String value) {
+            try {
+                return Integer.valueOf(value);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+
         @Override
         public IMessage onMessage(CPacketTerminalBtns message, MessageContext ctx) {
             String name = message.name;
@@ -114,6 +113,7 @@ public class CPacketTerminalBtns implements IMessage {
             final Container c = ctx.getServerHandler().playerEntity.openContainer;
             if (name.startsWith("PatternTerminal.") && c instanceof IWidgetPatternContainer wpc) {
                 IPatternContainer cpt = wpc.getContainer();
+                Integer intValue = parseInt(value);
                 switch (name) {
                     case "PatternTerminal.Encode" -> {
                         switch (value) {
@@ -127,9 +127,13 @@ public class CPacketTerminalBtns implements IMessage {
                     case "PatternTerminal.Combine" -> cpt.getPatternTerminal()
                         .setCombineMode(value.equals("1"));
                     case "PatternTerminal.Clear" -> cpt.clear();
-                    case "PatternTerminal.ActivePage" -> cpt.getPatternTerminal()
-                        .setActivePage(Integer.parseInt(value));
-                    case "PatternTerminal.Double" -> cpt.doubleStacks(Integer.parseInt(value));
+                    case "PatternTerminal.ActivePage" -> {
+                        if (intValue != null) cpt.getPatternTerminal()
+                            .setActivePage(intValue);
+                    }
+                    case "PatternTerminal.Double" -> {
+                        if (intValue != null) cpt.doubleStacks(intValue);
+                    }
                     case "PatternTerminal.Substitute" -> cpt.getPatternTerminal()
                         .setSubstitution(value.equals("1"));
                     case "PatternTerminal.Prioritize" -> {
@@ -149,11 +153,20 @@ public class CPacketTerminalBtns implements IMessage {
                     .saveSettings();
             }
             if (name.startsWith("InterfaceTerminal.") && c instanceof ContainerWirelessDualInterfaceTerminal ciw) {
+                Integer intValue = parseInt(value);
                 switch (name) {
-                    case "InterfaceTerminal.Double" -> ciw.doubleStacks(Integer.parseInt(value), tag);
-                    case "InterfaceTerminal.SetStick" -> ciw.setStick(tag);
-                    case "InterfaceTerminal.PatternModifier" -> ciw.setModifier(Integer.parseInt(value), tag);
-                    case "InterfaceTerminal.PlacePattern" -> ciw.PlacePattern(Integer.parseInt(value), tag);
+                    case "InterfaceTerminal.Double" -> {
+                        if (intValue != null && tag != null) ciw.doubleStacks(intValue, tag);
+                    }
+                    case "InterfaceTerminal.SetStick" -> {
+                        if (tag != null) ciw.setStick(tag);
+                    }
+                    case "InterfaceTerminal.PatternModifier" -> {
+                        if (intValue != null && tag != null) ciw.setModifier(intValue, tag);
+                    }
+                    case "InterfaceTerminal.PlacePattern" -> {
+                        if (intValue != null && tag != null) ciw.PlacePattern(intValue, tag);
+                    }
                 }
 
             }
@@ -165,7 +178,7 @@ public class CPacketTerminalBtns implements IMessage {
                     case "WirelessConnectorTerminal.Color" -> cwt.setColor(tag);
                 }
             }
-            if (name.startsWith("GuiCraftConfirm.replan")
+            if (name.equals("GuiCraftConfirm.replan")
                 && c instanceof appeng.container.implementations.ContainerCraftConfirm ccc) {
                 Util.replan(ctx.getServerHandler().playerEntity, ccc);
             }

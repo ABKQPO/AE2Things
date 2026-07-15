@@ -84,10 +84,15 @@ public abstract class SPacketMEBaseInvUpdate implements IMessage {
                     return buf.readByte() & STREAM_MASK;
                 }
             });
-            final ByteBuf uncompressed = Unpooled.buffer(buf.readableBytes());
+            final ByteBuf uncompressed = Unpooled.buffer(Math.min(buf.readableBytes(), OPERATION_BYTE_LIMIT));
             final byte[] tmp = new byte[TEMP_BUFFER_SIZE];
             int bytes;
+            int uncompressedBytes = 0;
             while ((bytes = gzReader.read(tmp)) > 0) {
+                uncompressedBytes += bytes;
+                if (uncompressedBytes > UNCOMPRESSED_PACKET_BYTE_LIMIT) {
+                    throw new IOException("AE2Thing inventory update exceeds the uncompressed packet limit");
+                }
                 uncompressed.writeBytes(tmp, 0, bytes);
             }
             gzReader.close();
@@ -99,7 +104,7 @@ public abstract class SPacketMEBaseInvUpdate implements IMessage {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            AELog.error(e);
         }
     }
 

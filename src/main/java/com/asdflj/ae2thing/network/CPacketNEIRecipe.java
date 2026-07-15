@@ -1,6 +1,5 @@
 package com.asdflj.ae2thing.network;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -37,6 +36,8 @@ import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.EncoderException;
 
 public class CPacketNEIRecipe implements IMessage {
 
@@ -52,9 +53,7 @@ public class CPacketNEIRecipe implements IMessage {
     @Override
     public void fromBytes(ByteBuf buf) {
         try {
-            ByteArrayInputStream bytes = new ByteArrayInputStream(buf.array());
-            bytes.skip(1);
-            final NBTTagCompound comp = CompressedStreamTools.readCompressed(bytes);
+            final NBTTagCompound comp = PacketDecodeUtil.readCompressedNbt(buf);
             if (comp != null) {
                 this.recipe = new ItemStack[9][];
                 for (int x = 0; x < this.recipe.length; x++) {
@@ -74,8 +73,8 @@ public class CPacketNEIRecipe implements IMessage {
                     }
                 }
             }
-        } catch (IOException ignored) {
-
+        } catch (IOException e) {
+            throw new DecoderException("Failed to decode recipe transfer", e);
         }
 
     }
@@ -92,8 +91,8 @@ public class CPacketNEIRecipe implements IMessage {
             data.capacity(data.readableBytes());
             buf.writeBytes(data);
 
-        } catch (IOException ignored) {
-
+        } catch (IOException e) {
+            throw new EncoderException("Failed to encode recipe transfer", e);
         }
 
     }

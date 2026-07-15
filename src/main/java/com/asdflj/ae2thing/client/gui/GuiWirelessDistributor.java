@@ -286,7 +286,9 @@ public class GuiWirelessDistributor extends AEBaseGui implements IInfoTerminal {
             final NBTTagCompound tag = list.getCompoundTagAt(x);
             DimensionalCoord a = DimensionalCoord.readFromNBT(tag);
             String name = tag.getString(Constants.NAME);
-            AEColor color = AEColor.values()[tag.getInteger(Constants.COLOR)];
+            int colorIndex = tag.getInteger(Constants.COLOR);
+            AEColor color = colorIndex >= 0 && colorIndex < AEColor.values().length ? AEColor.values()[colorIndex]
+                : AEColor.Transparent;
             boolean is_linked = tag.getBoolean(Constants.IS_LINKED);
             this.repo.postUpdate(new Info(a, null, name, color, is_linked, 0));
         }

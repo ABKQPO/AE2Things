@@ -20,7 +20,6 @@ import appeng.me.Grid;
 import appeng.tile.networking.TileController;
 import appeng.util.Platform;
 import appeng.util.ReadableNumberConverter;
-import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
@@ -37,7 +36,8 @@ public class CraftingDebugCardObject {
 
     public CraftingDebugCardObject(ItemStack itemStack) {
         this.data = Platform.openNbtData(itemStack);
-        this.currentMode = Mode.values()[this.data.getByte(Constants.DEBUG_CARD_MODE)];
+        int mode = this.data.getByte(Constants.DEBUG_CARD_MODE);
+        this.currentMode = mode >= 0 && mode < Mode.values().length ? Mode.values()[mode] : Mode.Everything;
     }
 
     public Mode getMode() {
@@ -79,16 +79,15 @@ public class CraftingDebugCardObject {
         if (grid == null) return;
         long id = AE2ThingAPI.instance()
             .getStorageMyID(grid);
-        if (FMLCommonHandler.instance()
-            .getSide() == Side.SERVER) {
+        if (!player.worldObj.isRemote && player instanceof EntityPlayerMP serverPlayer) {
             AE2Thing.proxy.netHandler.sendTo(
                 new SPacketCraftingDebugCardUpdate(
                     id,
                     AE2ThingAPI.instance()
                         .getHistory(grid),
                     this.getMode()),
-                (EntityPlayerMP) player);
-        } else {
+                serverPlayer);
+        } else if (player.worldObj.isRemote) {
             sendMessageToPlayer(id, this.getMode());
             AE2ThingAPI.instance()
                 .saveHistory();

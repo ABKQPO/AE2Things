@@ -121,24 +121,20 @@ public abstract class BaseMEGui extends AEBaseGui implements IGuiSelection {
             try {
                 ItemStack cs = player.inventory.getItemStack();
                 IAEItemStack item = slot.getAEStack() instanceof IAEItemStack ais ? ais : null;
-                if (ctrlDown == 0) {
-                    if (item != null && item.getItem() != null
-                        && item.getItem() instanceof ItemFluidDrop
-                        && item.getStackSize() != 0) {
-                        if (cs == null || isEmptyContainer(cs, ItemFluidDrop.getAeFluidStack(item))) {
-                            IAEFluidStack fluid = ItemFluidDrop.getAeFluidStack(item);
-                            AE2Thing.proxy.netHandler.sendToServer(new CPacketFluidUpdate(fluid, isShiftKeyDown()));
-                            return true;
-                        }
-                    }
+                IAEFluidStack fluid = slot.getAEStack() instanceof IAEFluidStack afs ? afs
+                    : item != null && item.getItem() instanceof ItemFluidDrop ? ItemFluidDrop.getAeFluidStack(item)
+                        : null;
+                if (fluid != null && fluid.getStackSize() != 0 && (cs == null || isEmptyContainer(cs, fluid))) {
+                    AE2Thing.proxy.netHandler.sendToServer(new CPacketFluidUpdate(fluid, isShiftKeyDown()));
+                    return true;
                 } else if (ctrlDown == 1 && isFilledContainer(cs)) {
                     AE2Thing.proxy.netHandler.sendToServer(new CPacketFluidUpdate(null, isShiftKeyDown()));
                     return true;
                 }
-                if (mouseButton == 3 && player.capabilities.isCreativeMode
-                    && item != null
-                    && !item.isCraftable()
-                    && item.getItem() instanceof ItemFluidDrop) {
+                if (fluid != null && mouseButton != 3) {
+                    return true;
+                }
+                if (mouseButton == 3 && player.capabilities.isCreativeMode && fluid != null && !fluid.isCraftable()) {
                     return false;
                 }
             } catch (Exception e) {

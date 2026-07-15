@@ -305,10 +305,10 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
         if (this.parent.updateFluidContainer(slot, ctrlDown, clickMode)) return true;
 
         IAEStack<?> aeStack = slot.getAEStack();
-        IAEItemStack stack = aeStack instanceof IAEItemStack ais ? ais : null;
+        IAEItemStack itemStack = aeStack instanceof IAEItemStack ais ? ais : null;
 
         if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
-            this.inventorySlots.setTargetStack(stack);
+            this.inventorySlots.setTargetStack(itemStack);
             final PacketMonitorableAction p = new PacketMonitorableAction(MonitorableAction.MOVE_REGION, -1);
             NetworkHandler.instance.sendToServer(p);
             return true;
@@ -318,8 +318,8 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
         switch (clickMode) {
             case 0: // pickup / set-down.
                 action = ctrlDown == 1 ? MonitorableAction.SPLIT_OR_PLACE_SINGLE : MonitorableAction.PICKUP_OR_SET_DOWN;
-                if (stack != null && action == MonitorableAction.PICKUP_OR_SET_DOWN
-                    && stack.getStackSize() == 0
+                if (aeStack != null && action == MonitorableAction.PICKUP_OR_SET_DOWN
+                    && aeStack.getStackSize() == 0
                     && player.inventory.getItemStack() == null) {
                     action = MonitorableAction.AUTO_CRAFT;
                 }
@@ -328,27 +328,27 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
                 action = ctrlDown == 1 ? MonitorableAction.PICKUP_SINGLE : MonitorableAction.SHIFT_CLICK;
                 break;
             case 3: // creative dupe:
-                if (stack != null && stack.isCraftable()) {
+                if (aeStack != null && aeStack.isCraftable()) {
                     action = MonitorableAction.AUTO_CRAFT;
                 } else if (player.capabilities.isCreativeMode) {
-                    if (aeStack instanceof IAEItemStack) {
+                    if (itemStack != null) {
                         action = MonitorableAction.CREATIVE_DUPLICATE;
                     }
                 } else break;
             default:
         }
         if (action == MonitorableAction.AUTO_CRAFT) {
-            this.inventorySlots.setTargetStack(stack);
+            this.inventorySlots.setTargetStack(aeStack);
             AE2Thing.proxy.netHandler.sendToServer(
                 new CPacketInventoryAction(
                     InventoryAction.AUTO_CRAFT,
                     Ae2ReflectClient.getInventorySlots(this.parent)
                         .size(),
                     -2,
-                    stack));
+                    aeStack));
         } else if (action != null) {
-            if (stack != null && stack.getItem() instanceof ItemFluidDrop) stack = null;
-            this.inventorySlots.setTargetStack(stack);
+            if (itemStack != null && itemStack.getItem() instanceof ItemFluidDrop) itemStack = null;
+            this.inventorySlots.setTargetStack(itemStack);
             final PacketMonitorableAction p = new PacketMonitorableAction(action, -1);
             NetworkHandler.instance.sendToServer(p);
         }

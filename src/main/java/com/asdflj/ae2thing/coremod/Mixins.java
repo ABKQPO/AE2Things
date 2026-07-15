@@ -8,26 +8,19 @@ import com.gtnewhorizon.gtnhmixins.builders.MixinBuilder;
 
 public enum Mixins implements IMixins {
 
-    AE_CLIENT(new MixinBuilder()
-        .addClientMixins(
-            "ae.AccessorGuiScrollbar",
-            "ae.MixinAEBaseGui",
-            "ae.MixinContainerCraftConfirm",
-            "ae.MixinCraftingCPUCluster",
-            "ae.MixinGuiCraftAmount",
-            "ae.MixinGuiCraftConfirm",
-            "ae.MixinItemRepo",
-            "ae.MixinTileIOPort",
-            "ae.MixinContainerCraftAmount")
-        .addRequiredMod(Mods.AE2)
-        .setPhase(Phase.LATE)),
-
-    AE_SERVER(new MixinBuilder()
+    AE(new MixinBuilder()
         .addCommonMixins(
             "ae.MixinContainerCraftConfirm",
             "ae.MixinCraftingCPUCluster",
+            "ae.MixinPacketMonitorableAction",
             "ae.MixinTileIOPort",
             "ae.MixinContainerCraftAmount")
+        .addClientMixins(
+            "ae.AccessorGuiScrollbar",
+            "ae.MixinAEBaseGui",
+            "ae.MixinGuiCraftAmount",
+            "ae.MixinGuiCraftConfirm",
+            "ae.MixinItemRepo")
         .addRequiredMod(Mods.AE2)
         .setPhase(Phase.LATE)),
 

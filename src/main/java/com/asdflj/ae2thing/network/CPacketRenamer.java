@@ -2,14 +2,18 @@ package com.asdflj.ae2thing.network;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import com.asdflj.ae2thing.AE2Thing;
+import com.asdflj.ae2thing.client.gui.container.ContainerRenamer;
+import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.inventory.InventoryHandler;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.inventory.item.IClickableInTerminal;
 import com.asdflj.ae2thing.inventory.item.WirelessTerminal;
+import com.asdflj.ae2thing.util.Ae2Reflect;
 import com.asdflj.ae2thing.util.BlockPos;
 import com.asdflj.ae2thing.util.Util;
 
@@ -24,6 +28,8 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 
 public class CPacketRenamer implements IMessage {
+
+    private static final int MAX_NAME_LENGTH = 128;
 
     private int x;
     private int y;
@@ -61,7 +67,7 @@ public class CPacketRenamer implements IMessage {
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        this.action = Action.values()[buf.readInt()];
+        this.action = PacketDecodeUtil.readIntEnum(buf, Action.values(), "renamer action");
         if (this.action == Action.OPEN) {
             this.x = buf.readInt();
             this.y = buf.readInt();
@@ -69,12 +75,7 @@ public class CPacketRenamer implements IMessage {
             this.dim = buf.readInt();
             this.side = ForgeDirection.getOrientation(buf.readInt());
         } else if (this.action == Action.SET_TEXT) {
-            int leName = buf.readInt();
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < leName; i++) {
-                sb.append(buf.readChar());
-            }
-            this.text = sb.toString();
+            this.text = PacketDecodeUtil.readUtf16(buf, MAX_NAME_LENGTH, "renamer text");
         }
 
     }
@@ -110,6 +111,7 @@ public class CPacketRenamer implements IMessage {
         }
 
         private String getName(TileEntity tile, ForgeDirection side) {
+            if (tile == null) return "";
             if (tile instanceof TileCableBus) {
                 return getName(((TileCableBus) tile).getPart(side));
             } else {
@@ -118,36 +120,40 @@ public class CPacketRenamer implements IMessage {
         }
 
         private void setName(TileEntity tile, ForgeDirection side, String text) {
-            if (text.isEmpty()) return;
-            if (tile instanceof TileCableBus) {
-                ((ICustomNameObject) ((TileCableBus) tile).getPart(side)).setCustomName(text);
-            } else {
-                ((ICustomNameObject) tile).setCustomName(text);
+            if (tile == null || text == null || text.isEmpty()) return;
+            Object target = tile instanceof TileCableBus cableBus ? cableBus.getPart(side) : tile;
+            if (target instanceof ICustomNameObject customNameObject) {
+                customNameObject.setCustomName(text);
             }
         }
 
         @Override
         public IMessage onMessage(CPacketRenamer message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
-            AEBaseContainer con = (AEBaseContainer) player.openContainer;
+            if (!(player.openContainer instanceof AEBaseContainer con)) return null;
             switch (message.action) {
                 case OPEN -> {
-                    if (con.getTarget() instanceof IClickableInTerminal clickableInterface) {
-                        TileEntity tile = DimensionManager.getWorld(message.dim)
-                            .getTileEntity(message.x, message.y, message.z);
-                        if (!(tile instanceof ICustomNameObject)) {
+                    if (con instanceof ContainerWirelessDualInterfaceTerminal terminalContainer
+                        && con.getTarget() instanceof IClickableInTerminal clickableInterface) {
+                        World world = DimensionManager.getWorld(message.dim);
+                        if (world == null) break;
+                        TileEntity tile = world.getTileEntity(message.x, message.y, message.z);
+                        Object target = tile instanceof TileCableBus cableBus ? cableBus.getPart(message.side) : tile;
+                        if (!(target instanceof ICustomNameObject)
+                            || !Ae2Reflect.getTracked(terminalContainer.delegateContainer)
+                                .containsKey(target)) {
                             break;
                         }
 
                         String name = getName(tile, message.side);
-                        clickableInterface.setClickedInterface(
-                            new Util.DimensionalCoordSide(
-                                message.x,
-                                message.y,
-                                message.z,
-                                message.dim,
-                                message.side,
-                                name));
+                        Util.DimensionalCoordSide renamingTarget = new Util.DimensionalCoordSide(
+                            message.x,
+                            message.y,
+                            message.z,
+                            message.dim,
+                            message.side,
+                            name);
+                        clickableInterface.setClickedInterface(renamingTarget);
 
                         if (con.getTarget() instanceof WirelessTerminal terminal) {
                             InventoryHandler.openGui(
@@ -156,23 +162,30 @@ public class CPacketRenamer implements IMessage {
                                 new BlockPos(terminal.getInventorySlot(), 0, 0),
                                 message.side,
                                 GuiType.RENAMER);
+                            if (player.openContainer instanceof ContainerRenamer renamer) {
+                                renamer.setRenamingTarget(renamingTarget);
+                            }
                         }
                     }
                 }
                 case GET_TEXT -> {
-                    if (con.getTarget() instanceof IClickableInTerminal clickableInterface) {
-                        Util.DimensionalCoordSide intMsg = clickableInterface.getClickedInterface();
-                        TileEntity tile = DimensionManager.getWorld(intMsg.getDimension())
-                            .getTileEntity(intMsg.x, intMsg.y, intMsg.z);
+                    if (con instanceof ContainerRenamer renamer) {
+                        Util.DimensionalCoordSide intMsg = renamer.getRenamingTarget();
+                        if (intMsg == null) break;
+                        World world = DimensionManager.getWorld(intMsg.getDimension());
+                        if (world == null) break;
+                        TileEntity tile = world.getTileEntity(intMsg.x, intMsg.y, intMsg.z);
                         AE2Thing.proxy.netHandler
                             .sendTo(new SPacketStringUpdate(this.getName(tile, intMsg.getSide())), player);
                     }
                 }
                 case SET_TEXT -> {
-                    if (con.getTarget() instanceof IClickableInTerminal clickableInterface) {
-                        Util.DimensionalCoordSide intMsg = clickableInterface.getClickedInterface();
-                        TileEntity tile = DimensionManager.getWorld(intMsg.getDimension())
-                            .getTileEntity(intMsg.x, intMsg.y, intMsg.z);
+                    if (con instanceof ContainerRenamer renamer) {
+                        Util.DimensionalCoordSide intMsg = renamer.getRenamingTarget();
+                        if (intMsg == null) break;
+                        World world = DimensionManager.getWorld(intMsg.getDimension());
+                        if (world == null) break;
+                        TileEntity tile = world.getTileEntity(intMsg.x, intMsg.y, intMsg.z);
                         this.setName(tile, intMsg.getSide(), message.text);
                         AE2Thing.proxy.netHandler.sendTo(new SPacketSwitchBack(), player);
                     }

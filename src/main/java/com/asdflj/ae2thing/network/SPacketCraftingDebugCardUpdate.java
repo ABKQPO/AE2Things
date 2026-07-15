@@ -1,6 +1,5 @@
 package com.asdflj.ae2thing.network;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 
@@ -43,12 +42,9 @@ public class SPacketCraftingDebugCardUpdate implements IMessage {
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        this.mode = CraftingDebugCardObject.Mode.values()[buf.readByte()];
+        this.mode = PacketDecodeUtil.readByteEnum(buf, CraftingDebugCardObject.Mode.values(), "debug card mode");
         try {
-            ByteArrayInputStream bytes = new ByteArrayInputStream(
-                buf.readBytes(buf.readableBytes())
-                    .array());
-            final NBTTagCompound comp = CompressedStreamTools.readCompressed(bytes);
+            final NBTTagCompound comp = PacketDecodeUtil.readCompressedNbt(buf);
             this.networkID = comp.getLong("networkID");
             this.data = comp;
             this.infos = CraftingDebugHelper.CraftingInfo.readFromNBTList(this.data);

@@ -5,16 +5,9 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
-import net.p455w0rd.wirelesscraftingterminal.api.IWirelessCraftingTermHandler;
-import net.p455w0rd.wirelesscraftingterminal.client.gui.GuiWirelessCraftingTerminal;
-import net.p455w0rd.wirelesscraftingterminal.common.container.ContainerWirelessCraftingTerminal;
-import net.p455w0rd.wirelesscraftingterminal.helpers.WTCGuiObject;
-import net.p455w0rd.wirelesscraftingterminal.items.ItemWirelessCraftingTerminal;
 
-import com.asdflj.ae2thing.api.adapter.terminal.item.InventoryPlayerWrapper;
 import com.asdflj.ae2thing.client.gui.GuiCellLink;
 import com.asdflj.ae2thing.client.gui.GuiCraftAmount;
 import com.asdflj.ae2thing.client.gui.GuiCraftConfirm;
@@ -52,10 +45,7 @@ import com.asdflj.ae2thing.common.tile.TileWirelessDistributor;
 import com.asdflj.ae2thing.inventory.ItemCellLinkInventory;
 import com.google.common.collect.ImmutableList;
 
-import appeng.api.AEApi;
 import appeng.api.storage.ITerminalHost;
-import appeng.container.AEBaseContainer;
-import appeng.container.ContainerOpenContext;
 import appeng.container.implementations.ContainerCraftAmount;
 import appeng.container.implementations.ContainerCraftingStatus;
 
@@ -326,55 +316,7 @@ public enum GuiType {
             return new GuiWirelessDistributor(player.inventory, inv);
         }
     }),
-    WCT_CRAFTING_TERMINAL_BRIDGE(new ItemGuiBridge<>(ItemWirelessCraftingTerminal.class) {
-
-        @Override
-        protected Object createServerGui(EntityPlayer player, ItemWirelessCraftingTerminal inv, ItemStack item) {
-            final IWirelessCraftingTermHandler wh = (IWirelessCraftingTermHandler) AEApi.instance()
-                .registries()
-                .wireless()
-                .getWirelessTerminalHandler(item);
-            if (wh == null) {
-                return null;
-            }
-            final WTCGuiObject term = new WTCGuiObject(
-                wh,
-                item,
-                player,
-                player.worldObj,
-                (int) player.posX,
-                (int) player.posY,
-                (int) player.posZ,
-                player.inventory.currentItem);
-            AEBaseContainer bc = new ContainerWirelessCraftingTerminal(new InventoryPlayerWrapper(player, item), term);
-            bc.setOpenContext(new ContainerOpenContext(term));
-            bc.getOpenContext()
-                .setWorld(player.worldObj);
-            bc.getOpenContext()
-                .setX((int) player.posX);
-            bc.getOpenContext()
-                .setY((int) player.posY);
-            bc.getOpenContext()
-                .setZ((int) player.posZ);
-            bc.getOpenContext()
-                .setSide(ForgeDirection.UNKNOWN);
-            return bc;
-        }
-
-        @Override
-        protected Object createClientGui(EntityPlayer player, ItemWirelessCraftingTerminal inv, ItemStack item) {
-            if (item == null) return null;
-            final WTCGuiObject term = ContainerWirelessCraftingTerminal.getGuiObject(
-                item,
-                player,
-                player.worldObj,
-                (int) player.posX,
-                (int) player.posY,
-                (int) player.posZ,
-                player.inventory.currentItem);
-            return new GuiWirelessCraftingTerminal(new InventoryPlayerWrapper(player, item), term);
-        }
-    });
+    WCT_CRAFTING_TERMINAL_BRIDGE(new OptionalWCTGuiFactory());
 
     public static final List<GuiType> VALUES = ImmutableList.copyOf(values());
 

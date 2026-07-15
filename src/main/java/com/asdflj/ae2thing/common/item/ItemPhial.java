@@ -87,14 +87,30 @@ public class ItemPhial extends ItemEssence implements IRegister<ItemPhial> {
 
     @Nullable
     public static IAEItemStack newAeStack(@Nullable AEEssentiaStack essentia) {
-        if (essentia != null && essentia.getStackSize() >= 0 && essentia.getAspect() != null) {
-            ItemStack phial = new ItemStack(ItemAndBlockHolder.PHIAL, 1, 1);
-            ItemPhial.setAspects(phial, essentia.getAspect());
-            IAEItemStack item = AEItemStack.create(phial);
-            item.setStackSize(essentia.getStackSize() / AspectUtil.R);
-            return item;
-        }
-        return null;
+        if (essentia == null || essentia.getAspect() == null || essentia.getStackSize() < 0) return null;
+        return newAeStack(essentia.getAspect(), essentia.getStackSize() / AspectUtil.R);
+    }
+
+    /**
+     * Converts an essentia monitor delta to the corresponding phial facade delta. The monitor's current amount is the
+     * amount after the change; comparing the converted totals on both sides of the change preserves updates that cross
+     * an item-unit boundary even when the raw delta itself is smaller than {@link AspectUtil#R}.
+     */
+    @Nullable
+    public static IAEItemStack newAeDeltaStack(@Nullable AEEssentiaStack current, @Nullable AEEssentiaStack change) {
+        if (change == null || change.getAspect() == null) return null;
+
+        long currentAmount = current == null ? 0 : current.getStackSize();
+        long itemDelta = PhialAmountConverter.calculateItemDelta(currentAmount, change.getStackSize(), AspectUtil.R);
+        return itemDelta == 0 ? null : newAeStack(change.getAspect(), itemDelta);
+    }
+
+    private static IAEItemStack newAeStack(Aspect aspect, long size) {
+        ItemStack phial = new ItemStack(ItemAndBlockHolder.PHIAL, 1, 1);
+        ItemPhial.setAspects(phial, aspect);
+        IAEItemStack item = AEItemStack.create(phial);
+        item.setStackSize(size);
+        return item;
     }
 
     public static ItemStack newStack(Aspect aspect, int size) {

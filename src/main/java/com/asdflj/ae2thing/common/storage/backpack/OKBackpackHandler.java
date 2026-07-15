@@ -42,15 +42,20 @@ public class OKBackpackHandler extends BaseBackpackHandler {
 
     @Override
     public ItemStack injectItem(ItemStack stack) {
+        return this.injectItem(stack, false);
+    }
+
+    @Override
+    public ItemStack injectItem(ItemStack stack, boolean simulate) {
         BackpackWrapper wrapper = this.context.getWrapper();
         ItemStack remaining = stack.copy();
         for (int slot = 0; slot < wrapper.getSlots() && remaining != null && remaining.stackSize > 0; slot++) {
             if (!wrapper.canInsert(slot, remaining)) {
                 continue;
             }
-            remaining = wrapper.insertItem(slot, remaining, false);
+            remaining = wrapper.insertItem(slot, remaining, simulate);
         }
-        if (remaining == null || remaining.stackSize < stack.stackSize) {
+        if (!simulate && (remaining == null || remaining.stackSize < stack.stackSize)) {
             BackpackEntityHelpers.persistBackpack(this.context);
         }
         return remaining == null ? null : remaining;

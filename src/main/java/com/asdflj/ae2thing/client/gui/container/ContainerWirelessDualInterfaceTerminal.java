@@ -281,10 +281,13 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     private ImmutablePair<World, IInterfaceViewable> getWorldAndHost(NBTTagCompound tag) {
         Util.DimensionalCoordSide intMsg = Util.DimensionalCoordSide.readFromNBT(tag);
         World w = DimensionManager.getWorld(intMsg.getDimension());
+        if (w == null) return null;
         TileEntity tile = w.getTileEntity(intMsg.x, intMsg.y, intMsg.z);
         IInterfaceViewable host;
         if (tile instanceof TileCableBus) {
-            host = (IInterfaceViewable) ((TileCableBus) tile).getPart(intMsg.getSide());
+            Object part = ((TileCableBus) tile).getPart(intMsg.getSide());
+            if (!(part instanceof IInterfaceViewable viewable)) return null;
+            host = viewable;
         } else if (tile instanceof IInterfaceViewable iv) {
             host = iv;
         } else if ((Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded())) {
@@ -293,6 +296,8 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
         } else {
             return null;
         }
+        if (!Ae2Reflect.getTracked(this.delegateContainer)
+            .containsKey(host)) return null;
         return ImmutablePair.of(w, host);
     }
 
@@ -360,9 +365,10 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
 
     public void setStick(NBTTagCompound tag) {
         Util.DimensionalCoordSide c = Util.DimensionalCoordSide.readFromNBT(tag);
-        World w = DimensionManager.getWorld(c.getDimension());
+        ImmutablePair<World, IInterfaceViewable> result = getWorldAndHost(tag);
+        if (result == null) return;
         if (Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded()) {
-            GTUtil.setDataStick(c.x, c.y, c.z, this.player, w);
+            GTUtil.setDataStick(c.x, c.y, c.z, this.player, result.left);
         }
     }
 
@@ -451,6 +457,7 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
 
     private void injectPatternToPatternModifier(IInterfaceViewable host, int slot, boolean shift) {
         IInventory patterns = host.getPatterns();
+        if (!shift && (slot < 0 || slot >= patterns.getSizeInventory())) return;
         PatternModifierInventory patternModifierInventory = new PatternModifierInventory(
             this.player.inventory.getItemStack(),
             -1,
@@ -475,8 +482,9 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     public void PlacePattern(int slot, NBTTagCompound tag) {
         ImmutablePair<World, IInterfaceViewable> result = getWorldAndHost(tag);
         if (result == null) return;
-        ItemStack item = result.right.getPatterns()
-            .getStackInSlot(slot);
+        IInventory patterns = result.right.getPatterns();
+        if (slot < 0 || slot >= patterns.getSizeInventory()) return;
+        ItemStack item = patterns.getStackInSlot(slot);
         if (item != null) return;
         if (!this.getContainer()
             .getPatternOutputSlot()
@@ -484,16 +492,13 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
         ItemStack pattern = this.getContainer()
             .getPatternOutputSlot()
             .getStack();
-        for (int i = 0; i < result.right.getPatterns()
-            .getSizeInventory(); i++) {
-            ItemStack slotStack = result.right.getPatterns()
-                .getStackInSlot(i);
+        for (int i = 0; i < patterns.getSizeInventory(); i++) {
+            ItemStack slotStack = patterns.getStackInSlot(i);
             if (StackInfo.equalItemAndNBT(slotStack, pattern, true)) {
                 return;
             }
         }
-        result.right.getPatterns()
-            .setInventorySlotContents(slot, pattern);
+        patterns.setInventorySlotContents(slot, pattern);
         this.getContainer()
             .getPatternOutputSlot()
             .putStack(null);

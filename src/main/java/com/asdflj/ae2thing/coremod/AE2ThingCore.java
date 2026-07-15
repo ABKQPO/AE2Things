@@ -13,7 +13,8 @@ import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
 
 @IFMLLoadingPlugin.Name("AE2ThingCore")
 @IFMLLoadingPlugin.MCVersion("1.7.10")
-@IFMLLoadingPlugin.TransformerExclusions("com.asdflj.ae2thing.coremod")
+@IFMLLoadingPlugin.TransformerExclusions({ "com.asdflj.ae2thing.coremod.AE2ThingCore",
+    "com.asdflj.ae2thing.coremod.ClassTransformer", "com.asdflj.ae2thing.coremod.transform" })
 public class AE2ThingCore implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     private static boolean DEV_ENVIRONMENT;

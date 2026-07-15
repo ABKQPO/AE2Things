@@ -13,6 +13,8 @@ import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.EncoderException;
 
 public class CPacketFluidUpdate implements IMessage {
 
@@ -53,7 +55,7 @@ public class CPacketFluidUpdate implements IMessage {
             this.slotIndex = buf.readInt();
             this.shift = buf.readBoolean();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new DecoderException("Failed to decode fluid update", e);
         }
     }
 
@@ -69,7 +71,7 @@ public class CPacketFluidUpdate implements IMessage {
             buf.writeInt(this.slotIndex);
             buf.writeBoolean(this.shift);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new EncoderException("Failed to encode fluid update", e);
         }
     }
 

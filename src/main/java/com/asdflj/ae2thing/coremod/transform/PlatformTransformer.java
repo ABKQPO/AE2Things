@@ -25,7 +25,7 @@ public class PlatformTransformer extends ClassTransformer.ClassMapper {
 
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-            if (name.equals("updateView")) {
+            if (name.equals("updateView") || name.startsWith("lambda$getFilter$")) {
                 return new TransformUpdateView(api, super.visitMethod(access, name, desc, signature, exceptions));
             }
             return super.visitMethod(access, name, desc, signature, exceptions);
@@ -44,9 +44,9 @@ public class PlatformTransformer extends ClassTransformer.ClassMapper {
                         Opcodes.INVOKESTATIC,
                         "com/asdflj/ae2thing/coremod/hooker/CoreModHooksClient",
                         "getModId",
-                        "(Lappeng/api/storage/data/IAEItemStack;)Ljava/lang/String;",
+                        "(Lappeng/api/storage/data/IAEStack;)Ljava/lang/String;",
                         false);
-                    case "getItemDisplayName" -> super.visitMethodInsn(
+                    case "getDisplayName", "getItemDisplayName" -> super.visitMethodInsn(
                         Opcodes.INVOKESTATIC,
                         "com/asdflj/ae2thing/coremod/hooker/CoreModHooksClient",
                         "getItemDisplayName",

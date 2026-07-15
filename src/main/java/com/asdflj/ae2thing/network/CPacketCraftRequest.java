@@ -37,6 +37,8 @@ import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.EncoderException;
 
 public class CPacketCraftRequest implements IMessage {
 
@@ -83,7 +85,9 @@ public class CPacketCraftRequest implements IMessage {
             try {
                 item.writeToPacket(buf);
                 buf.writeBoolean(heldShift);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                throw new EncoderException("Failed to encode crafting request", e);
+            }
         } else {
             buf.writeLong(amount);
             buf.writeBoolean(heldShift);
@@ -93,13 +97,15 @@ public class CPacketCraftRequest implements IMessage {
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        mode = Mode.values()[buf.readByte()];
-        craftingMode = CraftingMode.values()[buf.readByte()];
+        mode = PacketDecodeUtil.readByteEnum(buf, Mode.values(), "craft request mode");
+        craftingMode = PacketDecodeUtil.readByteEnum(buf, CraftingMode.values(), "crafting mode");
         if (mode == Mode.ITEM) {
             try {
                 item = AEItemStack.loadItemStackFromPacket(buf);
                 heldShift = buf.readBoolean();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                throw new DecoderException("Failed to decode crafting request", e);
+            }
         } else {
             amount = buf.readLong();
             heldShift = buf.readBoolean();
@@ -112,6 +118,8 @@ public class CPacketCraftRequest implements IMessage {
         @Override
         public IMessage onMessage(CPacketCraftRequest message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+            if (message.mode == Mode.STACK_SIZE && message.amount <= 0) return null;
+            if (message.mode == Mode.ITEM && message.item == null) return null;
             Object target;
             if (player.openContainer instanceof final ContainerCraftAmount cca) {
                 target = cca.getTarget();

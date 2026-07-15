@@ -75,7 +75,7 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
         if (l != null) {
             if (mode == Actionable.MODULATE) {
                 l.setStackSize(l.getStackSize() + input.getStackSize());
-                this.saveChanges();
+                this.saveChanges(input.copy());
             }
             return null;
         }
@@ -84,7 +84,7 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
         {
             if (mode == Actionable.MODULATE) {
                 this.cellFluids.add(input);
-                this.saveChanges();
+                this.saveChanges(input.copy());
             }
             return null;
         }
@@ -113,14 +113,18 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
 
                 if (mode == Actionable.MODULATE) {
                     l.setStackSize(0);
-                    this.saveChanges();
+                    IAEFluidStack change = results.copy();
+                    change.setStackSize(-results.getStackSize());
+                    this.saveChanges(change);
                 }
             } else {
                 results.setStackSize(size);
 
                 if (mode == Actionable.MODULATE) {
                     l.setStackSize(l.getStackSize() - size);
-                    this.saveChanges();
+                    IAEFluidStack change = results.copy();
+                    change.setStackSize(-results.getStackSize());
+                    this.saveChanges(change);
                 }
             }
         }
@@ -128,14 +132,14 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
         return results;
     }
 
-    private void saveChanges() {
+    private void saveChanges(IAEFluidStack change) {
         this.data.setBoolean(Constants.IS_EMPTY, this.cellFluids.isEmpty());
         if (this.container != null) {
             this.container.saveChanges(this);
         }
         AE2ThingAPI.instance()
             .getStorageManager()
-            .postChanges(this.cellItem, this.storage, this.drive);
+            .postFluidChange(this.storage, this.drive, change);
         AE2ThingAPI.instance()
             .getStorageManager()
             .setDirty(true);
@@ -293,8 +297,9 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
 
     @Override
     public IAEFluidStack getAvailableItem(@Nonnull IAEFluidStack request, int iteration) {
-        return this.getCellFluids()
+        IAEFluidStack available = this.getCellFluids()
             .findPrecise(request);
+        return available == null ? null : available.copy();
     }
 
     @Override

@@ -212,13 +212,15 @@ public class CellInventory implements ITCellInventory {
         return null;
     }
 
-    private FluidStack injectFluid(FluidStack fs) {
+    private FluidStack injectFluid(FluidStack fs, boolean simulate) {
         FluidStack injectFluid = fs.copy();
         for (BaseBackpackHandler inv : this.fluidInv) {
             for (FluidTank ft : inv.getFluidTanks()) {
-                int added = ft.fill(injectFluid, true);
+                int added = ft.fill(injectFluid, !simulate);
                 if (added > 0) {
-                    inv.markFluidAsDirty();
+                    if (!simulate) {
+                        inv.markFluidAsDirty();
+                    }
                     injectFluid.amount -= added;
                 }
                 if (injectFluid.amount <= 0) {
@@ -229,11 +231,11 @@ public class CellInventory implements ITCellInventory {
         return injectFluid;
     }
 
-    private ItemStack injectItem(ItemStack is) {
+    private ItemStack injectItem(ItemStack is, boolean simulate) {
         ItemStack injectItem = is.copy();
         for (IInventory inv : this.modInv) {
             if (inv instanceof BaseBackpackHandler backpackHandler) {
-                injectItem = backpackHandler.injectItem(injectItem);
+                injectItem = backpackHandler.injectItem(injectItem, simulate);
                 if (injectItem == null || injectItem.stackSize <= 0) {
                     return injectItem;
                 }
@@ -251,7 +253,9 @@ public class CellInventory implements ITCellInventory {
                 }
                 ItemStack updated = slotItem.copy();
                 updated.stackSize += moved;
-                inv.setInventorySlotContents(i, updated);
+                if (!simulate) {
+                    inv.setInventorySlotContents(i, updated);
+                }
                 injectItem.stackSize -= moved;
                 if (injectItem.stackSize <= 0) {
                     return injectItem;
@@ -266,7 +270,9 @@ public class CellInventory implements ITCellInventory {
                 if (added.stackSize <= 0) {
                     continue;
                 }
-                inv.setInventorySlotContents(i, added);
+                if (!simulate) {
+                    inv.setInventorySlotContents(i, added);
+                }
                 injectItem.stackSize -= added.stackSize;
                 if (injectItem.stackSize <= 0) {
                     return injectItem;
@@ -292,32 +298,36 @@ public class CellInventory implements ITCellInventory {
             return input;
         }
 
-        if (mode == Actionable.MODULATE) {
-            this.tryToLoadCellItems();
-            ItemStack is;
-            if (input.getItem() instanceof ItemFluidDrop) {
-                is = ItemFluidDrop.newStack(
-                    this.injectFluid(Objects.requireNonNull(ItemFluidDrop.getFluidStack(input.getItemStack()))));
-            } else {
-                is = this.injectItem(Objects.requireNonNull(input.getItemStack()));
-            }
-            if (is == null || is.stackSize == 0) {
+        this.tryToLoadCellItems();
+        boolean simulate = mode == Actionable.SIMULATE;
+        ItemStack is;
+        if (input.getItem() instanceof ItemFluidDrop) {
+            is = ItemFluidDrop.newStack(
+                this.injectFluid(Objects.requireNonNull(ItemFluidDrop.getFluidStack(input.getItemStack())), simulate));
+        } else {
+            is = this.injectItem(Objects.requireNonNull(input.getItemStack()), simulate);
+        }
+        if (is == null || is.stackSize == 0) {
+            if (!simulate) {
                 this.getCellItems()
                     .add(input);
-                return null;
-            } else {
-                IAEItemStack l = input.copy();
-                IAEItemStack noAdded = AEApi.instance()
-                    .storage()
-                    .createItemStack(is);
-                l.decStackSize(noAdded.getStackSize());
+            }
+            return null;
+        }
+
+        IAEItemStack noAdded = Objects.requireNonNull(
+            AEApi.instance()
+                .storage()
+                .createItemStack(is));
+        if (!simulate) {
+            IAEItemStack l = input.copy();
+            l.decStackSize(noAdded.getStackSize());
+            if (l.getStackSize() > 0) {
                 this.getCellItems()
                     .add(l);
-                return noAdded;
             }
-
         }
-        return null;
+        return noAdded;
     }
 
     protected IItemList<IAEItemStack> getCellItems() {

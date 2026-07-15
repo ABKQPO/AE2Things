@@ -53,7 +53,8 @@ public class MagnetObject {
     public MagnetObject(ItemStack is) {
         this.item = is;
         this.data = Platform.openNbtData(is);
-        this.currentMode = Mode.values()[data.getByte(modeKey)];
+        int mode = data.getByte(modeKey);
+        this.currentMode = mode >= 0 && mode < Mode.values().length ? Mode.values()[mode] : Mode.Off;
     }
 
     private void addBlackItems(IAEItemStack is) {

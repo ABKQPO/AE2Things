@@ -82,7 +82,10 @@ public class BlockWirelessDistributor extends BaseTileBlock implements IRegister
     @Override
     public void addInformation(ItemStack itemStack, EntityPlayer player, List<String> toolTip,
         boolean advancedToolTips) {
-        toolTip.add(AEColor.values()[itemStack.getItemDamage()].toString());
+        int colorIndex = itemStack.getItemDamage();
+        AEColor color = colorIndex >= 0 && colorIndex < AEColor.values().length ? AEColor.values()[colorIndex]
+            : AEColor.Transparent;
+        toolTip.add(color.toString());
         if (GuiScreen.isShiftKeyDown()) {
             toolTip.addAll(
                 Arrays.asList(

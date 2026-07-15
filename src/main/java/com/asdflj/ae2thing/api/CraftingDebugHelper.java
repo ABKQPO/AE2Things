@@ -35,7 +35,7 @@ import appeng.api.networking.security.MachineSource;
 import appeng.api.networking.security.PlayerSource;
 import appeng.api.parts.IPart;
 import appeng.api.parts.PartItemStack;
-import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.util.DimensionalCoord;
 import appeng.core.AELog;
 import appeng.crafting.v2.CraftingJobV2;
@@ -96,7 +96,7 @@ public class CraftingDebugHelper implements ICraftingCallback {
             return this.name;
         }
 
-        public CraftingInfo(BaseActionSource actionSource, IAEItemStack item, long id, CraftingMode mode) {
+        public CraftingInfo(BaseActionSource actionSource, IAEStack<?> item, long id, CraftingMode mode) {
             if (actionSource instanceof PlayerSource ps) {
                 this.name = ps.player.getDisplayName();
                 this.isPlayer = true;
@@ -144,7 +144,9 @@ public class CraftingDebugHelper implements ICraftingCallback {
             this.endTime = endTime;
             this.itemName = itemName;
             this.requestSize = requestSize;
-            this.mode = CraftingMode.values()[mode];
+            int modeIndex = Byte.toUnsignedInt(mode);
+            this.mode = modeIndex < CraftingMode.values().length ? CraftingMode.values()[modeIndex]
+                : CraftingMode.STANDARD;
             this.direction = ForgeDirection.getOrientation(direction);
             this.isPlayer = isPlayer;
             this.pos = pos;
@@ -207,7 +209,9 @@ public class CraftingDebugHelper implements ICraftingCallback {
             boolean isPlayer = tag.getBoolean("isPlayer");
             String msg = tag.getString("errorMsg");
             boolean simulation = tag.getBoolean("simulation");
-            Constants.State state = Constants.State.values()[tag.getByte("state")];
+            int stateIndex = Byte.toUnsignedInt(tag.getByte("state"));
+            Constants.State state = stateIndex < Constants.State.values().length ? Constants.State.values()[stateIndex]
+                : Constants.State.CANCELLED;
             DimensionalCoord pos = null;
             if (!isPlayer && tag.hasKey("dim")) {
                 pos = DimensionalCoord.readFromNBT(tag);
@@ -276,7 +280,7 @@ public class CraftingDebugHelper implements ICraftingCallback {
     }
 
     public CraftingDebugHelper(final World world, final IGrid meGrid, final BaseActionSource actionSource,
-        final IAEItemStack what, final CraftingMode craftingMode, ICraftingCallback callback) {
+        final IAEStack<?> what, final CraftingMode craftingMode, ICraftingCallback callback) {
         long id = AE2ThingAPI.instance()
             .getStorageMyID((Grid) meGrid);
         history.putIfAbsent(id, new LimitedSizeLinkedList<>());
@@ -293,7 +297,7 @@ public class CraftingDebugHelper implements ICraftingCallback {
     }
 
     public static void craftingHelper(final CraftingJobV2 jobV2, final World world, final IGrid meGrid,
-        final BaseActionSource actionSource, final IAEItemStack what, final CraftingMode craftingMode,
+        final BaseActionSource actionSource, final IAEStack<?> what, final CraftingMode craftingMode,
         final ICraftingCallback callback) {
         Ae2Reflect
             .setCallback(jobV2, new CraftingDebugHelper(world, meGrid, actionSource, what, craftingMode, callback));

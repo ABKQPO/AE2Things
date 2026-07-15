@@ -12,6 +12,7 @@ import com.glodblock.github.client.gui.GuiFluidInterface;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.util.Platform;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -34,16 +35,19 @@ public class CoreModHooksClient {
 
     private static final HashMap<IAEItemStack, ItemInfo> cache = new HashMap<>();
 
-    public static String getModId(final IAEItemStack is) {
-        if (cache.containsKey(is) && cache.get(is).modId != null) {
-            return cache.get(is).modId;
-        } else if (is.getItem() instanceof ItemFluidDrop) {
-            String id = Util.getModId(is);
-            putCache(is, id, null, null);
-            return id;
-        } else {
+    public static String getModId(final IAEStack<?> stack) {
+        if (stack instanceof IAEItemStack is) {
+            if (cache.containsKey(is) && cache.get(is).modId != null) {
+                return cache.get(is).modId;
+            } else if (is.getItem() instanceof ItemFluidDrop) {
+                String id = Util.getModId(is);
+                putCache(is, id, null, null);
+                return id;
+            }
             return Platform.getModId(is);
         }
+        String id = stack.getModId();
+        return id == null ? "** Null" : id;
     }
 
     public static String getItemDisplayName(final Object o) {
