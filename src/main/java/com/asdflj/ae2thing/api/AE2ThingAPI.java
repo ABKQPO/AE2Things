@@ -1,6 +1,5 @@
 package com.asdflj.ae2thing.api;
 
-import static com.asdflj.ae2thing.nei.NEI_TH_Config.getConfigValue;
 import static net.minecraft.init.Items.glass_bottle;
 
 import java.io.File;
@@ -18,7 +17,6 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 
@@ -26,13 +24,11 @@ import org.apache.commons.lang3.tuple.MutablePair;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.Tags;
-import com.asdflj.ae2thing.client.event.NotificationEvent;
 import com.asdflj.ae2thing.common.Config;
 import com.asdflj.ae2thing.common.fluids.Mana;
 import com.asdflj.ae2thing.common.storage.StorageManager;
 import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
-import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.network.CPacketFindCellItem;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.util.Ae2Reflect;
@@ -41,7 +37,6 @@ import com.asdflj.ae2thing.util.NameConst;
 import com.glodblock.github.util.Util;
 
 import appeng.api.storage.data.IAEFluidStack;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.me.Grid;
 import appeng.util.ReadableNumberConverter;
 import cpw.mods.fml.relauncher.FMLInjectionData;
@@ -275,22 +270,6 @@ public final class AE2ThingAPI implements IAE2ThingAPI {
                 new ChatComponentText(
                     I18n.format(NameConst.CRAFTING_DEBUG_CARD_EXPORT_FILE, Constants.DEBUG_CARD_EXPORT_FILENAME)));
         } catch (Exception ignored) {}
-    }
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    public void addCraftingCompleteNotification(IAEItemStack item) {
-        if (getConfigValue(ButtonConstants.CRAFTING_NOTIFICATION)) {
-            MinecraftForge.EVENT_BUS.post(new NotificationEvent(item));
-        }
-    }
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    public void addNotification(String tile, String Content, ItemStack item) {
-        if (getConfigValue(ButtonConstants.CRAFTING_NOTIFICATION)) {
-            MinecraftForge.EVENT_BUS.post(new NotificationEvent(tile, Content, item));
-        }
     }
 
 }

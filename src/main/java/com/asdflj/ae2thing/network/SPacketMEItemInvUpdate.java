@@ -83,11 +83,6 @@ public class SPacketMEItemInvUpdate extends SPacketMEBaseInvUpdate implements IM
                             .getPinned()
                             .add(item);
                     }
-                } else if (message.ref == Constants.MessageType.NOTIFICATION.type) {
-                    if (!message.isEmpty() && message.list.get(0) instanceof IAEItemStack item) {
-                        AE2ThingAPI.instance()
-                            .addCraftingCompleteNotification(item);
-                    }
                 }
             return null;
         }

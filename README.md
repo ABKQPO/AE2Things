@@ -16,9 +16,6 @@ Can set link mode to link other infinity cell. It will share stored items
 ![infinity_cell_link.png](blob/infinity_cell_link.png)
 **Middle click to quick order item**</br>
 ![order.gif](blob/order.gif)
-**Crafting complete notification**</br>
-Backport crafting complete notification
-![crafting_notification.gif](blob/crafting_notification.gif)
 **Terminal menu**</br>
 ![terminal_menu.gif](blob/terminal_menu.gif)
 **NEI encode pattern**</br>
@@ -59,4 +56,3 @@ Can easily manage ae2 stuff wireless connector
 ![crafting_debug_card.gif](blob/crafting_debug_card.gif)</br>
 FishBig and MDDyue
 ![doll_2.png](blob/doll_2.png)
-

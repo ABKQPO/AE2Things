@@ -48,7 +48,6 @@ public class NameConst {
     public static final String TT_CELL_LINK_DESC = TT_CELL_LINK + "desc";
     public static final String TT_CELL_CONTENTS = TT_KEY + "cell_contents";
     public static final String TT_CELL_EMPTY = TT_KEY + "cell_empty";
-    public static final String TT_CRAFTING_COMPLETE = TT_KEY + "crafting_complete";
     public static final String TT_INTERFACE_TERMINAL = TT_KEY + "wireless_dual_interface_terminal.";
     public static final String TT_INTERFACE_TERMINAL_DESC = TT_INTERFACE_TERMINAL + "desc";
     public static final String TT_CRAFTING_DEBUG_CARD = TT_KEY + "crafting_debug_card.";
@@ -108,7 +107,6 @@ public class NameConst {
 
     public static final String MESSAGE_KEY = AE2Thing.MODID + ".message.";
     public static final String MESSAGE_SCANNING = MESSAGE_KEY + "scanning";
-    public static final String MESSAGE_CRAFTING_COMPLETE = MESSAGE_KEY + "crafting_complete";
     public static final String MESSAGE_CRAFTING_DEBUG_CARD = MESSAGE_KEY + "crafting_debug_card.";
     public static final String MESSAGE_CRAFTING_DEBUG_CARD_REQUEST_TYPE = MESSAGE_CRAFTING_DEBUG_CARD + "request_type";
     public static final String MESSAGE_CRAFTING_DEBUG_CARD_REQUEST_TYPE_MACHINE = MESSAGE_CRAFTING_DEBUG_CARD_REQUEST_TYPE
