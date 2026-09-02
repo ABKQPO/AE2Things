@@ -47,11 +47,11 @@ import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.IMEMonitorHandlerReceiver;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.ITerminalTypeFilterProvider;
+import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
-import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IItemList;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
@@ -67,8 +67,8 @@ import appeng.util.InventoryAdaptor;
 import appeng.util.Platform;
 import appeng.util.inv.AdaptorPlayerHand;
 import appeng.util.item.AEFluidStack;
-import appeng.util.item.AEItemStack;
 import appeng.util.item.AEFluidStackType;
+import appeng.util.item.AEItemStack;
 import it.unimi.dsi.fastutil.objects.ObjectLongPair;
 
 public abstract class ContainerMonitor extends BaseNetworkContainer implements IConfigurableObject, IConfigManagerHost,
@@ -287,7 +287,11 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
                 if (this.getTargetStack() instanceof IAEFluidStack fluid) {
                     this.postChange(fluid, player, -1, action == MonitorableAction.FILL_CONTAINERS);
                 } else if (this.getTargetStack() != null) {
-                    this.processGenericContainer(this.getTargetStack(), player, true, action == MonitorableAction.FILL_CONTAINERS);
+                    this.processGenericContainer(
+                        this.getTargetStack(),
+                        player,
+                        true,
+                        action == MonitorableAction.FILL_CONTAINERS);
                 }
             }
             case DRAIN_SINGLE_CONTAINER, DRAIN_CONTAINERS -> {
@@ -319,7 +323,8 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
         IAEStackType type = fill ? requested.getStackType() : this.findContainerType(hand);
         if (hand == null || type == null || !type.isContainerItemForType(hand)) return;
         IStorageGrid storage = this.networkNode == null || this.networkNode.getGrid() == null ? null
-            : this.networkNode.getGrid().getCache(IStorageGrid.class);
+            : this.networkNode.getGrid()
+                .getCache(IStorageGrid.class);
         IMEMonitor monitor = storage == null ? null : storage.getMEMonitor(type);
         if (monitor == null) return;
         int count = shift ? hand.stackSize : 1;
@@ -327,34 +332,48 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
             hand = player.inventory.getItemStack();
             if (hand == null) break;
             if (fill) {
-                IAEStack available = monitor.extractItems(requested.copy(), Actionable.SIMULATE, this.getActionSource());
+                IAEStack available = monitor
+                    .extractItems(requested.copy(), Actionable.SIMULATE, this.getActionSource());
                 if (available == null) break;
                 ItemStack one = hand.copy();
                 one.stackSize = 1;
                 ObjectLongPair<ItemStack> result = type.fillContainer(one, available);
                 if (result.left() == null || result.rightLong() <= 0) break;
                 available.setStackSize(result.rightLong());
-                if (Platform.poweredExtraction(this.getPowerSource(), monitor, available, this.getActionSource()) == null) break;
+                if (Platform.poweredExtraction(this.getPowerSource(), monitor, available, this.getActionSource())
+                    == null) break;
                 if (hand.stackSize == 1) player.inventory.setItemStack(result.left());
-                else { Platform.addToPlayerInvOrDrop(player, result.left()); hand.stackSize--; }
+                else {
+                    Platform.addToPlayerInvOrDrop(player, result.left());
+                    hand.stackSize--;
+                }
             } else {
                 IAEStack contained = type.getStackFromContainerItem(hand);
                 if (contained == null) break;
-                IAEStack leftover = Platform.poweredInsert(this.getPowerSource(), monitor, contained.copy(), this.getActionSource(), Actionable.SIMULATE);
-                long accepted = leftover == null ? contained.getStackSize() : contained.getStackSize() - leftover.getStackSize();
+                IAEStack leftover = Platform.poweredInsert(
+                    this.getPowerSource(),
+                    monitor,
+                    contained.copy(),
+                    this.getActionSource(),
+                    Actionable.SIMULATE);
+                long accepted = leftover == null ? contained.getStackSize()
+                    : contained.getStackSize() - leftover.getStackSize();
                 if (accepted <= 0) break;
                 contained.setStackSize(accepted);
                 ObjectLongPair<ItemStack> result = type.drainStackFromContainer(hand.copy(), contained);
                 if (result.left() == null || result.rightLong() <= 0) break;
                 contained.setStackSize(result.rightLong());
-                if (Platform.poweredInsert(this.getPowerSource(), monitor, contained, this.getActionSource()) != null) break;
+                if (Platform.poweredInsert(this.getPowerSource(), monitor, contained, this.getActionSource()) != null)
+                    break;
                 if (hand.stackSize == 1) player.inventory.setItemStack(result.left());
-                else { hand.stackSize--; Platform.addToPlayerInvOrDrop(player, result.left()); }
+                else {
+                    hand.stackSize--;
+                    Platform.addToPlayerInvOrDrop(player, result.left());
+                }
             }
         }
         this.updateHeld(player);
     }
-
 
     private void pickupStoredItems(IAEItemStack stack, EntityPlayerMP player, IMEMonitor<IAEItemStack> itemMonitor) {
         stack.setStackSize(
@@ -395,7 +414,8 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
 
     protected void registerGenericMonitor(IAEStackType<?> type) {
         if (this.networkNode == null || this.networkNode.getGrid() == null) return;
-        IStorageGrid storage = this.networkNode.getGrid().getCache(IStorageGrid.class);
+        IStorageGrid storage = this.networkNode.getGrid()
+            .getCache(IStorageGrid.class);
         if (storage == null) return;
         IMEMonitor<?> monitor = storage.getMEMonitor(type);
         if (monitor == null) return;
@@ -405,29 +425,49 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
     }
 
     protected static class GenericMonitor implements IMEMonitorHandlerReceiver<IAEStack> {
+
         private final IMEMonitor monitor;
         private final List<ICrafting> crafters;
         private final List<IAEStack<?>> changes = new ArrayList<>();
-        public GenericMonitor(IMEMonitor monitor, List<ICrafting> crafters) { this.monitor = monitor; this.crafters = crafters; }
-        @Override public boolean isValid(Object token) { return monitor != null; }
-        @Override public void postChange(IBaseMonitor<IAEStack> monitor, Iterable<IAEStack> change, BaseActionSource source) {
-            for (Object stack : change) if (stack instanceof IAEStack<?> ae) changes.add(ae.copy());
+
+        public GenericMonitor(IMEMonitor monitor, List<ICrafting> crafters) {
+            this.monitor = monitor;
+            this.crafters = crafters;
         }
-        @Override public void onListUpdate() {}
+
+        @Override
+        public boolean isValid(Object token) {
+            return monitor != null;
+        }
+
+        @Override
+        public void postChange(IBaseMonitor<IAEStack> monitor, Iterable<IAEStack> change, BaseActionSource source) {
+            for (Object stack : change) if (stack instanceof IAEStack<?>ae) changes.add(ae.copy());
+        }
+
+        @Override
+        public void onListUpdate() {}
+
         void processItemList() {
             if (changes.isEmpty()) return;
             SPacketMEItemInvUpdate packet = new SPacketMEItemInvUpdate();
             packet.addAll(changes);
-            for (Object crafter : crafters) if (crafter instanceof EntityPlayerMP player) AE2Thing.proxy.netHandler.sendTo(packet, player);
+            for (Object crafter : crafters)
+                if (crafter instanceof EntityPlayerMP player) AE2Thing.proxy.netHandler.sendTo(packet, player);
             changes.clear();
         }
+
         void queueInventory(ICrafting crafter) {
             if (!(crafter instanceof EntityPlayerMP player)) return;
             SPacketMEItemInvUpdate packet = new SPacketMEItemInvUpdate();
-            for (Object stack : monitor.getStorageList()) if (stack instanceof IAEStack<?> ae) packet.appendStack(ae.copy());
+            for (Object stack : monitor.getStorageList())
+                if (stack instanceof IAEStack<?>ae) packet.appendStack(ae.copy());
             if (!packet.isEmpty()) AE2Thing.proxy.netHandler.sendTo(packet, player);
         }
-        void removeListener() { monitor.removeListener(this); }
+
+        void removeListener() {
+            monitor.removeListener(this);
+        }
     }
 
     @Override

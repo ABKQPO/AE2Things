@@ -50,10 +50,8 @@ import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.parts.IInterfaceTerminal;
 import appeng.api.storage.ITerminalHost;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.AEStackTypeRegistry;
-import appeng.util.item.AEItemStackType;
-import appeng.util.item.AEFluidStackType;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.api.util.IConfigurableObject;
 import appeng.api.util.IInterfaceViewable;
 import appeng.container.implementations.ContainerInterfaceTerminal;
@@ -75,7 +73,9 @@ import appeng.tile.inventory.InvOperation;
 import appeng.tile.networking.TileCableBus;
 import appeng.util.PatternMultiplierHelper;
 import appeng.util.Platform;
+import appeng.util.item.AEFluidStackType;
 import appeng.util.item.AEItemStack;
+import appeng.util.item.AEItemStackType;
 import codechicken.nei.recipe.StackInfo;
 
 public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
@@ -177,12 +177,12 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
                         this.setValidContainer(false);
                     } else {
                         this.monitor.addListener();
-                    this.fluidMonitor.addListener();
-                    for (var type : AEStackTypeRegistry.getAllTypes()) {
-                        if (type != AEItemStackType.ITEM_STACK_TYPE && type != AEFluidStackType.FLUID_STACK_TYPE) {
-                            this.registerGenericMonitor(type);
+                        this.fluidMonitor.addListener();
+                        for (var type : AEStackTypeRegistry.getAllTypes()) {
+                            if (type != AEItemStackType.ITEM_STACK_TYPE && type != AEFluidStackType.FLUID_STACK_TYPE) {
+                                this.registerGenericMonitor(type);
+                            }
                         }
-                    }
                     }
                 }
             } else {

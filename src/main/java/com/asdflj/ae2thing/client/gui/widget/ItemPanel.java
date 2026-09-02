@@ -1,7 +1,7 @@
 package com.asdflj.ae2thing.client.gui.widget;
 
-import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
 import static appeng.client.gui.AEBaseGui.isCtrlKeyDown;
+import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
 
 import java.io.IOException;
 import java.util.List;
@@ -32,9 +32,9 @@ import com.glodblock.github.common.item.ItemFluidDrop;
 import appeng.api.config.SearchBoxMode;
 import appeng.api.config.Settings;
 import appeng.api.config.TerminalStyle;
+import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEStackType;
 import appeng.api.util.IConfigManager;
 import appeng.client.gui.implementations.GuiMEMonitorable;
@@ -311,12 +311,10 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
                     final boolean processStack = isShiftKeyDown();
                     final MonitorableAction action;
                     if (ctrlDown == 0) {
-                        action = processStack
-                            ? MonitorableAction.FILL_CONTAINERS
+                        action = processStack ? MonitorableAction.FILL_CONTAINERS
                             : MonitorableAction.FILL_SINGLE_CONTAINER;
                     } else {
-                        action = processStack
-                            ? MonitorableAction.DRAIN_CONTAINERS
+                        action = processStack ? MonitorableAction.DRAIN_CONTAINERS
                             : MonitorableAction.DRAIN_SINGLE_CONTAINER;
                     }
                     this.inventorySlots.setTargetStack(aeStack);
