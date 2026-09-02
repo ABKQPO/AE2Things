@@ -6,39 +6,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraftforge.fluids.FluidStack;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 
-import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.client.gui.widget.IGuiSelection;
-import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.nei.NEI_TH_Config;
-import com.asdflj.ae2thing.network.CPacketFluidUpdate;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
-import com.asdflj.ae2thing.util.AspectUtil;
-import com.asdflj.ae2thing.util.HBMAeAddonUtil;
-import com.asdflj.ae2thing.util.NameConst;
-import com.glodblock.github.common.item.ItemFluidDrop;
-import com.glodblock.github.hbmaeaddon.util.HBMUtil;
-import com.glodblock.github.util.Util;
 
 import appeng.api.config.SearchBoxMode;
 import appeng.api.config.Settings;
-import appeng.api.storage.data.IAEFluidStack;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
 import appeng.client.ActionKey;
@@ -49,9 +32,6 @@ import appeng.core.AEConfig;
 import appeng.core.CommonHelper;
 import codechicken.nei.LayoutManager;
 import codechicken.nei.util.TextHistory;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import thaumcraft.api.aspects.Aspect;
 
 public abstract class BaseMEGui extends AEBaseGui implements IGuiSelection {
 
@@ -79,147 +59,8 @@ public abstract class BaseMEGui extends AEBaseGui implements IGuiSelection {
         return s == SearchBoxMode.NEI_MANUAL_SEARCH || s == SearchBoxMode.NEI_AUTOSEARCH;
     }
 
-    protected String getContainerDisplayName(ItemStack is) {
-        if (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.isEssentiaContainer(is)) {
-            Aspect aspect = AspectUtil.getAspectFromJar(is);
-            return aspect.getName();
-        } else if (Util.FluidUtil.isFluidContainer(is)) {
-            FluidStack fs = Util.FluidUtil.getFluidFromContainer(is);
-            return fs.getLocalizedName();
-        } else if (Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemHasFluidType(is)) {
-            return HBMUtil.getFluidType(is)
-                .getLocalizedName();
-        } else {
-            return is.getDisplayName();
-        }
-    }
-
     public boolean hasShiftDown() {
         return Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
-    }
-
-    protected boolean isFilledContainer(ItemStack is) {
-        if (is == null) return false;
-        return (Util.FluidUtil.isFluidContainer(is) && Util.FluidUtil.isFilled(is))
-            || (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.isEssentiaContainer(is)
-                && !AspectUtil.isEmptyEssentiaContainer(is))
-            || (Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemHasFluidType(is));
-    }
-
-    private boolean isEmptyContainer(ItemStack is, IAEFluidStack fs) {
-        if (is == null) return false;
-        return Util.FluidUtil.isEmpty(is)
-            || (Mods.THAUMIC_ENERGISTICS.isModLoaded() && AspectUtil.isEssentiaContainer(is)
-                && AspectUtil.isEmptyEssentiaContainer(is))
-            || (Mods.HBM_AE_ADDON.isModLoaded() && HBMAeAddonUtil.getItemIsEmptyContainer(is, fs));
-    }
-
-    @SideOnly(Side.CLIENT)
-    public boolean updateFluidContainer(VirtualMESlot slot, int ctrlDown, int mouseButton) {
-        final EntityPlayer player = Minecraft.getMinecraft().thePlayer;
-        if (slot != null) {
-            try {
-                ItemStack cs = player.inventory.getItemStack();
-                IAEItemStack item = slot.getAEStack() instanceof IAEItemStack ais ? ais : null;
-                IAEFluidStack fluid = slot.getAEStack() instanceof IAEFluidStack afs ? afs
-                    : item != null && item.getItem() instanceof ItemFluidDrop ? ItemFluidDrop.getAeFluidStack(item)
-                        : null;
-                if (fluid != null && fluid.getStackSize() != 0 && (cs == null || isEmptyContainer(cs, fluid))) {
-                    AE2Thing.proxy.netHandler.sendToServer(new CPacketFluidUpdate(fluid, isShiftKeyDown()));
-                    return true;
-                } else if (ctrlDown == 1 && isFilledContainer(cs)) {
-                    AE2Thing.proxy.netHandler.sendToServer(new CPacketFluidUpdate(null, isShiftKeyDown()));
-                    return true;
-                }
-                if (mouseButton == 3 && player.capabilities.isCreativeMode && fluid != null && !fluid.isCraftable()) {
-                    return false;
-                }
-            } catch (Exception e) {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    protected void drawContainerActionTooltip(int x, int y, String message) {
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-        RenderHelper.disableStandardItemLighting();
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        final String[] lines = message.split("\n");
-
-        if (lines.length > 0) {
-            int width = 0;
-            int left;
-            int top;
-
-            for (left = 0; left < lines.length; ++left) {
-                top = this.fontRendererObj.getStringWidth(lines[left]);
-
-                if (top > width) {
-                    width = top;
-                }
-            }
-
-            left = x + 12;
-            top = y - 12;
-            int height = 8;
-
-            if (lines.length > 1) {
-                height += 2 + (lines.length - 1) * 10;
-            }
-
-            ScaledResolution scaledresolution = new ScaledResolution(
-                this.mc,
-                this.mc.displayWidth,
-                this.mc.displayHeight);
-
-            if (top + height + 6 > scaledresolution.getScaledHeight()) {
-                top = scaledresolution.getScaledHeight() - height - 6;
-            }
-
-            if (left + width + 6 > scaledresolution.getScaledWidth()) {
-                left = scaledresolution.getScaledWidth() - width - 6;
-            }
-
-            this.zLevel = 300.0F;
-            itemRender.zLevel = 300.0F;
-            final int color1 = 0xF0100010;
-            this.drawGradientRect(left - 3, top - 4, left + width + 3, top - 3, color1, color1);
-            this.drawGradientRect(left - 3, top + height + 3, left + width + 3, top + height + 4, color1, color1);
-            this.drawGradientRect(left - 3, top - 3, left + width + 3, top + height + 3, color1, color1);
-            this.drawGradientRect(left - 4, top - 3, left - 3, top + height + 3, color1, color1);
-            this.drawGradientRect(left + width + 3, top - 3, left + width + 4, top + height + 3, color1, color1);
-            final int color2 = 0x505000FF;
-            final int color3 = 0x5028007F; // (color2 & 16711422) >> 1 | color2 & -16777216;
-            this.drawGradientRect(left - 3, top - 3 + 1, left - 3 + 1, top + height + 3 - 1, color2, color3);
-            this.drawGradientRect(
-                left + width + 2,
-                top - 3 + 1,
-                left + width + 3,
-                top + height + 3 - 1,
-                color2,
-                color3);
-            this.drawGradientRect(left - 3, top - 3, left + width + 3, top - 3 + 1, color2, color2);
-            this.drawGradientRect(left - 3, top + height + 2, left + width + 3, top + height + 3, color3, color3);
-
-            for (int var13 = 0; var13 < lines.length; ++var13) {
-                String var14 = lines[var13];
-
-                this.fontRendererObj.drawStringWithShadow(var14, left, top, -1);
-
-                if (var13 == 0) {
-                    top += 2;
-                }
-
-                top += 10;
-            }
-
-            this.zLevel = 0.0F;
-            itemRender.zLevel = 0.0F;
-        }
-        GL11.glPopAttrib();
     }
 
     @Override
@@ -228,29 +69,27 @@ public abstract class BaseMEGui extends AEBaseGui implements IGuiSelection {
         boolean topRowVisible = this.getScrollBar() == null || this.getScrollBar()
             .getCurrentScroll() == 0;
         drawPinnedSlots(this, this.meSlots, this.guiLeft, this.guiTop, topRowVisible);
-        this.drawFluidContainerTooltip(mouseX, mouseY);
+        this.drawVirtualSlotTooltip(mouseX, mouseY);
     }
 
-    public void drawFluidContainerTooltip(int mouseX, int mouseY) {
-        EntityPlayer player = this.mc.thePlayer;
-        ItemStack is = player.inventory.getItemStack();
-        if (isFilledContainer(is)) {
-            VirtualMESlot s = this.getVirtualMESlotUnderMouse();
-            if (s instanceof VirtualMEMonitorableSlot) {
-                List<String> message = new ArrayList<>();
-                message.add(
-                    "\u00a77" + I18n.format(
-                        NameConst.GUI_TERMINAL_STORE_ACTION,
-                        I18n.format(NameConst.GUI_TERMINAL_LEFT_CLICK),
-                        EnumChatFormatting.WHITE + is.getDisplayName() + EnumChatFormatting.RESET));
-                message.add(
-                    "\u00a77" + I18n.format(
-                        NameConst.GUI_TERMINAL_STORE_ACTION,
-                        I18n.format(NameConst.GUI_TERMINAL_RIGHT_CLICK),
-                        EnumChatFormatting.WHITE + getContainerDisplayName(is) + EnumChatFormatting.RESET));
-                drawContainerActionTooltip(mouseX, mouseY, String.join("\n", message));
-            }
+    private void drawVirtualSlotTooltip(int mouseX, int mouseY) {
+        VirtualMESlot slot = this.getVirtualMESlotUnderMouse();
+        if (slot == null) return;
+        List<String> lines = new ArrayList<>();
+        slot.addTooltip(lines);
+        if (!lines.isEmpty()) {
+            this.drawHoveringText(lines, mouseX, mouseY, this.fontRendererObj);
         }
+    }
+
+    @Override
+    public List<String> handleItemTooltip(ItemStack stack, int mouseX, int mouseY, List<String> currentToolTip) {
+        super.handleItemTooltip(stack, mouseX, mouseY, currentToolTip);
+        VirtualMESlot slot = this.getVirtualMESlotUnderMouse();
+        if (slot != null) {
+            slot.addTooltip(currentToolTip);
+        }
+        return currentToolTip;
     }
 
     @Override

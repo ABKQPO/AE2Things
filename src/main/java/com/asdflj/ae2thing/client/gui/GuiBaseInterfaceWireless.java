@@ -693,12 +693,13 @@ public class GuiBaseInterfaceWireless extends BaseMEGui implements IDropToFillTe
 
     @Override
     public List<String> handleItemTooltip(ItemStack stack, int mouseX, int mouseY, List<String> currentToolTip) {
+        super.handleItemTooltip(stack, mouseX, mouseY, currentToolTip);
         return currentToolTip;
     }
 
     @Override
     public ItemStack getHoveredStack() {
-        return tooltipStack;
+        return tooltipStack != null ? tooltipStack : super.getHoveredStack();
     }
 
     /**
@@ -709,6 +710,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui implements IDropToFillTe
     public void drawHoveringText(List textLines, int x, int y, FontRenderer font) {
         if (!textLines.isEmpty()) {
             GL11.glDisable(GL12.GL_RESCALE_NORMAL);
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
             RenderHelper.disableStandardItemLighting();
             int maxStrWidth = 0;
 
@@ -798,6 +800,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui implements IDropToFillTe
 
             RenderHelper.enableGUIStandardItemLighting();
             GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+            GL11.glEnable(GL11.GL_DEPTH_TEST);
         }
     }
 

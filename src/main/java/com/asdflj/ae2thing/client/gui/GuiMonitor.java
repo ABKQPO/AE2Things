@@ -203,8 +203,6 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
         final int ctrlDown = pickBlock ? 0 : mouseButton;
         final int clickMode = pickBlock ? 3 : (isShiftKeyDown() ? 1 : 0);
 
-        if (updateFluidContainer(virtualSlot, ctrlDown, clickMode)) return true;
-
         if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
             if (this.enableSpaceClicking()) {
                 IAEStack<?> aeStack = virtualSlot.getAEStack();

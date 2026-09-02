@@ -1,5 +1,7 @@
 package com.asdflj.ae2thing.client.gui.container;
 
+import static appeng.util.IterationCounter.fetchNewId;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -38,6 +40,7 @@ import com.asdflj.ae2thing.util.GTUtil;
 import com.glodblock.github.common.item.ItemFluidPacket;
 import com.glodblock.github.util.Util;
 
+import appeng.api.AEApi;
 import appeng.api.implementations.ICraftingPatternItem;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
@@ -47,6 +50,10 @@ import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.parts.IInterfaceTerminal;
 import appeng.api.storage.ITerminalHost;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.AEStackTypeRegistry;
+import appeng.util.item.AEItemStackType;
+import appeng.util.item.AEFluidStackType;
 import appeng.api.util.IConfigurableObject;
 import appeng.api.util.IInterfaceViewable;
 import appeng.container.implementations.ContainerInterfaceTerminal;
@@ -68,6 +75,7 @@ import appeng.tile.inventory.InvOperation;
 import appeng.tile.networking.TileCableBus;
 import appeng.util.PatternMultiplierHelper;
 import appeng.util.Platform;
+import appeng.util.item.AEItemStack;
 import codechicken.nei.recipe.StackInfo;
 
 public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
@@ -169,7 +177,12 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
                         this.setValidContainer(false);
                     } else {
                         this.monitor.addListener();
-                        this.fluidMonitor.addListener();
+                    this.fluidMonitor.addListener();
+                    for (var type : AEStackTypeRegistry.getAllTypes()) {
+                        if (type != AEItemStackType.ITEM_STACK_TYPE && type != AEFluidStackType.FLUID_STACK_TYPE) {
+                            this.registerGenericMonitor(type);
+                        }
+                    }
                     }
                 }
             } else {
@@ -438,12 +451,14 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     public void addCraftingToCrafters(ICrafting c) {
         super.addCraftingToCrafters(c);
         this.fluidMonitor.queueInventory(c);
+        for (GenericMonitor generic : this.genericMonitors) generic.queueInventory(c);
     }
 
     @Override
     public void onContainerClosed(EntityPlayer player) {
         super.onContainerClosed(player);
         if (this.fluidMonitor.getMonitor() != null) this.fluidMonitor.removeListener();
+        for (GenericMonitor generic : this.genericMonitors) generic.removeListener();
     }
 
     @Override
@@ -454,16 +469,43 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     }
 
     @Override
-    public ItemStack slotClick(int slotId, int clickedButton, int mode, EntityPlayer player) {
-        if (slotId == -999) return this.getPlayerInv()
-            .getItemStack();
-        return super.slotClick(slotId, clickedButton, mode, player);
-    }
-
-    @Override
     public void onChangeInventory(IInventory inv, int slot, InvOperation mc, ItemStack removedStack,
         ItemStack newStack) {
 
+    }
+
+    @Override
+    public ItemStack slotClick(int slotId, int clickedButton, int mode, EntityPlayer player) {
+        if (slotId >= 0 && slotId < this.inventorySlots.size()
+            && this.inventorySlots.get(slotId) == this.patternPanel.getPatternInputSlot()
+            && player instanceof EntityPlayerMP serverPlayer
+            && !this.patternPanel.getPatternInputSlot()
+                .getHasStack()
+            && player.inventory.getItemStack() == null
+            && (mode == 0 && (clickedButton == 0 || clickedButton == 1))) {
+            if (this.getMonitor() == null) return super.slotClick(slotId, clickedButton, mode, player);
+            IAEItemStack blank = this.getMonitor()
+                .getAvailableItem(
+                    AEItemStack.create(
+                        AEApi.instance()
+                            .definitions()
+                            .materials()
+                            .blankPattern()
+                            .maybeStack(1)
+                            .get()),
+                    fetchNewId());
+            if (blank != null && blank.getStackSize() > 0 && this.getPowerSource() != null) {
+                long amount = clickedButton == 0 ? blank.getItemStack()
+                    .getMaxStackSize() : 1;
+                blank.setStackSize(Math.min(amount, blank.getStackSize()));
+                IAEItemStack extracted = Platform
+                    .poweredExtraction(this.getPowerSource(), this.getMonitor(), blank, this.getActionSource());
+                serverPlayer.inventory.setItemStack(extracted == null ? null : extracted.getItemStack());
+                this.updateHeld(serverPlayer);
+                return null;
+            }
+        }
+        return super.slotClick(slotId, clickedButton, mode, player);
     }
 
     public void setCraftingMode(final boolean craftingMode) {

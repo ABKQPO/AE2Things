@@ -1,6 +1,7 @@
 package com.asdflj.ae2thing.client.gui.widget;
 
 import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
+import static appeng.client.gui.AEBaseGui.isCtrlKeyDown;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,6 +34,8 @@ import appeng.api.config.Settings;
 import appeng.api.config.TerminalStyle;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.AEStackTypeRegistry;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.util.IConfigManager;
 import appeng.client.gui.implementations.GuiMEMonitorable;
 import appeng.client.gui.slots.VirtualMEMonitorableSlot;
@@ -78,7 +81,6 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     private GuiImgButton searchBoxSettings;
     private static String memoryText = "";
     private final TextHistory history;
-    private int lastClickTime = 0;
 
     public ItemPanel(IWidgetGui gui, ContainerWirelessDualInterfaceTerminal container, IConfigManager configSrc,
         ISortSource source) {
@@ -295,17 +297,34 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     }
 
     private boolean meSlotClick(VirtualMESlot slot, int ctrlDown, int clickMode) {
-        // Temporary solution
-        if (lastClickTime == Minecraft.getMinecraft().thePlayer.ticksExisted) {
-            return false;
-        }
-        lastClickTime = Minecraft.getMinecraft().thePlayer.ticksExisted;
         saveSearchString();
         final EntityPlayer player = Minecraft.getMinecraft().thePlayer;
-        if (this.parent.updateFluidContainer(slot, ctrlDown, clickMode)) return true;
-
         IAEStack<?> aeStack = slot.getAEStack();
         IAEItemStack itemStack = aeStack instanceof IAEItemStack ais ? ais : null;
+
+        if (isCtrlKeyDown()) {
+            final ItemStack hand = player.inventory.getItemStack();
+            if (hand != null) {
+                for (final IAEStackType<?> type : AEStackTypeRegistry.getAllTypes()) {
+                    if (!type.isContainerItemForType(hand)) continue;
+                    if (ctrlDown == 0 && aeStack == null) continue;
+                    final boolean processStack = isShiftKeyDown();
+                    final MonitorableAction action;
+                    if (ctrlDown == 0) {
+                        action = processStack
+                            ? MonitorableAction.FILL_CONTAINERS
+                            : MonitorableAction.FILL_SINGLE_CONTAINER;
+                    } else {
+                        action = processStack
+                            ? MonitorableAction.DRAIN_CONTAINERS
+                            : MonitorableAction.DRAIN_SINGLE_CONTAINER;
+                    }
+                    this.inventorySlots.setTargetStack(aeStack);
+                    NetworkHandler.instance.sendToServer(new PacketMonitorableAction(action, -1));
+                    return true;
+                }
+            }
+        }
 
         if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
             this.inventorySlots.setTargetStack(itemStack);

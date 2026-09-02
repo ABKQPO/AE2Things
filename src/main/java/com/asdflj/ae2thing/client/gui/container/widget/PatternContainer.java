@@ -315,6 +315,11 @@ public class PatternContainer implements IPatternContainer, IOptionalSlotHost, I
     }
 
     @Override
+    public Slot getPatternInputSlot() {
+        return this.patternSlotIN;
+    }
+
+    @Override
     public boolean isPatternTerminal() {
         return true;
     }

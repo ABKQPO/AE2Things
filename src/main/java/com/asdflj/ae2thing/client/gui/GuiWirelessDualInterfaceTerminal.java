@@ -34,6 +34,7 @@ import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import appeng.api.config.Settings;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStackType;
 import appeng.api.util.IConfigManager;
 import appeng.client.gui.AEBaseGui;
@@ -45,9 +46,11 @@ import appeng.client.gui.widgets.ISortSource;
 import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotPatternTerm;
+import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.slot.SlotRestrictedInput;
 import appeng.core.localization.GuiText;
 import appeng.util.IConfigManagerHost;
+import appeng.core.localization.ButtonToolTips;
 import appeng.util.MonitorableTypeFilter;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
@@ -64,6 +67,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private boolean dragging = false;
     private final ItemPanel itemPanel;
     private final TypeFilterWidget typeFilter;
+    private IAEItemStack blankPatternView = ContainerPatternTerm.createBlankPattern().setStackSize(0);
 
     public GuiWirelessDualInterfaceTerminal(InventoryPlayer inventoryPlayer, ITerminalHost te) {
         super(inventoryPlayer, te);
@@ -190,6 +194,10 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     protected void handleMouseClick(Slot slot, int slotIdx, int ctrlDown, int mouseButton) {
+        if (slot instanceof AppEngSlot appEngSlot && appEngSlot.isPlayerSide()) {
+            super.handleMouseClick(slot, slotIdx, ctrlDown, mouseButton);
+            return;
+        }
         for (IAEBasePanel panel : this.panels) {
             if (!panel.isActive()) continue;
             if (panel.handleMouseClick(slot, slotIdx, ctrlDown, mouseButton)) return;
@@ -228,7 +236,23 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     public void func_146977_a(final Slot s) {
+        if (s == this.container.getContainer().getPatternInputSlot() && !s.getHasStack()) {
+            this.blankPatternView.drawInGui(this.mc, s.xDisplayPosition, s.yDisplayPosition);
+            this.blankPatternView.drawOverlayInGui(this.mc, s.xDisplayPosition, s.yDisplayPosition, true, true, true, true);
+            return;
+        }
         if (drawSlot(s, () -> super.func_146977_a(s))) super.func_146977_a(s);
+    }
+
+    @Override
+    public List<String> handleItemTooltip(ItemStack stack, int mouseX, int mouseY, List<String> lines) {
+        super.handleItemTooltip(stack, mouseX, mouseY, lines);
+        Slot input = this.container.getContainer().getPatternInputSlot();
+        if (this.getSlot(mouseX, mouseY) == input && !input.getHasStack()) {
+            lines.add(GuiText.BlankPatternInNetwork.getLocal());
+            lines.add(String.format(ButtonToolTips.ItemsStored.getLocal(), this.blankPatternView.getStackSize()));
+        }
+        return lines;
     }
 
     @Override
@@ -351,6 +375,9 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             if (panel.isActive() && panel instanceof IGuiMonitor monitor) {
                 monitor.postStackUpdate(list);
             }
+        }
+        for (IAEStack<?> stack : list) {
+            if (stack instanceof IAEItemStack item && this.blankPatternView.equals(item)) this.blankPatternView = item;
         }
     }
 
