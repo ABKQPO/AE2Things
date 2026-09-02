@@ -1,6 +1,5 @@
 package com.asdflj.ae2thing.network;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -31,10 +30,7 @@ public class SPacketFindCellItem implements IMessage {
     @Override
     public void fromBytes(ByteBuf buf) {
         try {
-            ByteArrayInputStream bytes = new ByteArrayInputStream(
-                buf.readBytes(buf.readableBytes())
-                    .array());
-            NBTTagCompound tag = CompressedStreamTools.readCompressed(bytes);
+            NBTTagCompound tag = PacketDecodeUtil.readCompressedNbt(buf);
             this.storageProviderList = StorageProvider.readAsListFromNBT(tag);
         } catch (IOException ignored) {
 

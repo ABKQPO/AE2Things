@@ -50,6 +50,8 @@ import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.EncoderException;
 
 public class CPacketInventoryActionExtend implements IMessage {
 
@@ -88,14 +90,14 @@ public class CPacketInventoryActionExtend implements IMessage {
             try {
                 stack.writeToPacket(buf);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new EncoderException("Failed to encode extended inventory action stack", e);
             }
         }
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        action = InventoryActionExtend.values()[buf.readInt()];
+        action = PacketDecodeUtil.readIntEnum(buf, InventoryActionExtend.values(), "extended inventory action");
         slot = buf.readInt();
         id = buf.readLong();
         isEmpty = buf.readBoolean();
@@ -103,7 +105,7 @@ public class CPacketInventoryActionExtend implements IMessage {
             try {
                 stack = AEItemStack.loadItemStackFromPacket(buf);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new DecoderException("Failed to decode extended inventory action stack", e);
             }
         }
     }
@@ -137,7 +139,11 @@ public class CPacketInventoryActionExtend implements IMessage {
         @Override
         public IMessage onMessage(CPacketInventoryActionExtend message, MessageContext ctx) {
             final EntityPlayerMP sender = ctx.getServerHandler().playerEntity;
-            if(message.action == InventoryActionExtend.REQUEST_ITEM && sender.inventory.mainInventory[message.slot] == null){
+            if (message.action == InventoryActionExtend.REQUEST_ITEM) {
+                if (message.slot < 0 || message.slot >= sender.inventory.mainInventory.length || message.stack == null
+                    || sender.inventory.mainInventory[message.slot] != null) {
+                    return null;
+                }
                 message.stack.setStackSize(message.stack.getItemStack().getMaxStackSize());
                 IAEItemStack requestItem = message.stack.copy();
                 extractItemFromME(sender,requestItem,message.slot);

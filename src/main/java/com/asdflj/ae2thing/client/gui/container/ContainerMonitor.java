@@ -1,5 +1,6 @@
 package com.asdflj.ae2thing.client.gui.container;
 
+import static appeng.util.IterationCounter.fetchNewId;
 import static com.asdflj.ae2thing.api.Constants.MessageType.UPDATE_PLAYER_ITEM;
 
 import java.io.IOException;
@@ -11,6 +12,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.ICrafting;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidContainerItem;
@@ -48,10 +50,13 @@ import appeng.core.AELog;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketValueConfig;
 import appeng.helpers.IContainerCraftingPacket;
+import appeng.helpers.MonitorableAction;
 import appeng.tile.inventory.IAEAppEngInventory;
 import appeng.util.ConfigManager;
 import appeng.util.IConfigManagerHost;
+import appeng.util.InventoryAdaptor;
 import appeng.util.Platform;
+import appeng.util.inv.AdaptorPlayerHand;
 import appeng.util.item.AEFluidStack;
 import appeng.util.item.AEItemStack;
 
@@ -131,6 +136,166 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
 
     public IMEMonitor<IAEItemStack> getMonitor() {
         return this.monitor.getMonitor();
+    }
+
+    public void doMonitorableAction(MonitorableAction action, EntityPlayerMP player) {
+        IMEMonitor<IAEItemStack> itemMonitor = this.getMonitor();
+        IAEItemStack slotItem = null;
+        if (itemMonitor != null && this.getTargetStack() instanceof IAEItemStack target) {
+            slotItem = itemMonitor.getAvailableItem(target, fetchNewId());
+        }
+
+        switch (action) {
+            case SHIFT_CLICK -> {
+                if (this.getPowerSource() == null || itemMonitor == null || slotItem == null) return;
+
+                IAEItemStack toExtract = slotItem.copy();
+                ItemStack item = toExtract.getItemStack();
+                toExtract.setStackSize(item.getMaxStackSize());
+                item.stackSize = (int) toExtract.getStackSize();
+
+                InventoryAdaptor adaptor = InventoryAdaptor.getAdaptor(player, ForgeDirection.UNKNOWN);
+                ItemStack remainder = adaptor.simulateAdd(item);
+                if (remainder != null) {
+                    toExtract.decStackSize(remainder.stackSize);
+                }
+
+                toExtract = Platform
+                    .poweredExtraction(this.getPowerSource(), itemMonitor, toExtract, this.getActionSource());
+                if (toExtract != null) {
+                    adaptor.addItems(toExtract.getItemStack());
+                }
+            }
+            case PICKUP_SINGLE, ROLL_UP -> {
+                if (this.getPowerSource() == null || itemMonitor == null || slotItem == null) return;
+
+                ItemStack hand = player.inventory.getItemStack();
+                if (hand != null) {
+                    if (hand.stackSize >= hand.getMaxStackSize()) return;
+                    if (!Platform.isSameItemPrecise(slotItem.getItemStack(), hand)) return;
+                }
+
+                IAEItemStack toExtract = slotItem.copy();
+                toExtract.setStackSize(1);
+                toExtract = Platform
+                    .poweredExtraction(this.getPowerSource(), itemMonitor, toExtract, this.getActionSource());
+                if (toExtract != null) {
+                    InventoryAdaptor handAdaptor = new AdaptorPlayerHand(player);
+                    ItemStack remainder = handAdaptor.addItems(toExtract.getItemStack());
+                    if (remainder != null) {
+                        itemMonitor.injectItems(toExtract, Actionable.MODULATE, this.getActionSource());
+                    }
+                    this.updateHeld(player);
+                }
+            }
+            case PICKUP_OR_SET_DOWN -> {
+                if (this.getPowerSource() == null || itemMonitor == null) return;
+
+                ItemStack hand = player.inventory.getItemStack();
+                if (hand == null) {
+                    if (slotItem == null) return;
+                    this.pickupStoredItems(slotItem.copy(), player, itemMonitor);
+                } else {
+                    IAEItemStack toInsert = AEApi.instance()
+                        .storage()
+                        .createItemStack(hand);
+                    toInsert = Platform
+                        .poweredInsert(this.getPowerSource(), itemMonitor, toInsert, this.getActionSource());
+                    player.inventory.setItemStack(toInsert == null ? null : toInsert.getItemStack());
+                    this.updateHeld(player);
+                }
+            }
+            case SPLIT_OR_PLACE_SINGLE -> {
+                if (this.getPowerSource() == null || itemMonitor == null) return;
+
+                ItemStack hand = player.inventory.getItemStack();
+                if (hand == null) {
+                    if (slotItem == null) return;
+                    this.splitStoredItems(slotItem.copy(), player, itemMonitor);
+                } else {
+                    IAEItemStack toInsert = AEApi.instance()
+                        .storage()
+                        .createItemStack(hand);
+                    toInsert.setStackSize(1);
+                    toInsert = Platform
+                        .poweredInsert(this.getPowerSource(), itemMonitor, toInsert, this.getActionSource());
+                    if (toInsert == null) {
+                        hand.stackSize--;
+                        if (hand.stackSize <= 0) player.inventory.setItemStack(null);
+                        this.updateHeld(player);
+                    }
+                }
+            }
+            case ROLL_DOWN -> {
+                ItemStack hand = player.inventory.getItemStack();
+                if (this.getPowerSource() == null || itemMonitor == null || hand == null) return;
+
+                IAEItemStack toInsert = AEItemStack.create(hand);
+                toInsert.setStackSize(1);
+                toInsert = Platform.poweredInsert(this.getPowerSource(), itemMonitor, toInsert, this.getActionSource());
+                if (toInsert == null) {
+                    hand.stackSize--;
+                    if (hand.stackSize <= 0) player.inventory.setItemStack(null);
+                    this.updateHeld(player);
+                }
+            }
+            case MOVE_REGION -> {
+                if (this.getPowerSource() == null || itemMonitor == null || slotItem == null) return;
+
+                long maxSize = slotItem.getItemStack()
+                    .getMaxStackSize();
+                InventoryAdaptor adaptor = InventoryAdaptor.getAdaptor(player, ForgeDirection.UNKNOWN);
+                while (true) {
+                    IAEItemStack toExtract = slotItem.copy();
+                    toExtract.setStackSize(maxSize);
+                    toExtract = itemMonitor.extractItems(toExtract, Actionable.SIMULATE, this.getActionSource());
+                    if (toExtract == null || toExtract.getStackSize() <= 0) break;
+
+                    ItemStack remainder = adaptor.simulateAdd(toExtract.getItemStack());
+                    if (remainder != null) {
+                        if (toExtract.getStackSize() == remainder.stackSize) break;
+                        toExtract.decStackSize(remainder.stackSize);
+                    }
+
+                    toExtract = Platform
+                        .poweredExtraction(this.getPowerSource(), itemMonitor, toExtract, this.getActionSource());
+                    if (toExtract == null || toExtract.getStackSize() <= 0) break;
+                    adaptor.addItems(toExtract.getItemStack());
+                }
+            }
+            case CREATIVE_DUPLICATE -> {
+                if (player.capabilities.isCreativeMode && slotItem != null) {
+                    ItemStack item = slotItem.getItemStack();
+                    item.stackSize = item.getMaxStackSize();
+                    player.inventory.setItemStack(item);
+                    this.updateHeld(player);
+                }
+            }
+            default -> {}
+        }
+    }
+
+    private void pickupStoredItems(IAEItemStack stack, EntityPlayerMP player, IMEMonitor<IAEItemStack> itemMonitor) {
+        stack.setStackSize(
+            stack.getItemStack()
+                .getMaxStackSize());
+        stack = Platform.poweredExtraction(this.getPowerSource(), itemMonitor, stack, this.getActionSource());
+        player.inventory.setItemStack(stack == null ? null : stack.getItemStack());
+        this.updateHeld(player);
+    }
+
+    private void splitStoredItems(IAEItemStack stack, EntityPlayerMP player, IMEMonitor<IAEItemStack> itemMonitor) {
+        long maxSize = stack.getItemStack()
+            .getMaxStackSize();
+        stack.setStackSize(maxSize);
+        stack = itemMonitor.extractItems(stack, Actionable.SIMULATE, this.getActionSource());
+        if (stack != null) {
+            long stackSize = Math.min(maxSize, stack.getStackSize());
+            stack.setStackSize((stackSize + 1) >> 1);
+            stack = Platform.poweredExtraction(this.getPowerSource(), itemMonitor, stack, this.getActionSource());
+        }
+        player.inventory.setItemStack(stack == null ? null : stack.getItemStack());
+        this.updateHeld(player);
     }
 
     @Override

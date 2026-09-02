@@ -3,7 +3,7 @@ package com.asdflj.ae2thing.inventory.item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.util.ForgeDirection;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import com.asdflj.ae2thing.api.WirelessObject;
 
@@ -105,25 +105,27 @@ public abstract class WirelessTerminal
         return this.obj.getSource();
     }
 
-    @NotNull
+    @Nullable
     public IAEStack<?> injectStack(IAEStack<?> stack, Actionable mode) {
-        if (stack instanceof IAEItemStack) {
+        if (stack instanceof IAEItemStack itemStack) {
             return this.getItemInventory()
-                .injectItems((IAEItemStack) stack, mode, this.getActionSource());
-        } else {
+                .injectItems(itemStack, mode, this.getActionSource());
+        } else if (stack instanceof IAEFluidStack fluidStack) {
             return this.getFluidInventory()
-                .injectItems((IAEFluidStack) stack, mode, this.getActionSource());
+                .injectItems(fluidStack, mode, this.getActionSource());
         }
+        return stack;
     }
 
-    @NotNull
+    @Nullable
     public IAEStack<?> extractStack(IAEStack<?> stack, Actionable mode) {
-        if (stack instanceof IAEItemStack) {
+        if (stack instanceof IAEItemStack itemStack) {
             return this.getItemInventory()
-                .extractItems((IAEItemStack) stack, mode, this.getActionSource());
-        } else {
+                .extractItems(itemStack, mode, this.getActionSource());
+        } else if (stack instanceof IAEFluidStack fluidStack) {
             return this.getFluidInventory()
-                .extractItems((IAEFluidStack) stack, mode, this.getActionSource());
+                .extractItems(fluidStack, mode, this.getActionSource());
         }
+        return null;
     }
 }

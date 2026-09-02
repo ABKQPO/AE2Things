@@ -1,6 +1,5 @@
 package com.asdflj.ae2thing.network;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -29,10 +28,7 @@ public class SPacketCraftingStateUpdate implements IMessage {
     @Override
     public void fromBytes(ByteBuf buf) {
         try {
-            ByteArrayInputStream bytes = new ByteArrayInputStream(
-                buf.readBytes(buf.readableBytes())
-                    .array());
-            this.craftingStates = CompressedStreamTools.readCompressed(bytes);
+            this.craftingStates = PacketDecodeUtil.readCompressedNbt(buf);
         } catch (IOException ignored) {
 
         }

@@ -7,14 +7,18 @@ import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.tileentity.TileEntity;
 
+import com.asdflj.ae2thing.AE2Thing;
 import com.google.common.base.Throwables;
+import com.gtnewhorizon.gtnhlib.util.ServerThreadUtil;
 
+import appeng.core.AELog;
 import cpw.mods.fml.common.network.FMLEmbeddedChannel;
 import cpw.mods.fml.common.network.FMLOutboundHandler;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.network.NetworkRegistry.TargetPoint;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.common.network.simpleimpl.SimpleChannelHandlerWrapper;
 import cpw.mods.fml.common.network.simpleimpl.SimpleIndexedCodec;
 import cpw.mods.fml.relauncher.Side;
@@ -109,7 +113,29 @@ public class AE2ThingNetworkWrapper {
 
     private <REPLY extends IMessage, REQ extends IMessage> SimpleChannelHandlerWrapper<REQ, REPLY> getHandlerWrapper(
         IMessageHandler<? super REQ, ? extends REPLY> messageHandler, Side side, Class<REQ> requestType) {
-        return new SimpleChannelHandlerWrapper<REQ, REPLY>(messageHandler, side, requestType);
+        IMessageHandler<REQ, REPLY> mainThreadHandler = (message, context) -> {
+            if (side == Side.CLIENT) {
+                AE2Thing.proxy.scheduleClientTask(() -> runScheduled(messageHandler, message, context));
+            } else if (ServerThreadUtil.isCallingFromMinecraftThread()) {
+                return messageHandler.onMessage(message, context);
+            } else {
+                ServerThreadUtil.addScheduledTask(() -> runScheduled(messageHandler, message, context));
+            }
+            return null;
+        };
+        return new SimpleChannelHandlerWrapper<>(mainThreadHandler, side, requestType);
+    }
+
+    private static <REQ extends IMessage, REPLY extends IMessage> void runScheduled(
+        IMessageHandler<? super REQ, ? extends REPLY> messageHandler, REQ message, MessageContext context) {
+        try {
+            REPLY reply = messageHandler.onMessage(message, context);
+            if (reply != null) {
+                AELog.error("Scheduled AE2Thing message handler returned an unsupported reply packet: %s", reply);
+            }
+        } catch (Throwable throwable) {
+            AELog.error(throwable);
+        }
     }
 
     /**

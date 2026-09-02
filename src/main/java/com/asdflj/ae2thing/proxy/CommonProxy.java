@@ -65,6 +65,10 @@ public class CommonProxy {
 
     public AE2ThingNetworkWrapper netHandler = new AE2ThingNetworkWrapper(AE2Thing.MODID);
 
+    public void scheduleClientTask(Runnable task) {
+        throw new IllegalStateException("Cannot schedule a client task on a dedicated server");
+    }
+
     public void preInit(FMLPreInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
         FMLCommonHandler.instance()

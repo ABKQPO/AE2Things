@@ -12,6 +12,7 @@ import com.asdflj.ae2thing.util.AspectUtil;
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
 import appeng.api.networking.GridFlags;
+import appeng.api.networking.crafting.ICraftingGrid;
 import appeng.api.networking.events.MENetworkCellArrayUpdate;
 import appeng.api.networking.events.MENetworkChannelsChanged;
 import appeng.api.networking.events.MENetworkEventSubscribe;
@@ -28,20 +29,25 @@ import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.IMEMonitorHandlerReceiver;
 import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
 import appeng.helpers.IPriorityHost;
 import appeng.me.GridAccessException;
+import appeng.me.cache.CraftingGridCache;
 import appeng.me.storage.MEInventoryHandler;
 import appeng.tile.grid.AENetworkTile;
 import appeng.util.IterationCounter;
 import appeng.util.item.AEItemStackType;
 import thaumcraft.api.aspects.Aspect;
 import thaumicenergistics.common.storage.AEEssentiaStack;
+import thaumicenergistics.common.storage.AEEssentiaStackType;
 
 public class TileEssentiaDiscretizer extends AENetworkTile implements IPriorityHost, ICellContainer {
 
     private final BaseActionSource ownActionSource = new MachineSource(this);
     private final PhialDiscretizingInventory phialInv = new PhialDiscretizingInventory();
+    private final EssentiaCraftingInventory essentiaCraftInv = new EssentiaCraftingInventory();
     private boolean prevActiveState = false;
 
     public TileEssentiaDiscretizer() {
@@ -57,9 +63,14 @@ public class TileEssentiaDiscretizer extends AENetworkTile implements IPriorityH
 
     @Override
     @SuppressWarnings("rawtypes")
-    public List<IMEInventoryHandler> getCellArray(StorageChannel channel) {
-        if (getProxy().isActive() && channel == StorageChannel.ITEMS) {
-            return Collections.singletonList(phialInv.invHandler);
+    public List<IMEInventoryHandler> getCellArray(IAEStackType<?> type) {
+        if (getProxy().isActive()) {
+            if (type == AEItemStackType.ITEM_STACK_TYPE) {
+                return Collections.singletonList(phialInv.invHandler);
+            }
+            if (type == AEEssentiaStackType.ESSENTIA_STACK_TYPE) {
+                return Collections.singletonList(essentiaCraftInv.invHandler);
+            }
         }
         return Collections.emptyList();
     }
@@ -81,6 +92,7 @@ public class TileEssentiaDiscretizer extends AENetworkTile implements IPriorityH
 
     @Override
     public void gridChanged() {
+        phialInv.itemCache = null;
         IMEMonitor<AEEssentiaStack> essentiaGrid = getEssentiaGrid();
         if (essentiaGrid != null) {
             essentiaGrid.addListener(phialInv, essentiaGrid);
@@ -227,12 +239,16 @@ public class TileEssentiaDiscretizer extends AENetworkTile implements IPriorityH
             BaseActionSource actionSource) {
             itemCache = null;
             try {
+                IMEMonitor<AEEssentiaStack> essentiaGrid = getEssentiaGrid();
+                if (essentiaGrid == null) return;
+
                 List<IAEItemStack> mappedChanges = new ArrayList<>();
                 for (AEEssentiaStack essentia : change) {
-                    IAEItemStack itemStack = ItemPhial.newAeStack(essentia);
-                    if (itemStack != null) {
-                        mappedChanges.add(itemStack);
-                    }
+                    if (essentia == null || essentia.getAspect() == null) continue;
+                    AEEssentiaStack query = new AEEssentiaStack(essentia.getAspect(), 1);
+                    AEEssentiaStack current = essentiaGrid.getAvailableItem(query, IterationCounter.fetchNewId());
+                    IAEItemStack itemStack = ItemPhial.newAeDeltaStack(current, essentia);
+                    if (itemStack != null) mappedChanges.add(itemStack);
                 }
                 getProxy().getGrid()
                     .<IStorageGrid>getCache(IStorageGrid.class)
@@ -245,6 +261,72 @@ public class TileEssentiaDiscretizer extends AENetworkTile implements IPriorityH
         @Override
         public void onListUpdate() {
             // NO-OP
+        }
+    }
+
+    /**
+     * Treats essentia delivered by processing patterns as the equivalent phial item so an item-channel crafting job
+     * waiting for that phial can accept the result.
+     */
+    private class EssentiaCraftingInventory implements IMEInventory<AEEssentiaStack> {
+
+        private final MEInventoryHandler<AEEssentiaStack> invHandler = new MEInventoryHandler<>(
+            this,
+            AEEssentiaStackType.ESSENTIA_STACK_TYPE);
+
+        EssentiaCraftingInventory() {
+            invHandler.setPriority(Integer.MAX_VALUE);
+        }
+
+        @Override
+        public AEEssentiaStack injectItems(AEEssentiaStack input, Actionable type, BaseActionSource src) {
+            if (input == null) return null;
+
+            final ICraftingGrid craftingGrid;
+            try {
+                craftingGrid = getProxy().getGrid()
+                    .getCache(ICraftingGrid.class);
+            } catch (GridAccessException e) {
+                return input;
+            }
+
+            if (!(craftingGrid instanceof CraftingGridCache craftingCache)) return input;
+
+            IAEItemStack phial = ItemPhial.newAeStack(input);
+            if (phial == null) return input;
+
+            IAEStack<?> remaining = craftingCache.injectItems(phial, type, ownActionSource);
+            if (remaining == null) return null;
+            if (remaining instanceof IAEItemStack itemRemaining) {
+                AEEssentiaStack essentiaRemaining = ItemPhial.getAeEssentiaStack(itemRemaining);
+                return essentiaRemaining == null ? input : essentiaRemaining;
+            }
+            return input;
+        }
+
+        @Override
+        public AEEssentiaStack extractItems(AEEssentiaStack request, Actionable mode, BaseActionSource src) {
+            return null;
+        }
+
+        @Override
+        public IItemList<AEEssentiaStack> getAvailableItems(IItemList<AEEssentiaStack> out, int iteration) {
+            return out;
+        }
+
+        @Override
+        public AEEssentiaStack getAvailableItem(@Nonnull AEEssentiaStack request, int iteration) {
+            return null;
+        }
+
+        @Override
+        public StorageChannel getChannel() {
+            return null;
+        }
+
+        @Override
+        public IAEStackType<?> getStackType() {
+            return AEEssentiaStackType.ESSENTIA_STACK_TYPE;
         }
     }
 }

@@ -14,6 +14,8 @@ import com.asdflj.ae2thing.network.CPacketTypeFilter;
 import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEStackType;
 import appeng.client.gui.widgets.TypeToggleButton;
+import appeng.util.item.AEFluidStackType;
+import appeng.util.item.AEItemStackType;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 /**
@@ -39,6 +41,9 @@ public class TypeFilterWidget {
         }
         int y = yStart;
         for (final IAEStackType<?> type : AEStackTypeRegistry.getSortedTypes()) {
+            if (type != AEItemStackType.ITEM_STACK_TYPE && type != AEFluidStackType.FLUID_STACK_TYPE) {
+                continue;
+            }
             final ResourceLocation texture = type.getButtonTexture();
             final IIcon icon = type.getButtonIcon();
             if (texture == null || icon == null) {

@@ -1,12 +1,12 @@
 package com.asdflj.ae2thing.common.storage;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -23,6 +23,8 @@ import appeng.api.implementations.tiles.IChestOrDrive;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.storage.StorageChannel;
+import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.tile.grid.AENetworkInvTile;
 import appeng.util.Platform;
 import appeng.util.item.AEFluidStackType;
@@ -162,7 +164,33 @@ public class StorageManager extends WorldSavedData {
         data.setTag(Constants.FLUID_DISKLIST, fluidDiskList);
     }
 
-    public void postChanges(final ItemStack cell, final DataStorage storage, IChestOrDrive drive) {
+    public void postItemChange(final DataStorage storage, IChestOrDrive drive, IAEItemStack change) {
+        if (change == null || change.getStackSize() == 0) return;
+        this.postChanges(
+            storage,
+            drive,
+            storageGrid -> {
+                storageGrid.postAlterationOfStoredItems(
+                    AEItemStackType.ITEM_STACK_TYPE,
+                    Collections.singletonList(change),
+                    null);
+            });
+    }
+
+    public void postFluidChange(final DataStorage storage, IChestOrDrive drive, IAEFluidStack change) {
+        if (change == null || change.getStackSize() == 0) return;
+        this.postChanges(
+            storage,
+            drive,
+            storageGrid -> {
+                storageGrid.postAlterationOfStoredItems(
+                    AEFluidStackType.FLUID_STACK_TYPE,
+                    Collections.singletonList(change),
+                    null);
+            });
+    }
+
+    private void postChanges(final DataStorage storage, IChestOrDrive drive, Consumer<IStorageGrid> postChange) {
         if (!Config.cellLink || drive == null) return;
         if (drive instanceof AENetworkInvTile ait) {
             try {
@@ -176,18 +204,10 @@ public class StorageManager extends WorldSavedData {
                     g -> g.isEmpty() || !g.getPivot()
                         .isActive());
                 if (iGrids.size() <= 1) return;
-                iGrids.removeIf(i -> i == curGrid);
-                List<IGrid> cp = new ArrayList<>(iGrids);
+                Set<IGrid> cp = new HashSet<>(iGrids);
                 for (IGrid grid : cp) {
                     if (grid.isEmpty() || grid.equals(curGrid)) continue;
-                    IStorageGrid iStorageGrid = grid.getCache(IStorageGrid.class);
-                    if (storage.getChannel() == StorageChannel.ITEMS) {
-                        iStorageGrid
-                            .postAlterationOfStoredItems(AEItemStackType.ITEM_STACK_TYPE, storage.getItems(), null);
-                    } else if (storage.getChannel() == StorageChannel.FLUIDS) {
-                        iStorageGrid
-                            .postAlterationOfStoredItems(AEFluidStackType.FLUID_STACK_TYPE, storage.getFluids(), null);
-                    }
+                    postChange.accept(grid.getCache(IStorageGrid.class));
                 }
             } catch (Exception ignored) {}
         }

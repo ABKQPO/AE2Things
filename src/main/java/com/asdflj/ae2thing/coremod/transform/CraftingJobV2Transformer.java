@@ -26,7 +26,7 @@ public class CraftingJobV2Transformer extends ClassTransformer.ClassMapper {
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
             if (name.equals("<init>") && desc.equals(
-                "(Lnet/minecraft/world/World;Lappeng/api/networking/IGrid;Lappeng/api/networking/security/BaseActionSource;Lappeng/api/storage/data/IAEItemStack;Lappeng/api/config/CraftingMode;Lappeng/api/networking/crafting/ICraftingCallback;)V")) {
+                "(Lnet/minecraft/world/World;Lappeng/api/networking/IGrid;Lappeng/api/networking/security/BaseActionSource;Lappeng/api/storage/data/IAEStack;Lappeng/api/config/CraftingMode;Lappeng/api/networking/crafting/ICraftingCallback;)V")) {
                 return new TransformInit(api, super.visitMethod(access, name, desc, signature, exceptions));
             } else if (name.equals("remove")) {
                 return new TransformRemove(api, super.visitMethod(access, name, desc, signature, exceptions));
@@ -76,7 +76,7 @@ public class CraftingJobV2Transformer extends ClassTransformer.ClassMapper {
                         Opcodes.INVOKESTATIC,
                         "com/asdflj/ae2thing/api/CraftingDebugHelper",
                         "craftingHelper",
-                        "(Lappeng/crafting/v2/CraftingJobV2;Lnet/minecraft/world/World;Lappeng/api/networking/IGrid;Lappeng/api/networking/security/BaseActionSource;Lappeng/api/storage/data/IAEItemStack;Lappeng/api/config/CraftingMode;Lappeng/api/networking/crafting/ICraftingCallback;)V",
+                        "(Lappeng/crafting/v2/CraftingJobV2;Lnet/minecraft/world/World;Lappeng/api/networking/IGrid;Lappeng/api/networking/security/BaseActionSource;Lappeng/api/storage/data/IAEStack;Lappeng/api/config/CraftingMode;Lappeng/api/networking/crafting/ICraftingCallback;)V",
                         false);
                 }
             }

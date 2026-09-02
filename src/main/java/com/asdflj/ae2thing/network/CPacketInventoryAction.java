@@ -12,7 +12,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 
-import com.asdflj.ae2thing.client.gui.container.ContainerCraftingTerminal;
 import com.asdflj.ae2thing.inventory.InventoryHandler;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.inventory.item.WirelessTerminal;
@@ -20,6 +19,7 @@ import com.asdflj.ae2thing.util.BlockPos;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.container.AEBaseContainer;
 import appeng.container.ContainerOpenContext;
 import appeng.container.implementations.ContainerCraftAmount;
@@ -29,13 +29,15 @@ import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.EncoderException;
 
 public class CPacketInventoryAction implements IMessage {
 
     private InventoryAction action;
     private int slot;
     private long id;
-    private IAEItemStack stack;
+    private IAEStack<?> stack;
     private boolean isEmpty;
 
     public CPacketInventoryAction() {}
@@ -48,7 +50,7 @@ public class CPacketInventoryAction implements IMessage {
         this.isEmpty = true;
     }
 
-    public CPacketInventoryAction(final InventoryAction action, final int slot, final int id, IAEItemStack stack) {
+    public CPacketInventoryAction(final InventoryAction action, final int slot, final int id, IAEStack<?> stack) {
         this.action = action;
         this.slot = slot;
         this.id = id;
@@ -64,24 +66,24 @@ public class CPacketInventoryAction implements IMessage {
         buf.writeBoolean(isEmpty);
         if (!isEmpty) {
             try {
-                stack.writeToPacket(buf);
+                IAEStack.writeToPacketGeneric(buf, stack);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new EncoderException("Failed to encode inventory action stack", e);
             }
         }
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        action = InventoryAction.values()[buf.readInt()];
+        action = PacketDecodeUtil.readIntEnum(buf, InventoryAction.values(), "inventory action");
         slot = buf.readInt();
         id = buf.readLong();
         isEmpty = buf.readBoolean();
         if (!isEmpty) {
             try {
-                stack = AEItemStack.loadItemStackFromPacket(buf);
+                stack = IAEStack.fromPacketGeneric(buf);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new DecoderException("Failed to decode inventory action stack", e);
             }
         }
     }
@@ -92,9 +94,6 @@ public class CPacketInventoryAction implements IMessage {
         @Override
         public IMessage onMessage(CPacketInventoryAction message, MessageContext ctx) {
             final EntityPlayerMP sender = ctx.getServerHandler().playerEntity;
-            if(sender.openContainer instanceof ContainerCraftingTerminal) {
-                return null;
-            }
             if (sender.openContainer instanceof final AEBaseContainer baseContainer) {
                 Object target = baseContainer.getTarget();
                 if (message.action == InventoryAction.AUTO_CRAFT) {
@@ -103,15 +102,16 @@ public class CPacketInventoryAction implements IMessage {
                         final TileEntity te = context.getTile();
                         if (te != null || target instanceof WirelessTerminal) {
                             if (message.stack == null){
-                                if (baseContainer.getTargetStack() instanceof IAEItemStack ais) {
-                                    message.stack = ais;
-                                }
+                                message.stack = baseContainer.getTargetStack();
                             }
-                            if(message.stack != null && message.stack.getItem() instanceof ItemFluidDrop){
-                                ItemStack is = message.stack.getItemStack().copy();
+                            if(message.stack instanceof IAEItemStack itemStack
+                                && itemStack.getItem() instanceof ItemFluidDrop){
+                                ItemStack is = itemStack.getItemStack().copy();
                                 NBTTagCompound data = is.getTagCompound();
-                                data.removeTag(DISPLAY_ONLY);
-                                is.setTagCompound(data);
+                                if (data != null) {
+                                    data.removeTag(DISPLAY_ONLY);
+                                    is.setTagCompound(data);
+                                }
                                 baseContainer.setTargetStack(AEItemStack.create(is));
                             }else{
                                 baseContainer.setTargetStack(message.stack);
@@ -133,9 +133,8 @@ public class CPacketInventoryAction implements IMessage {
                             }
                         }
                         if (sender.openContainer instanceof final ContainerCraftAmount cca) {
-                            if (baseContainer.getTargetStack() instanceof IAEItemStack ais) {
-                                cca.getCraftingItem().putStack(ais.getItemStack());
-                                cca.setItemToCraft(ais);
+                            if (baseContainer.getTargetStack() != null) {
+                                cca.setItemToCraft(baseContainer.getTargetStack());
                             }
                             cca.detectAndSendChanges();
                         }

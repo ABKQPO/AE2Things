@@ -58,6 +58,7 @@ public class CPacketPatternNameSet implements IMessage {
         @Override
         public IMessage onMessage(CPacketPatternNameSet message, MessageContext ctx) {
             EntityPlayer player = ctx.getServerHandler().playerEntity;
+            if (message.originGui == null || message.name == null || message.name.length() > 128) return null;
             if (player.openContainer instanceof ContainerPatternValueName cpv) {
                 final Object target = cpv.getTarget();
                 if (target instanceof IGridHost) {
@@ -71,13 +72,15 @@ public class CPacketPatternNameSet implements IMessage {
                                 new BlockPos(te),
                                 Objects.requireNonNull(context.getSide()),
                                 message.originGui);
-                        } else {
+                        } else if (target instanceof WirelessTerminal terminal) {
                             InventoryHandler.openGui(
                                 player,
                                 player.getEntityWorld(),
-                                new BlockPos(((WirelessTerminal) target).getInventorySlot(), 0, 0),
+                                new BlockPos(terminal.getInventorySlot(), 0, 0),
                                 Objects.requireNonNull(context.getSide()),
                                 message.originGui);
+                        } else {
+                            return null;
                         }
                         if (player.openContainer instanceof IWidgetPatternContainer) {
                             SetName(message, player);
@@ -89,8 +92,9 @@ public class CPacketPatternNameSet implements IMessage {
         }
 
         private void SetName(CPacketPatternNameSet message, EntityPlayer player) {
+            if (message.valueIndex < 0 || message.valueIndex >= player.openContainer.inventorySlots.size()) return;
             Slot slot = player.openContainer.getSlot(message.valueIndex);
-            if (slot instanceof SlotFake) {
+            if (slot instanceof SlotFake && slot.getStack() != null) {
                 ItemStack stack = slot.getStack()
                     .copy();
                 if (message.name.isEmpty()) {

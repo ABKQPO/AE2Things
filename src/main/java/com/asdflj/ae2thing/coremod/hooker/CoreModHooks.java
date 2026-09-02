@@ -48,11 +48,13 @@ public class CoreModHooks {
 
     public static long getItemsToMove(TileIOPort ioPort, long base) {
         if (ioPort instanceof TileExIOPort) {
-            return Config.exIOPortTransferContentsRate * base;
-        } else {
-            return base;
+            try {
+                return Math.multiplyExact(base, Config.exIOPortTransferContentsRate);
+            } catch (ArithmeticException ignored) {
+                return Long.MAX_VALUE;
+            }
         }
-
+        return base;
     }
 
 }

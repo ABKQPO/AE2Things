@@ -8,6 +8,7 @@ import net.minecraft.inventory.Container;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,12 +18,12 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.NameConst;
 
-import appeng.api.storage.data.IAEItemStack;
+import appeng.api.AEApi;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.implementations.GuiCraftConfirm;
 import appeng.client.gui.widgets.GuiAeButton;
-import appeng.util.item.ItemList;
 
 @Mixin(GuiCraftConfirm.class)
 public abstract class MixinGuiCraftConfirm extends AEBaseGui {
@@ -32,16 +33,19 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
 
     @Shadow(remap = false)
     @Final
-    private IItemList<IAEItemStack> storage;
+    @Mutable
+    private IItemList<IAEStack<?>> storage;
     @Shadow(remap = false)
     @Final
-    private IItemList<IAEItemStack> pending;
+    @Mutable
+    private IItemList<IAEStack<?>> pending;
     @Shadow(remap = false)
     @Final
-    private IItemList<IAEItemStack> missing;
+    @Mutable
+    private IItemList<IAEStack<?>> missing;
     @Shadow(remap = false)
     @Final
-    private List<IAEItemStack> visual;
+    private List<IAEStack<?>> visual;
     private GuiAeButton replan = null;
     private boolean clickStart = false;
 
@@ -57,9 +61,18 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
             clickStart = false;
             start.enabled = false;
             replan.visible = false;
-            ((ItemList) this.storage).clear();
-            ((ItemList) this.pending).clear();
-            ((ItemList) this.missing).clear();
+            // Rebuild instead of resetStatus(): zeroed entries stay in the list, and
+            // handleInput() only copies stackSize onto existing entries, dropping the
+            // incoming usedPercent -> "<0.01%" shown after replanning.
+            this.storage = AEApi.instance()
+                .storage()
+                .createAEStackList();
+            this.pending = AEApi.instance()
+                .storage()
+                .createAEStackList();
+            this.missing = AEApi.instance()
+                .storage()
+                .createAEStackList();
             this.visual.clear();
             AE2Thing.proxy.netHandler.sendToServer(new CPacketTerminalBtns("GuiCraftConfirm.replan", true));
         }

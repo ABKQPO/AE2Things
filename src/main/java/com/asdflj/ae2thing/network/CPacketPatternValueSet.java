@@ -59,6 +59,7 @@ public class CPacketPatternValueSet implements IMessage {
         @Override
         public IMessage onMessage(CPacketPatternValueSet message, MessageContext ctx) {
             EntityPlayer player = ctx.getServerHandler().playerEntity;
+            if (message.originGui == null || message.amount <= 0) return null;
             if (player.openContainer instanceof ContainerPatternValueAmount cpv) {
                 final Object target = cpv.getTarget();
                 final ContainerOpenContext context = cpv.getOpenContext();
@@ -71,17 +72,21 @@ public class CPacketPatternValueSet implements IMessage {
                             new BlockPos(te),
                             Objects.requireNonNull(context.getSide()),
                             message.originGui);
-                    } else {
+                    } else if (target instanceof IInventorySlotAware slotAware) {
                         InventoryHandler.openGui(
                             player,
                             player.getEntityWorld(),
-                            new BlockPos(((IInventorySlotAware) target).getInventorySlot(), 0, 0),
+                            new BlockPos(slotAware.getInventorySlot(), 0, 0),
                             Objects.requireNonNull(context.getSide()),
                             message.originGui);
+                    } else {
+                        return null;
                     }
                     if (player.openContainer instanceof IPatternValueContainer) {
+                        if (message.valueIndex < 0 || message.valueIndex >= player.openContainer.inventorySlots.size())
+                            return null;
                         Slot slot = player.openContainer.getSlot(message.valueIndex);
-                        if (slot instanceof SlotFake) {
+                        if (slot instanceof SlotFake && slot.getStack() != null) {
                             ItemStack stack = slot.getStack()
                                 .copy();
                             if (Util.isFluidPacket(stack)) {

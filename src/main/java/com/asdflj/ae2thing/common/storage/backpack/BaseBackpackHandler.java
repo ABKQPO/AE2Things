@@ -46,6 +46,10 @@ public abstract class BaseBackpackHandler implements IInventory {
     }
 
     public ItemStack injectItem(ItemStack stack) {
+        return this.injectItem(stack, false);
+    }
+
+    public ItemStack injectItem(ItemStack stack, boolean simulate) {
         ItemStack remaining = stack.copy();
         for (int i = 0; i < this.getSizeInventory(); i++) {
             ItemStack slotItem = this.getStackInSlot(i);
@@ -59,7 +63,9 @@ public abstract class BaseBackpackHandler implements IInventory {
             }
             ItemStack updated = slotItem.copy();
             updated.stackSize += moved;
-            this.setInventorySlotContents(i, updated);
+            if (!simulate) {
+                this.setInventorySlotContents(i, updated);
+            }
             remaining.stackSize -= moved;
             if (remaining.stackSize <= 0) {
                 return remaining;
@@ -74,7 +80,9 @@ public abstract class BaseBackpackHandler implements IInventory {
             if (added.stackSize <= 0) {
                 continue;
             }
-            this.setInventorySlotContents(i, added);
+            if (!simulate) {
+                this.setInventorySlotContents(i, added);
+            }
             remaining.stackSize -= added.stackSize;
             if (remaining.stackSize <= 0) {
                 return remaining;

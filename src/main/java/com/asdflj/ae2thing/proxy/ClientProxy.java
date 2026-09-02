@@ -72,6 +72,16 @@ public class ClientProxy extends CommonProxy {
     public static List<MouseWheelHandler> mouseHandlers = new ArrayList<>();
     private static GuiBaseInterfaceWireless.InterfaceWirelessEntryWrapper entryWrapper = null;
 
+    @Override
+    public void scheduleClientTask(Runnable task) {
+        Minecraft minecraft = Minecraft.getMinecraft();
+        if (minecraft.func_152345_ab()) {
+            task.run();
+        } else {
+            minecraft.func_152344_a(task);
+        }
+    }
+
     public static void setInterfaceHighlightEntry(
         GuiBaseInterfaceWireless.InterfaceWirelessEntryWrapper interfaceWirelessEntryWrapper) {
         entryWrapper = interfaceWirelessEntryWrapper;

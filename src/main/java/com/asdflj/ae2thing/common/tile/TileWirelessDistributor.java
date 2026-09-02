@@ -1,6 +1,5 @@
 package com.asdflj.ae2thing.common.tile;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -23,6 +22,7 @@ import net.minecraftforge.common.util.ForgeDirection;
 
 import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.common.block.SubBlocks;
+import com.asdflj.ae2thing.network.PacketDecodeUtil;
 import com.asdflj.ae2thing.util.BlockPos;
 
 import appeng.api.AEApi;
@@ -173,9 +173,9 @@ public class TileWirelessDistributor extends AENetworkTile
 
     @Override
     public void setDamage(int damage) {
-        this.damage = damage;
+        this.damage = damage >= 0 && damage < AEColor.values().length ? damage : AEColor.Transparent.ordinal();
         this.getProxy()
-            .setColor(AEColor.values()[damage]);
+            .setColor(AEColor.values()[this.damage]);
         if (Platform.isClient()) {
             this.worldObj.markBlockRangeForRenderUpdate(
                 this.xCoord,
@@ -191,13 +191,10 @@ public class TileWirelessDistributor extends AENetworkTile
     public boolean readFromNBTEvent(final ByteBuf buf) {
         dimensionalCoords.clear();
         try {
-            ByteArrayInputStream bytes = new ByteArrayInputStream(
-                buf.readBytes(buf.readableBytes())
-                    .array());
-            NBTTagCompound data = CompressedStreamTools.readCompressed(bytes);
+            NBTTagCompound data = PacketDecodeUtil.readCompressedNbt(buf);
             this.setDamage(data.getInteger(Constants.COLOR));
             NBTTagList list = data.getTagList(Constants.CONNECTIONS, 10);
-            for (int x = 0; x < list.tagCount(); x++) {
+            for (int x = 0; x < Math.min(list.tagCount(), MAX_SIZE); x++) {
                 final NBTTagCompound tag = list.getCompoundTagAt(x);
                 DimensionalCoord dimensionalCoord = DimensionalCoord.readFromNBT(tag);
                 dimensionalCoords.add(dimensionalCoord);
@@ -214,10 +211,12 @@ public class TileWirelessDistributor extends AENetworkTile
     @TileEvent(TileEventType.WORLD_NBT_READ)
     public void readFromNBTEvent(NBTTagCompound data) {
         this.setDamage(data.getInteger(Constants.COLOR));
-        this.radius = Constants.Radius.values()[data.getInteger(Constants.TIER)];
+        int tier = data.getInteger(Constants.TIER);
+        this.radius = tier >= 0 && tier < Constants.Radius.values().length ? Constants.Radius.values()[tier]
+            : Constants.Radius.Tier2;
         NBTTagList list = data.getTagList(Constants.CONNECTIONS, 10);
         if (Platform.isServer() && !this.loaded) {
-            for (int i = 0; i < list.tagCount(); i++) {
+            for (int i = 0; i < Math.min(list.tagCount(), MAX_SIZE); i++) {
                 NBTTagCompound tag = list.getCompoundTagAt(i);
                 this.dimensionalCoords.add(DimensionalCoord.readFromNBT(tag));
             }
@@ -487,7 +486,11 @@ public class TileWirelessDistributor extends AENetworkTile
             }
         }
         if (tile instanceof BaseMetaTileEntity bmt && bmt.getProxy()
-            .isReady()) {
+            .isReady()
+            && isSameColor(
+                bmt.getProxy()
+                    .getColor(),
+                this.getColor())) {
             bmt.getProxy()
                 .getNode()
                 .destroy();
@@ -526,10 +529,14 @@ public class TileWirelessDistributor extends AENetworkTile
         if (this.getProxy()
             .isActive()) {
             for (TileEntity tile : this.getAvailableTileEntity()) {
-                if (this.connectionWrappers.size() < MAX_SIZE) {
+                if (this.connectionWrappers.size() >= MAX_SIZE) {
                     break;
                 }
                 if (tile instanceof IGridProxyable proxy) {
+                    if (!isSameColor(
+                        proxy.getProxy()
+                            .getColor(),
+                        this.getColor())) continue;
                     try {
                         GridConnectionWrapper con = doLink(this, tile, proxy);
                         if (con != null) {

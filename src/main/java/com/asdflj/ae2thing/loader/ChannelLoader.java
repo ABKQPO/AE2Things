@@ -1,102 +1,86 @@
 package com.asdflj.ae2thing.loader;
 
-import java.io.IOException;
-import java.net.JarURLConnection;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.Packet;
 import net.minecraft.world.World;
 
 import com.asdflj.ae2thing.AE2Thing;
+import com.asdflj.ae2thing.network.CPacketCraftRequest;
+import com.asdflj.ae2thing.network.CPacketFindCellItem;
+import com.asdflj.ae2thing.network.CPacketFluidUpdate;
+import com.asdflj.ae2thing.network.CPacketInventoryAction;
+import com.asdflj.ae2thing.network.CPacketInventoryActionExtend;
+import com.asdflj.ae2thing.network.CPacketNEIRecipe;
+import com.asdflj.ae2thing.network.CPacketNetworkCraftingItems;
+import com.asdflj.ae2thing.network.CPacketOpenTerminal;
+import com.asdflj.ae2thing.network.CPacketPatternNameSet;
+import com.asdflj.ae2thing.network.CPacketPatternValueSet;
+import com.asdflj.ae2thing.network.CPacketRenamer;
+import com.asdflj.ae2thing.network.CPacketSwitchGuis;
+import com.asdflj.ae2thing.network.CPacketTerminalBtns;
+import com.asdflj.ae2thing.network.CPacketTransferRecipe;
+import com.asdflj.ae2thing.network.CPacketTypeFilter;
+import com.asdflj.ae2thing.network.CPacketValueConfig;
+import com.asdflj.ae2thing.network.SPacketCraftingDebugCardUpdate;
+import com.asdflj.ae2thing.network.SPacketCraftingStateUpdate;
+import com.asdflj.ae2thing.network.SPacketFindCellItem;
+import com.asdflj.ae2thing.network.SPacketMEFluidInvUpdate;
+import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
+import com.asdflj.ae2thing.network.SPacketNBTDataUpdate;
+import com.asdflj.ae2thing.network.SPacketSetItemAmount;
+import com.asdflj.ae2thing.network.SPacketSetItemName;
+import com.asdflj.ae2thing.network.SPacketStringUpdate;
+import com.asdflj.ae2thing.network.SPacketSwitchBack;
+import com.asdflj.ae2thing.network.SPacketTypeFilter;
 import com.asdflj.ae2thing.network.wrapper.AE2ThingNetworkWrapper;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.relauncher.Side;
 
 public class ChannelLoader implements Runnable {
 
     public static final ChannelLoader INSTANCE = new ChannelLoader();
-
-    public static Set<Class<?>> getClasses(String packageName) throws IOException {
-        ClassLoader classLoader = Thread.currentThread()
-            .getContextClassLoader();
-        assert classLoader != null;
-        String path = packageName.replace('.', '/');
-        Enumeration<URL> resources = classLoader.getResources(path);
-        Set<Class<?>> classes = new LinkedHashSet<>();
-        while (resources.hasMoreElements()) {
-            URL resource = resources.nextElement();
-            if ("jar".equals(resource.getProtocol())) {
-                processJarFile(classes, resource, packageName);
-            }
-        }
-        return classes;
-    }
-
-    private static void processJarFile(Set<Class<?>> classes, URL jarFileUrl, String packageName) {
-        JarFile jarFile = null;
-        try {
-            JarURLConnection jarURLConnection = (JarURLConnection) jarFileUrl.openConnection();
-            if (jarURLConnection != null) {
-                jarFile = jarURLConnection.getJarFile();
-                if (jarFile != null) {
-                    Enumeration<JarEntry> jarEntries = jarFile.entries();
-                    while (jarEntries.hasMoreElements()) {
-                        JarEntry jarEntry = jarEntries.nextElement();
-                        String jarEntryName = jarEntry.getName();
-                        if (jarEntryName.startsWith(packageName.replace('.', '/') + '/')
-                            && jarEntryName.endsWith(".class")) {
-                            String className = jarEntryName.substring(0, jarEntryName.lastIndexOf("."))
-                                .replaceAll("/", ".");
-                            try {
-                                classes.add(Class.forName(className));
-                            } catch (ClassNotFoundException ignored) {
-
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (IOException ignored) {} finally {
-            if (jarFile != null) {
-                try {
-                    jarFile.close();
-                } catch (IOException ignored) {}
-            }
-        }
-    }
+    private static final Class<?>[] MESSAGE_TYPES = { CPacketCraftRequest.class, CPacketFindCellItem.class,
+        CPacketFluidUpdate.class, CPacketInventoryAction.class, CPacketInventoryActionExtend.class,
+        CPacketNEIRecipe.class, CPacketNetworkCraftingItems.class, CPacketOpenTerminal.class,
+        CPacketPatternNameSet.class, CPacketPatternValueSet.class, CPacketRenamer.class, CPacketSwitchGuis.class,
+        CPacketTerminalBtns.class, CPacketTransferRecipe.class, CPacketTypeFilter.class, CPacketValueConfig.class,
+        SPacketCraftingDebugCardUpdate.class, SPacketCraftingStateUpdate.class, SPacketFindCellItem.class,
+        SPacketMEFluidInvUpdate.class, SPacketMEItemInvUpdate.class, SPacketNBTDataUpdate.class,
+        SPacketSetItemAmount.class, SPacketSetItemName.class, SPacketStringUpdate.class, SPacketSwitchBack.class,
+        SPacketTypeFilter.class };
 
     @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void run() {
-        int id = 0;
         AE2ThingNetworkWrapper netHandler = AE2Thing.proxy.netHandler;
-        try {
-            Set<Class<?>> result = getClasses("com.asdflj.ae2thing.network");
-            for (Class<?> aClass : result) {
-                if (aClass.getName()
-                    .endsWith("Handler")) {
-                    Class c = Class.forName(
-                        aClass.getName()
-                            .replace("$Handler", ""));
-                    IMessageHandler cls = (IMessageHandler) aClass.getConstructor()
-                        .newInstance();
-                    netHandler.registerMessage(
-                        cls,
-                        c,
-                        id++,
-                        c.getSimpleName()
-                            .startsWith("C") ? Side.SERVER : Side.CLIENT);
+        for (int id = 0; id < MESSAGE_TYPES.length; id++) {
+            Class<?> messageType = MESSAGE_TYPES[id];
+            Class<?> handlerType = null;
+            for (Class<?> nestedType : messageType.getDeclaredClasses()) {
+                if (nestedType.getSimpleName()
+                    .equals("Handler") && IMessageHandler.class.isAssignableFrom(nestedType)) {
+                    handlerType = nestedType;
+                    break;
                 }
             }
-        } catch (Exception ignored) {}
-
+            if (handlerType == null) {
+                throw new IllegalStateException("Missing packet handler for " + messageType.getName());
+            }
+            try {
+                IMessageHandler handler = (IMessageHandler) handlerType.getDeclaredConstructor()
+                    .newInstance();
+                netHandler.registerMessage(
+                    handler,
+                    (Class<? extends IMessage>) messageType,
+                    id,
+                    messageType.getSimpleName()
+                        .startsWith("C") ? Side.SERVER : Side.CLIENT);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("Cannot register packet " + messageType.getName(), e);
+            }
+        }
     }
 
     public static void sendPacketToAllPlayers(Packet packet, World world) {
