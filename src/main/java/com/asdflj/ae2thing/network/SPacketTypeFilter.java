@@ -11,6 +11,7 @@ import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.DecoderException;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 
@@ -33,6 +34,9 @@ public class SPacketTypeFilter implements IMessage {
             this.map.put(type, true);
         }
         final int size = buf.readInt();
+        if (size < 0 || size > this.map.size()) {
+            throw new DecoderException("Invalid terminal type-filter count: " + size);
+        }
         for (int i = 0; i < size; i++) {
             final String typeId = ByteBufUtils.readUTF8String(buf);
             final boolean value = buf.readBoolean();

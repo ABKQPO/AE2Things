@@ -185,7 +185,7 @@ public class TileEssentiaDiscretizer extends AENetworkTile implements IPriorityH
         }
 
         @Override
-        public IItemList<IAEItemStack> getAvailableItems(IItemList<IAEItemStack> out) {
+        public IItemList<IAEItemStack> getAvailableItems(IItemList<IAEItemStack> out, int iteration) {
             if (itemCache == null) {
                 itemCache = AEApi.instance()
                     .storage()
@@ -207,7 +207,7 @@ public class TileEssentiaDiscretizer extends AENetworkTile implements IPriorityH
         }
 
         @Override
-        public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request) {
+        public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request, int iteration) {
             IMEMonitor<AEEssentiaStack> essentiaGrid = getEssentiaGrid();
             if (essentiaGrid == null) {
                 return null;

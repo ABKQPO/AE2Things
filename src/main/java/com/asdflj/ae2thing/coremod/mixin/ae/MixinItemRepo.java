@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.client.me.AdvItemRepo;
 import com.asdflj.ae2thing.client.me.IDisplayRepoExtend;
+import com.asdflj.ae2thing.coremod.hooker.CoreModHooksClient;
 
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
@@ -29,6 +30,46 @@ import appeng.client.me.ItemRepo;
 
 @Mixin(ItemRepo.class)
 public abstract class MixinItemRepo implements IDisplayRepo, IDisplayRepoExtend {
+
+    @Redirect(
+        method = { "updateView", "lambda$getFilter$*" },
+        at = @At(
+            value = "INVOKE",
+            target = "Lappeng/api/storage/data/IAEStack;getModId()Ljava/lang/String;"),
+        remap = false)
+    private String ae2thing$getModId(IAEStack<?> stack) {
+        return CoreModHooksClient.getModId(stack);
+    }
+
+    @Redirect(
+        method = { "updateView", "lambda$getFilter$*" },
+        at = @At(
+            value = "INVOKE",
+            target = "Lappeng/api/storage/data/IAEStack;getDisplayName()Ljava/lang/String;"),
+        remap = false)
+    private String ae2thing$getDisplayName(IAEStack<?> stack) {
+        return CoreModHooksClient.getItemDisplayName(stack);
+    }
+
+    @Redirect(
+        method = { "updateView", "lambda$getFilter$*" },
+        at = @At(
+            value = "INVOKE",
+            target = "Lappeng/util/Platform;getItemDisplayName(Ljava/lang/Object;)Ljava/lang/String;"),
+        remap = false)
+    private String ae2thing$getItemDisplayName(Object stack) {
+        return CoreModHooksClient.getItemDisplayName(stack);
+    }
+
+    @Redirect(
+        method = { "updateView", "lambda$getFilter$*" },
+        at = @At(
+            value = "INVOKE",
+            target = "Lappeng/util/Platform;getTooltip(Ljava/lang/Object;)Ljava/util/List;"),
+        remap = false)
+    private List<String> ae2thing$getTooltip(Object stack) {
+        return CoreModHooksClient.getTooltip(stack);
+    }
 
     @Shadow(remap = false)
     @Final

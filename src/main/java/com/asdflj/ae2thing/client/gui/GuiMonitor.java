@@ -233,7 +233,7 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
                 break;
             case 3: // creative dupe:
                 itemStack = transformItem(itemStack); // for fluid terminal
-                if (aeStack != null && aeStack.isCraftable()) {
+                if (itemStack != null && itemStack.isCraftable()) {
                     action = MonitorableAction.AUTO_CRAFT;
                 } else if (player.capabilities.isCreativeMode) {
                     if (itemStack != null) {

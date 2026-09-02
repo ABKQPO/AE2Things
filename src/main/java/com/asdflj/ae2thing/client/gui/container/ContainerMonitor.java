@@ -382,6 +382,8 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
     @Override
     public void addCraftingToCrafters(final ICrafting c) {
         super.addCraftingToCrafters(c);
+        // A container can gain viewers after its initial sync; allow the type filter to reach them.
+        this.typeFilterSynced = false;
         this.monitor.queueInventory(c);
     }
 
@@ -560,11 +562,16 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
                 totalInserted = total;
             } else {
                 // We cant have partially filled containers -> user will receive a fluid packet as last resort
-                long overflowAmount = fluidPerContainer - (total % fluidPerContainer);
-                IAEFluidStack overflow = AEFluidStack.create(fluidStackPerContainer);
-                overflow.setStackSize(overflowAmount);
-                dropItem(ItemFluidPacket.newStack(overflow));
-                totalInserted = total + overflowAmount;
+                long remainder = total % fluidPerContainer;
+                if (remainder == 0) {
+                    totalInserted = total;
+                } else {
+                    long overflowAmount = fluidPerContainer - remainder;
+                    IAEFluidStack overflow = AEFluidStack.create(fluidStackPerContainer);
+                    overflow.setStackSize(overflowAmount);
+                    dropItem(ItemFluidPacket.newStack(overflow));
+                    totalInserted = total + overflowAmount;
+                }
             }
         } else {
             totalInserted = totalFluid.getStackSize();
@@ -649,7 +656,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
             } else if (partialTanksStack != null) {
                 player.inventory.setInventorySlotContents(slotIndex, partialTanksStack);
             } else {
-                player.inventory.setItemStack(null);
+                player.inventory.setInventorySlotContents(slotIndex, null);
                 shouldSendStack = false;
             }
         }

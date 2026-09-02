@@ -32,6 +32,9 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
     private GuiAeButton start;
 
     @Shadow(remap = false)
+    private GuiAeButton startWithFollow;
+
+    @Shadow(remap = false)
     @Final
     @Mutable
     private IItemList<IAEStack<?>> storage;
@@ -46,6 +49,9 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
     @Shadow(remap = false)
     @Final
     private List<IAEStack<?>> visual;
+    @Shadow(remap = false)
+    @Final
+    private List<IAEStack<?>> filteredVisual;
     private GuiAeButton replan = null;
     private boolean clickStart = false;
 
@@ -55,7 +61,7 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
 
     @Inject(method = "actionPerformed", at = @At(value = "HEAD"))
     private void actionPerformed(GuiButton btn, CallbackInfo ci) {
-        if (btn == start) {
+        if (btn == start || btn == startWithFollow) {
             clickStart = true;
         } else if (btn == replan) {
             clickStart = false;
@@ -74,6 +80,7 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
                 .storage()
                 .createAEStackList();
             this.visual.clear();
+            this.filteredVisual.clear();
             AE2Thing.proxy.netHandler.sendToServer(new CPacketTerminalBtns("GuiCraftConfirm.replan", true));
         }
     }
@@ -98,9 +105,11 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
             if (clickStart || !start.enabled) {
                 replan.visible = true;
                 start.visible = false;
+                startWithFollow.visible = false;
             } else {
                 replan.visible = false;
                 start.visible = true;
+                startWithFollow.visible = true;
             }
         } catch (Exception ignored) {}
 

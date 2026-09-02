@@ -131,9 +131,6 @@ public abstract class BaseMEGui extends AEBaseGui implements IGuiSelection {
                     AE2Thing.proxy.netHandler.sendToServer(new CPacketFluidUpdate(null, isShiftKeyDown()));
                     return true;
                 }
-                if (fluid != null && mouseButton != 3) {
-                    return true;
-                }
                 if (mouseButton == 3 && player.capabilities.isCreativeMode && fluid != null && !fluid.isCraftable()) {
                     return false;
                 }

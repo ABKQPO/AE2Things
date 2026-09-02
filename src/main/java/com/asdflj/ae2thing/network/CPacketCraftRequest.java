@@ -180,7 +180,7 @@ public class CPacketCraftRequest implements IMessage {
                                 ccc.setItemToCraft(cca.getItemToCraft());
                                 ccc.setAutoStart(message.heldShift);
                                 ccc.setJob(futureJob);
-                                cca.detectAndSendChanges();
+                                ccc.detectAndSendChanges();
                             }
                         }
                     } catch (final Throwable e) {

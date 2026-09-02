@@ -11,6 +11,8 @@ public enum Mixins implements IMixins {
     AE(new MixinBuilder()
         .addCommonMixins(
             "ae.MixinContainerCraftConfirm",
+            "ae.MixinCraftingJobV2",
+            "ae.MixinGridStorage",
             "ae.MixinPacketMonitorableAction",
             "ae.MixinTileIOPort",
             "ae.MixinContainerCraftAmount")
@@ -21,6 +23,14 @@ public enum Mixins implements IMixins {
             "ae.MixinGuiCraftConfirm",
             "ae.MixinItemRepo")
         .addRequiredMod(Mods.AE2)
+        .setPhase(Phase.LATE)),
+
+    AE2_FLUID_CRAFT(new MixinBuilder().addClientMixins("ae2fc.MixinGuiFluidInterface")
+        .addRequiredMod(Mods.AE2_FLUID_CRAFT)
+        .setPhase(Phase.LATE)),
+
+    THAUMCRAFT(new MixinBuilder().addCommonMixins("thaumcraft.MixinTileThaumatorium")
+        .addRequiredMod(Mods.THAUMCRAFT)
         .setPhase(Phase.LATE)),
 
     ASPECT_RECIPE_INDEX(

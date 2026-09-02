@@ -169,13 +169,15 @@ public class CPacketInventoryActionExtend implements IMessage {
                                     new BlockPos(te),
                                     Objects.requireNonNull(baseContainer.getOpenContext().getSide()),
                                     GuiType.PATTERN_NAME_SET);
-                        }else{
+                        } else if (target instanceof WirelessTerminal wirelessTerminal) {
                             InventoryHandler.openGui(
                                 sender,
                                 sender.getEntityWorld(),
-                                new BlockPos(((WirelessTerminal) target).getInventorySlot(),0,0),
+                                new BlockPos(wirelessTerminal.getInventorySlot(), 0, 0),
                                 Objects.requireNonNull(baseContainer.getOpenContext().getSide()),
                                 GuiType.PATTERN_NAME_SET_ITEM);
+                        } else {
+                            return null;
                         }
 
                         ItemStack itemStack = message.stack.getItemStack();
@@ -193,17 +195,21 @@ public class CPacketInventoryActionExtend implements IMessage {
                     }
                 } else if (message.action == InventoryActionExtend.GET_CRAFTING_STATE) {
                     if(target instanceof IActionHost gh){
-                        ICraftingGrid craftingGrid = gh.getActionableNode()
-                            .getGrid()
-                            .getCache(ICraftingGrid.class);
+                        if (gh.getActionableNode() == null || gh.getActionableNode().getGrid() == null) {
+                            return null;
+                        }
+                        ICraftingGrid craftingGrid = gh.getActionableNode().getGrid().getCache(ICraftingGrid.class);
                         NBTTagCompound cpuData = new NBTTagCompound();
                         NBTTagList tagList = new NBTTagList();
                         cpuData.setTag(Constants.CPU_LIST,tagList);
                         int i = 0;
+                        if (craftingGrid == null || message.stack == null) {
+                            return null;
+                        }
                         for (ICraftingCPU cpu: craftingGrid.getCpus()) {
                             i++;
                             if(cpu instanceof CraftingCPUCluster ccc && ccc.getFinalOutput() != null){
-                                if(message.stack.hashCode() == ccc.getFinalOutput().hashCode()){
+                                if(message.stack.isSameType(ccc.getFinalOutput())){
                                     IItemList<IAEItemStack> list =  AEApi.instance().storage().createPrimitiveItemList();
                                     ccc.getListOfItem(list,ACTIVE);
                                     List<IAEItemStack> activeItems = getActiveCraftingItems(list);
@@ -239,13 +245,15 @@ public class CPacketInventoryActionExtend implements IMessage {
                                     new BlockPos(te),
                                     Objects.requireNonNull(baseContainer.getOpenContext().getSide()),
                                     GuiType.PATTERN_VALUE_SET);
-                        }else{
+                        } else if (target instanceof IInventorySlotAware slotAware) {
                             InventoryHandler.openGui(
                                 sender,
                                 sender.getEntityWorld(),
-                                new BlockPos(((IInventorySlotAware)target).getInventorySlot(),0,0),
+                                new BlockPos(slotAware.getInventorySlot(), 0, 0),
                                 Objects.requireNonNull(baseContainer.getOpenContext().getSide()),
                                 GuiType.PATTERN_VALUE_SET_ITEM);
+                        } else {
+                            return null;
                         }
                         int amt = (int) message.stack.getStackSize();
                         AE2Thing.proxy.netHandler.sendTo(new SPacketSetItemAmount(amt), sender);
