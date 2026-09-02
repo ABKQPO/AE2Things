@@ -16,7 +16,9 @@ import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.util.IConfigurableObject;
-import appeng.container.guisync.GuiSync;
+import appeng.container.sync.SyncRegistrar;
+import appeng.container.sync.handlers.BooleanSyncHandler;
+import appeng.container.sync.handlers.IntSyncHandler;
 import appeng.container.slot.SlotRestrictedInput;
 import appeng.helpers.IContainerCraftingPacket;
 import appeng.me.helpers.ChannelPowerSrc;
@@ -34,23 +36,47 @@ public abstract class BasePatternContainerMonitor extends ContainerMonitor imple
     protected final IInventory output;
     protected final IInventory patternInv;
 
-    @GuiSync(99)
     public boolean canAccessViewCells;
-    @GuiSync(95)
     public boolean combine = false;
-    @GuiSync(92)
     public int activePage = 0;
-    @GuiSync(100)
     public boolean craftingMode = true;
+    private final BooleanSyncHandler canAccessViewCellsSync;
+    private final BooleanSyncHandler combineSync;
+    private final IntSyncHandler activePageSync;
+    private final BooleanSyncHandler craftingModeSync;
     protected final IPatternTerminal it;
 
     public BasePatternContainerMonitor(InventoryPlayer ip, ITerminalHost monitorable) {
         super(ip, monitorable);
+        final SyncRegistrar sync = this.syncRegistrar();
+        this.canAccessViewCellsSync = sync.booleanS2C("canAccessViewCells").onClientChange((o, n) -> {
+            this.canAccessViewCells = n;
+            this.onUpdate("canAccessViewCells", o, n);
+        });
+        this.combineSync = sync.booleanS2C("combine").onClientChange((o, n) -> {
+            this.combine = n;
+            this.onUpdate("combine", o, n);
+        });
+        this.activePageSync = sync.intS2C("activePage").onClientChange((o, n) -> {
+            this.activePage = n;
+            this.onUpdate("activePage", o, n);
+        });
+        this.craftingModeSync = sync.booleanS2C("craftingMode").onClientChange((o, n) -> {
+            this.craftingMode = n;
+            this.onUpdate("craftingMode", o, n);
+        });
         this.it = (IPatternTerminal) monitorable;
         this.canAccessViewCells = false;
         this.crafting = this.it.getInventoryByName(Constants.CRAFTING);
         this.output = this.it.getInventoryByName(Constants.OUTPUT);
         this.patternInv = this.it.getInventoryByName(Constants.PATTERN);
+    }
+
+    protected final void syncPatternState() {
+        this.canAccessViewCellsSync.set(this.canAccessViewCells);
+        this.combineSync.set(this.combine);
+        this.activePageSync.set(this.activePage);
+        this.craftingModeSync.set(this.craftingMode);
     }
 
     @Override

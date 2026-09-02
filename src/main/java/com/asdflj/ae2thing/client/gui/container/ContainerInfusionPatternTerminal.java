@@ -209,7 +209,6 @@ public class ContainerInfusionPatternTerminal extends BasePatternContainerMonito
 
     @Override
     public void detectAndSendChanges() {
-        super.detectAndSendChanges();
         if (Platform.isServer()) {
             this.combine = this.getPatternTerminal()
                 .shouldCombine();
@@ -236,7 +235,9 @@ public class ContainerInfusionPatternTerminal extends BasePatternContainerMonito
                     }
                 }
             }
+            this.syncPatternState();
         }
+        super.detectAndSendChanges();
     }
 
     private void updateOrderOfOutputSlots() {

@@ -16,7 +16,8 @@ import appeng.api.networking.IGridNode;
 import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.storage.ITerminalHost;
 import appeng.container.AEBaseContainer;
-import appeng.container.guisync.GuiSync;
+import appeng.container.sync.SyncRegistrar;
+import appeng.container.sync.handlers.BooleanSyncHandler;
 import appeng.items.misc.ItemEncodedPattern;
 import appeng.me.helpers.ChannelPowerSrc;
 import appeng.util.Platform;
@@ -28,11 +29,15 @@ public class BaseNetworkContainer extends AEBaseContainer {
     protected int ticks;
     protected final double powerMultiplier = 0.5;
 
-    @GuiSync(1)
     public boolean hasPower = false;
+    private final BooleanSyncHandler powerSync;
 
     public BaseNetworkContainer(InventoryPlayer ip, ITerminalHost host) {
         super(ip, host);
+        final SyncRegistrar sync = this.syncRegistrar();
+        this.powerSync = sync.booleanS2C("hasPower").onClientChange((oldValue, newValue) -> {
+            this.hasPower = newValue;
+        });
         this.player = ip.player;
         if (Platform.isClient()) return;
         if (host instanceof WirelessTerminal) {
@@ -77,6 +82,10 @@ public class BaseNetworkContainer extends AEBaseContainer {
 
     public BaseNetworkContainer(InventoryPlayer ip, Object anchor) {
         super(ip, anchor);
+        final SyncRegistrar sync = this.syncRegistrar();
+        this.powerSync = sync.booleanS2C("hasPower").onClientChange((oldValue, newValue) -> {
+            this.hasPower = newValue;
+        });
         this.player = ip.player;
     }
 
@@ -109,6 +118,7 @@ public class BaseNetworkContainer extends AEBaseContainer {
 
     protected void setPowered(final boolean isPowered) {
         this.hasPower = isPowered;
+        this.powerSync.set(isPowered);
     }
 
     @Override

@@ -4,8 +4,8 @@ import java.awt.Rectangle;
 import java.util.Collections;
 import java.util.List;
 
+import appeng.client.gui.widgets.MEGuiTextField;
 import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -24,7 +24,6 @@ import com.glodblock.github.util.Util;
 import appeng.client.gui.AEBaseGui;
 import appeng.container.slot.SlotFake;
 import appeng.core.AEConfig;
-import appeng.core.localization.GuiColors;
 import appeng.core.localization.GuiText;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketClickOrDragFakeSlot;
@@ -38,7 +37,7 @@ import cpw.mods.fml.common.Optional;
 @Optional.Interface(modid = "NotEnoughItems", iface = "codechicken.nei.api.INEIGuiHandler")
 public class GuiFluidPacketEncoder extends AEBaseGui implements INEIGuiHandler {
 
-    private GuiTextField level;
+    private MEGuiTextField level;
     private GuiButton plus1;
     private GuiButton plus10;
     private GuiButton plus100;
@@ -56,6 +55,7 @@ public class GuiFluidPacketEncoder extends AEBaseGui implements INEIGuiHandler {
         super(new ContainerFluidPacketEncoder(ip, tile));
         cvb = (ContainerFluidPacketEncoder) this.inventorySlots;
         te = tile;
+        this.xSize = 211;
         this.ySize = 184;
     }
 
@@ -63,17 +63,16 @@ public class GuiFluidPacketEncoder extends AEBaseGui implements INEIGuiHandler {
     public void initGui() {
         super.initGui();
         this.addButtons();
-        this.level = new GuiTextField(this.fontRendererObj, 24, 43, 79, this.fontRendererObj.FONT_HEIGHT);
-        this.level.setEnableBackgroundDrawing(false);
-        this.level.setMaxStringLength(16);
-        this.level.setTextColor(GuiColors.LevelEmitterValue.getColor());
-        this.level.setVisible(true);
+        this.level = new MEGuiTextField(90, 12);
+        this.level.x = 39;
+        this.level.y = 44;
+        this.level.setMaxStringLength(18);
         this.level.setFocused(true);
         ((ContainerFluidPacketEncoder) this.inventorySlots).setTextField(this.level);
     }
 
-    public static int y1 = 38;
-    public static int x1 = 144;
+    public static int y1 = 40;
+    public static int x1 = 134;
 
     protected void addButtons() {
         final int a = AEConfig.instance.levelByStackAmounts(0);
@@ -85,10 +84,10 @@ public class GuiFluidPacketEncoder extends AEBaseGui implements INEIGuiHandler {
         this.buttonList.add(this.plus10 = new GuiButton(0, this.guiLeft + 48, this.guiTop + 17, 28, 20, "+" + b));
         this.buttonList.add(this.plus100 = new GuiButton(0, this.guiLeft + 82, this.guiTop + 17, 32, 20, "+" + c));
         this.buttonList.add(this.plus1000 = new GuiButton(0, this.guiLeft + 120, this.guiTop + 17, 38, 20, "+" + d));
-        this.buttonList.add(this.minus1 = new GuiButton(0, this.guiLeft + 20, this.guiTop + 59, 22, 20, "-" + a));
-        this.buttonList.add(this.minus10 = new GuiButton(0, this.guiLeft + 48, this.guiTop + 59, 28, 20, "-" + b));
-        this.buttonList.add(this.minus100 = new GuiButton(0, this.guiLeft + 82, this.guiTop + 59, 32, 20, "-" + c));
-        this.buttonList.add(this.minus1000 = new GuiButton(0, this.guiLeft + 120, this.guiTop + 59, 38, 20, "-" + d));
+        this.buttonList.add(this.minus1 = new GuiButton(0, this.guiLeft + 20, this.guiTop + 63, 22, 20, "-" + a));
+        this.buttonList.add(this.minus10 = new GuiButton(0, this.guiLeft + 48, this.guiTop + 63, 28, 20, "-" + b));
+        this.buttonList.add(this.minus100 = new GuiButton(0, this.guiLeft + 82, this.guiTop + 63, 32, 20, "-" + c));
+        this.buttonList.add(this.minus1000 = new GuiButton(0, this.guiLeft + 120, this.guiTop + 63, 38, 20, "-" + d));
 
         this.buttonList
             .add(this.submit = new GuiButton(0, this.guiLeft + x1, this.guiTop + y1, 26, 20, GuiText.Set.getLocal()));

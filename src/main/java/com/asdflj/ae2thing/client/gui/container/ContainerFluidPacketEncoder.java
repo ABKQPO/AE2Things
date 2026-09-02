@@ -1,6 +1,6 @@
 package com.asdflj.ae2thing.client.gui.container;
 
-import net.minecraft.client.gui.GuiTextField;
+import appeng.client.gui.widgets.MEGuiTextField;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -12,10 +12,11 @@ import com.glodblock.github.common.item.ItemFluidPacket;
 import com.glodblock.github.util.Util;
 
 import appeng.api.config.SecurityPermissions;
-import appeng.container.guisync.GuiSync;
 import appeng.container.slot.IOptionalSlotHost;
 import appeng.container.slot.OptionalSlotFake;
 import appeng.container.slot.SlotFake;
+import appeng.container.sync.SyncRegistrar;
+import appeng.container.sync.handlers.LongSyncHandler;
 import appeng.tile.inventory.AppEngInternalAEInventory;
 import appeng.util.Platform;
 import cpw.mods.fml.relauncher.Side;
@@ -24,10 +25,10 @@ import cpw.mods.fml.relauncher.SideOnly;
 public class ContainerFluidPacketEncoder extends BaseNetworkContainer implements IOptionalSlotHost {
 
     @SideOnly(Side.CLIENT)
-    private GuiTextField textField;
+    private MEGuiTextField textField;
 
-    @GuiSync(2)
     public long EmitterValue = 0;
+    private final LongSyncHandler emitterValueSync;
 
     private final TileFluidPacketEncoder tile;
     private OptionalSlotFakeTypeOnly slot;
@@ -60,6 +61,14 @@ public class ContainerFluidPacketEncoder extends BaseNetworkContainer implements
     public ContainerFluidPacketEncoder(InventoryPlayer ip, TileFluidPacketEncoder host) {
         super(ip, host);
         tile = host;
+        final SyncRegistrar sync = this.syncRegistrar();
+        this.emitterValueSync = sync.longS2C("emitterValue").onClientChange((oldValue, newValue) -> {
+            this.EmitterValue = newValue;
+            if (this.textField != null) {
+                this.textField.setText(String.valueOf(newValue));
+                this.textField.setCursorPositionEnd();
+            }
+        });
         this.setupConfig();
 
         this.bindPlayerInventory(ip, 0, 184 - /* height of player inventory */ 82);
@@ -68,18 +77,19 @@ public class ContainerFluidPacketEncoder extends BaseNetworkContainer implements
     public void setLevel(final long l) {
         this.tile.setReportingValue(l);
         this.EmitterValue = l;
+        this.emitterValueSync.set(l);
         this.tile.configureWatchers();
     }
 
     protected void setupConfig() {
         final IInventory inv = getFakeFluidInv();
-        final int y = 40;
-        final int x = 80 + 44;
+        final int y = 42;
+        final int x = 17;
         this.addSlotToContainer(slot = new OptionalSlotFakeTypeOnly(inv, this.tile, this, 0, x, y, 0, 0, 0));
     }
 
     @SideOnly(Side.CLIENT)
-    public void setTextField(final GuiTextField level) {
+    public void setTextField(final MEGuiTextField level) {
         this.textField = level;
         this.textField.setText(String.valueOf(this.EmitterValue));
     }
@@ -94,6 +104,7 @@ public class ContainerFluidPacketEncoder extends BaseNetworkContainer implements
 
         if (Platform.isServer()) {
             this.EmitterValue = this.tile.getReportingValue();
+            this.emitterValueSync.set(this.EmitterValue);
         }
         super.detectAndSendChanges();
 

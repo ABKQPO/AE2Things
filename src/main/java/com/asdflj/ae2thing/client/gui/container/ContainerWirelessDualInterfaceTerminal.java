@@ -49,8 +49,10 @@ import appeng.api.parts.IInterfaceTerminal;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.util.IConfigurableObject;
 import appeng.api.util.IInterfaceViewable;
-import appeng.container.guisync.GuiSync;
 import appeng.container.implementations.ContainerInterfaceTerminal;
+import appeng.container.sync.SyncRegistrar;
+import appeng.container.sync.handlers.BooleanSyncHandler;
+import appeng.container.sync.handlers.IntSyncHandler;
 import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotPatternOutputs;
@@ -74,31 +76,61 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     public final ContainerInterfaceTerminal delegateContainer;
     private final PatternContainer patternPanel;
 
-    @GuiSync(97)
     public boolean craftingMode = true;
 
-    @GuiSync(96)
     public boolean substitute = false;
 
-    @GuiSync(95)
     public boolean combine = false;
 
-    @GuiSync(94)
     public boolean beSubstitute = false;
 
-    @GuiSync(93)
     public boolean inverted;
 
-    @GuiSync(92)
     public int activePage = 0;
 
-    @GuiSync(91)
     public boolean prioritize = false;
+
+    private final BooleanSyncHandler craftingModeSync;
+    private final BooleanSyncHandler substituteSync;
+    private final BooleanSyncHandler combineSync;
+    private final BooleanSyncHandler beSubstituteSync;
+    private final BooleanSyncHandler invertedSync;
+    private final IntSyncHandler activePageSync;
+    private final BooleanSyncHandler prioritizeSync;
 
     private final IPatternTerminal it;
 
     public ContainerWirelessDualInterfaceTerminal(InventoryPlayer ip, ITerminalHost monitorable) {
         super(ip, monitorable);
+        final SyncRegistrar sync = this.syncRegistrar();
+        this.craftingModeSync = sync.booleanS2C("craftingMode").onClientChange((o, n) -> {
+            this.craftingMode = n;
+            this.onUpdate("craftingMode", o, n);
+        });
+        this.substituteSync = sync.booleanS2C("substitute").onClientChange((o, n) -> {
+            this.substitute = n;
+            this.onUpdate("substitute", o, n);
+        });
+        this.combineSync = sync.booleanS2C("combine").onClientChange((o, n) -> {
+            this.combine = n;
+            this.onUpdate("combine", o, n);
+        });
+        this.beSubstituteSync = sync.booleanS2C("beSubstitute").onClientChange((o, n) -> {
+            this.beSubstitute = n;
+            this.onUpdate("beSubstitute", o, n);
+        });
+        this.invertedSync = sync.booleanS2C("inverted").onClientChange((o, n) -> {
+            this.inverted = n;
+            this.onUpdate("inverted", o, n);
+        });
+        this.activePageSync = sync.intS2C("activePage").onClientChange((o, n) -> {
+            this.activePage = n;
+            this.onUpdate("activePage", o, n);
+        });
+        this.prioritizeSync = sync.booleanS2C("prioritize").onClientChange((o, n) -> {
+            this.prioritize = n;
+            this.onUpdate("prioritize", o, n);
+        });
         this.patternPanel = new PatternContainer(ip, monitorable, this);
         this.delegateContainer = new ContainerInterfaceTerminal(ip, (IInterfaceTerminal) monitorable);
         this.it = (IPatternTerminal) monitorable;
@@ -156,8 +188,19 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
             return;
         }
         this.patternPanel.detectAndSendChanges();
+        this.syncPatternState();
         super.detectAndSendChanges();
         this.delegateContainer.detectAndSendChanges();
+    }
+
+    private void syncPatternState() {
+        this.craftingModeSync.set(this.craftingMode);
+        this.substituteSync.set(this.substitute);
+        this.combineSync.set(this.combine);
+        this.beSubstituteSync.set(this.beSubstitute);
+        this.invertedSync.set(this.inverted);
+        this.activePageSync.set(this.activePage);
+        this.prioritizeSync.set(this.prioritize);
     }
 
     @Override
