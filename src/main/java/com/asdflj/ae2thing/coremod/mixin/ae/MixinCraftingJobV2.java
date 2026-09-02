@@ -25,7 +25,7 @@ public abstract class MixinCraftingJobV2 {
         remap = false)
     private void ae2thing$init(World world, IGrid grid, BaseActionSource actionSource, IAEStack<?> what,
         CraftingMode craftingMode, ICraftingCallback callback, CallbackInfo ci) {
-        CraftingDebugHelper.craftingHelper((CraftingJobV2) (Object) this, world, grid, actionSource, what, craftingMode,
-            callback);
+        CraftingDebugHelper
+            .craftingHelper((CraftingJobV2) (Object) this, world, grid, actionSource, what, craftingMode, callback);
     }
 }

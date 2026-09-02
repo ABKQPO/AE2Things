@@ -42,10 +42,13 @@ public class CPacketNetworkCraftingItems implements IMessage {
         }
 
         private void sendToClient(IActionHost host, EntityPlayerMP player) {
-            if (host.getActionableNode() == null || host.getActionableNode().getGrid() == null) {
+            if (host.getActionableNode() == null || host.getActionableNode()
+                .getGrid() == null) {
                 return;
             }
-            ICraftingGrid craftingGrid = host.getActionableNode().getGrid().getCache(ICraftingGrid.class);
+            ICraftingGrid craftingGrid = host.getActionableNode()
+                .getGrid()
+                .getCache(ICraftingGrid.class);
             if (craftingGrid == null) {
                 return;
             }

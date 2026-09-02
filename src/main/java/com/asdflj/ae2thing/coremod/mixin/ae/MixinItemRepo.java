@@ -33,9 +33,7 @@ public abstract class MixinItemRepo implements IDisplayRepo, IDisplayRepoExtend 
 
     @Redirect(
         method = { "updateView", "lambda$getFilter$*" },
-        at = @At(
-            value = "INVOKE",
-            target = "Lappeng/api/storage/data/IAEStack;getModId()Ljava/lang/String;"),
+        at = @At(value = "INVOKE", target = "Lappeng/api/storage/data/IAEStack;getModId()Ljava/lang/String;"),
         remap = false)
     private String ae2thing$getModId(IAEStack<?> stack) {
         return CoreModHooksClient.getModId(stack);
@@ -43,9 +41,7 @@ public abstract class MixinItemRepo implements IDisplayRepo, IDisplayRepoExtend 
 
     @Redirect(
         method = { "updateView", "lambda$getFilter$*" },
-        at = @At(
-            value = "INVOKE",
-            target = "Lappeng/api/storage/data/IAEStack;getDisplayName()Ljava/lang/String;"),
+        at = @At(value = "INVOKE", target = "Lappeng/api/storage/data/IAEStack;getDisplayName()Ljava/lang/String;"),
         remap = false)
     private String ae2thing$getDisplayName(IAEStack<?> stack) {
         return CoreModHooksClient.getItemDisplayName(stack);
@@ -63,9 +59,7 @@ public abstract class MixinItemRepo implements IDisplayRepo, IDisplayRepoExtend 
 
     @Redirect(
         method = { "updateView", "lambda$getFilter$*" },
-        at = @At(
-            value = "INVOKE",
-            target = "Lappeng/util/Platform;getTooltip(Ljava/lang/Object;)Ljava/util/List;"),
+        at = @At(value = "INVOKE", target = "Lappeng/util/Platform;getTooltip(Ljava/lang/Object;)Ljava/util/List;"),
         remap = false)
     private List<String> ae2thing$getTooltip(Object stack) {
         return CoreModHooksClient.getTooltip(stack);
