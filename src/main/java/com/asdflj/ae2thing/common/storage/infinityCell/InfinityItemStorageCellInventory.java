@@ -74,12 +74,14 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
     @Override
     public void loadCellItems() {
         if (this.cellItems == null) {
-            this.cellItems = this.storage.getItems();
+            this.cellItems = this.storage == null ? AEApi.instance()
+                .storage()
+                .createItemList() : this.storage.getItems();
             for (IAEItemStack is : this.cellItems) {
                 if (is.getStackSize() <= 0) is.reset();
             }
         }
-        if (!this.getUUID()
+        if (this.storage != null && !this.getUUID()
             .equals(this.storage.getUUID())) {
             data.setString(Constants.DISKUUID, this.storage.getUUID());
         }

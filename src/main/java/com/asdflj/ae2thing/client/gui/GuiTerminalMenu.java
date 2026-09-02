@@ -49,7 +49,7 @@ public class GuiTerminalMenu extends GuiContainer implements INEIGuiHandler {
     private static final boolean hasLwjgl3 = Loader.isModLoaded("lwjgl3ify");
 
     public GuiTerminalMenu() {
-        super(new ContainerTerminalMenu());
+        super(new ContainerTerminalMenu(Minecraft.getMinecraft().thePlayer.inventory));
         this.xSize = 256;
     }
 

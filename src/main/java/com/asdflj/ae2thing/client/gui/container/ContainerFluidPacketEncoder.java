@@ -1,6 +1,5 @@
 package com.asdflj.ae2thing.client.gui.container;
 
-import appeng.client.gui.widgets.MEGuiTextField;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -12,6 +11,7 @@ import com.glodblock.github.common.item.ItemFluidPacket;
 import com.glodblock.github.util.Util;
 
 import appeng.api.config.SecurityPermissions;
+import appeng.client.gui.widgets.MEGuiTextField;
 import appeng.container.slot.IOptionalSlotHost;
 import appeng.container.slot.OptionalSlotFake;
 import appeng.container.slot.SlotFake;
@@ -62,13 +62,14 @@ public class ContainerFluidPacketEncoder extends BaseNetworkContainer implements
         super(ip, host);
         tile = host;
         final SyncRegistrar sync = this.syncRegistrar();
-        this.emitterValueSync = sync.longS2C("emitterValue").onClientChange((oldValue, newValue) -> {
-            this.EmitterValue = newValue;
-            if (this.textField != null) {
-                this.textField.setText(String.valueOf(newValue));
-                this.textField.setCursorPositionEnd();
-            }
-        });
+        this.emitterValueSync = sync.longS2C("emitterValue")
+            .onClientChange((oldValue, newValue) -> {
+                this.EmitterValue = newValue;
+                if (this.textField != null) {
+                    this.textField.setText(String.valueOf(newValue));
+                    this.textField.setCursorPositionEnd();
+                }
+            });
         this.setupConfig();
 
         this.bindPlayerInventory(ip, 0, 184 - /* height of player inventory */ 82);

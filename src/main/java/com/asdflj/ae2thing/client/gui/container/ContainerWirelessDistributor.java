@@ -23,6 +23,7 @@ public class ContainerWirelessDistributor extends BaseNetworkContainer implement
 
     public ContainerWirelessDistributor(InventoryPlayer ip, TileWirelessDistributor host) {
         super(ip, host);
+        this.bindPlayerInventory(ip, -1000, -1000);
         this.tile = (TileWirelessDistributor) this.getTileEntity();
     }
 

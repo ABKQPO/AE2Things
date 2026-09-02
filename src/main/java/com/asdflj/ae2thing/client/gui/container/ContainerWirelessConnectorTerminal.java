@@ -24,6 +24,7 @@ public class ContainerWirelessConnectorTerminal extends BaseNetworkContainer imp
 
     public ContainerWirelessConnectorTerminal(InventoryPlayer ip, ITerminalHost host) {
         super(ip, host);
+        this.bindPlayerInventory(ip, -1000, -1000);
     }
 
     public void updateData() {

@@ -16,10 +16,10 @@ import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.util.IConfigurableObject;
+import appeng.container.slot.SlotRestrictedInput;
 import appeng.container.sync.SyncRegistrar;
 import appeng.container.sync.handlers.BooleanSyncHandler;
 import appeng.container.sync.handlers.IntSyncHandler;
-import appeng.container.slot.SlotRestrictedInput;
 import appeng.helpers.IContainerCraftingPacket;
 import appeng.me.helpers.ChannelPowerSrc;
 import appeng.tile.inventory.IAEAppEngInventory;
@@ -49,22 +49,26 @@ public abstract class BasePatternContainerMonitor extends ContainerMonitor imple
     public BasePatternContainerMonitor(InventoryPlayer ip, ITerminalHost monitorable) {
         super(ip, monitorable);
         final SyncRegistrar sync = this.syncRegistrar();
-        this.canAccessViewCellsSync = sync.booleanS2C("canAccessViewCells").onClientChange((o, n) -> {
-            this.canAccessViewCells = n;
-            this.onUpdate("canAccessViewCells", o, n);
-        });
-        this.combineSync = sync.booleanS2C("combine").onClientChange((o, n) -> {
-            this.combine = n;
-            this.onUpdate("combine", o, n);
-        });
-        this.activePageSync = sync.intS2C("activePage").onClientChange((o, n) -> {
-            this.activePage = n;
-            this.onUpdate("activePage", o, n);
-        });
-        this.craftingModeSync = sync.booleanS2C("craftingMode").onClientChange((o, n) -> {
-            this.craftingMode = n;
-            this.onUpdate("craftingMode", o, n);
-        });
+        this.canAccessViewCellsSync = sync.booleanS2C("canAccessViewCells")
+            .onClientChange((o, n) -> {
+                this.canAccessViewCells = n;
+                this.onUpdate("canAccessViewCells", o, n);
+            });
+        this.combineSync = sync.booleanS2C("combine")
+            .onClientChange((o, n) -> {
+                this.combine = n;
+                this.onUpdate("combine", o, n);
+            });
+        this.activePageSync = sync.intS2C("activePage")
+            .onClientChange((o, n) -> {
+                this.activePage = n;
+                this.onUpdate("activePage", o, n);
+            });
+        this.craftingModeSync = sync.booleanS2C("craftingMode")
+            .onClientChange((o, n) -> {
+                this.craftingMode = n;
+                this.onUpdate("craftingMode", o, n);
+            });
         this.it = (IPatternTerminal) monitorable;
         this.canAccessViewCells = false;
         this.crafting = this.it.getInventoryByName(Constants.CRAFTING);

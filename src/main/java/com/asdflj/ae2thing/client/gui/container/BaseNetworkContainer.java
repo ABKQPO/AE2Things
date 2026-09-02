@@ -35,9 +35,8 @@ public class BaseNetworkContainer extends AEBaseContainer {
     public BaseNetworkContainer(InventoryPlayer ip, ITerminalHost host) {
         super(ip, host);
         final SyncRegistrar sync = this.syncRegistrar();
-        this.powerSync = sync.booleanS2C("hasPower").onClientChange((oldValue, newValue) -> {
-            this.hasPower = newValue;
-        });
+        this.powerSync = sync.booleanS2C("hasPower")
+            .onClientChange((oldValue, newValue) -> { this.hasPower = newValue; });
         this.player = ip.player;
         if (Platform.isClient()) return;
         if (host instanceof WirelessTerminal) {
@@ -83,9 +82,8 @@ public class BaseNetworkContainer extends AEBaseContainer {
     public BaseNetworkContainer(InventoryPlayer ip, Object anchor) {
         super(ip, anchor);
         final SyncRegistrar sync = this.syncRegistrar();
-        this.powerSync = sync.booleanS2C("hasPower").onClientChange((oldValue, newValue) -> {
-            this.hasPower = newValue;
-        });
+        this.powerSync = sync.booleanS2C("hasPower")
+            .onClientChange((oldValue, newValue) -> { this.hasPower = newValue; });
         this.player = ip.player;
     }
 

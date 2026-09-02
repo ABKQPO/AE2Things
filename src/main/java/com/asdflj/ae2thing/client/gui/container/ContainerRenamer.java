@@ -13,6 +13,7 @@ public class ContainerRenamer extends AEBaseContainer {
 
     public ContainerRenamer(InventoryPlayer ip, ITerminalHost monitorable) {
         super(ip, monitorable);
+        this.bindPlayerInventory(ip, -1000, -1000);
     }
 
     public Util.DimensionalCoordSide getRenamingTarget() {

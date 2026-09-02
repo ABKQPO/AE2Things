@@ -4,7 +4,6 @@ import java.awt.Rectangle;
 import java.util.Collections;
 import java.util.List;
 
-import appeng.client.gui.widgets.MEGuiTextField;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.resources.I18n;
@@ -22,6 +21,7 @@ import com.asdflj.ae2thing.util.NameConst;
 import com.glodblock.github.util.Util;
 
 import appeng.client.gui.AEBaseGui;
+import appeng.client.gui.widgets.MEGuiTextField;
 import appeng.container.slot.SlotFake;
 import appeng.core.AEConfig;
 import appeng.core.localization.GuiText;
@@ -179,15 +179,27 @@ public class GuiFluidPacketEncoder extends AEBaseGui implements INEIGuiHandler {
     }
 
     @Override
+    protected void mouseClicked(final int xCoord, final int yCoord, final int button) {
+        final int localX = xCoord - this.guiLeft;
+        final int localY = yCoord - this.guiTop;
+        if (this.level.isMouseIn(localX, localY)) {
+            this.level.mouseClicked(localX, localY, button);
+        } else if (this.level.isMouseIn(xCoord, yCoord)) {
+            this.level.mouseClicked(xCoord, yCoord, button);
+        } else {
+            this.level.setFocused(false);
+        }
+        super.mouseClicked(xCoord, yCoord, button);
+    }
+
+    @Override
     protected void keyTyped(final char character, final int key) {
         if (!this.checkHotbarKeys(key)) {
-            if (key == Keyboard.KEY_RETURN) {
+            if (key == Keyboard.KEY_RETURN || key == Keyboard.KEY_NUMPADENTER) {
                 addQty(0);
-            } else {
-                this.level.textboxKeyTyped(character, key);
+            } else if (!this.level.textboxKeyTyped(character, key)) {
                 super.keyTyped(character, key);
             }
-
         }
     }
 

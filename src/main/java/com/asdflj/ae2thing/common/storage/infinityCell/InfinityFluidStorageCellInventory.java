@@ -18,6 +18,7 @@ import com.asdflj.ae2thing.common.item.BaseCellItem;
 import com.asdflj.ae2thing.common.storage.DataStorage;
 import com.asdflj.ae2thing.common.storage.ITFluidCellInventory;
 
+import appeng.api.AEApi;
 import appeng.api.config.Actionable;
 import appeng.api.config.FuzzyMode;
 import appeng.api.exceptions.AppEngException;
@@ -165,12 +166,14 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
 
     protected void loadCellFluids() {
         if (this.cellFluids == null) {
-            this.cellFluids = this.storage.getFluids();
+            this.cellFluids = this.storage == null ? AEApi.instance()
+                .storage()
+                .createFluidList() : this.storage.getFluids();
             for (IAEFluidStack is : this.cellFluids) {
                 if (is.getStackSize() <= 0) is.reset();
             }
         }
-        if (!this.getUUID()
+        if (this.storage != null && !this.getUUID()
             .equals(this.storage.getUUID())) {
             data.setString(Constants.DISKUUID, this.storage.getUUID());
         }

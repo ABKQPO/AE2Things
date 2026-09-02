@@ -50,13 +50,13 @@ import appeng.api.storage.ITerminalHost;
 import appeng.api.util.IConfigurableObject;
 import appeng.api.util.IInterfaceViewable;
 import appeng.container.implementations.ContainerInterfaceTerminal;
-import appeng.container.sync.SyncRegistrar;
-import appeng.container.sync.handlers.BooleanSyncHandler;
-import appeng.container.sync.handlers.IntSyncHandler;
 import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotPatternOutputs;
 import appeng.container.slot.SlotPatternTerm;
+import appeng.container.sync.SyncRegistrar;
+import appeng.container.sync.handlers.BooleanSyncHandler;
+import appeng.container.sync.handlers.IntSyncHandler;
 import appeng.core.AELog;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketInterfaceTerminalUpdate;
@@ -103,34 +103,41 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     public ContainerWirelessDualInterfaceTerminal(InventoryPlayer ip, ITerminalHost monitorable) {
         super(ip, monitorable);
         final SyncRegistrar sync = this.syncRegistrar();
-        this.craftingModeSync = sync.booleanS2C("craftingMode").onClientChange((o, n) -> {
-            this.craftingMode = n;
-            this.onUpdate("craftingMode", o, n);
-        });
-        this.substituteSync = sync.booleanS2C("substitute").onClientChange((o, n) -> {
-            this.substitute = n;
-            this.onUpdate("substitute", o, n);
-        });
-        this.combineSync = sync.booleanS2C("combine").onClientChange((o, n) -> {
-            this.combine = n;
-            this.onUpdate("combine", o, n);
-        });
-        this.beSubstituteSync = sync.booleanS2C("beSubstitute").onClientChange((o, n) -> {
-            this.beSubstitute = n;
-            this.onUpdate("beSubstitute", o, n);
-        });
-        this.invertedSync = sync.booleanS2C("inverted").onClientChange((o, n) -> {
-            this.inverted = n;
-            this.onUpdate("inverted", o, n);
-        });
-        this.activePageSync = sync.intS2C("activePage").onClientChange((o, n) -> {
-            this.activePage = n;
-            this.onUpdate("activePage", o, n);
-        });
-        this.prioritizeSync = sync.booleanS2C("prioritize").onClientChange((o, n) -> {
-            this.prioritize = n;
-            this.onUpdate("prioritize", o, n);
-        });
+        this.craftingModeSync = sync.booleanS2C("craftingMode")
+            .onClientChange((o, n) -> {
+                this.craftingMode = n;
+                this.onUpdate("craftingMode", o, n);
+            });
+        this.substituteSync = sync.booleanS2C("substitute")
+            .onClientChange((o, n) -> {
+                this.substitute = n;
+                this.onUpdate("substitute", o, n);
+            });
+        this.combineSync = sync.booleanS2C("combine")
+            .onClientChange((o, n) -> {
+                this.combine = n;
+                this.onUpdate("combine", o, n);
+            });
+        this.beSubstituteSync = sync.booleanS2C("beSubstitute")
+            .onClientChange((o, n) -> {
+                this.beSubstitute = n;
+                this.onUpdate("beSubstitute", o, n);
+            });
+        this.invertedSync = sync.booleanS2C("inverted")
+            .onClientChange((o, n) -> {
+                this.inverted = n;
+                this.onUpdate("inverted", o, n);
+            });
+        this.activePageSync = sync.intS2C("activePage")
+            .onClientChange((o, n) -> {
+                this.activePage = n;
+                this.onUpdate("activePage", o, n);
+            });
+        this.prioritizeSync = sync.booleanS2C("prioritize")
+            .onClientChange((o, n) -> {
+                this.prioritize = n;
+                this.onUpdate("prioritize", o, n);
+            });
         this.patternPanel = new PatternContainer(ip, monitorable, this);
         this.delegateContainer = new ContainerInterfaceTerminal(ip, (IInterfaceTerminal) monitorable);
         this.it = (IPatternTerminal) monitorable;

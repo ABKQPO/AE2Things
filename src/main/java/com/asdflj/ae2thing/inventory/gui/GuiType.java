@@ -79,7 +79,7 @@ public enum GuiType {
 
         @Override
         public Object createServerGui(EntityPlayer player, World world, int x, int y, int z, ForgeDirection face) {
-            return new ContainerTerminalMenu();
+            return new ContainerTerminalMenu(player.inventory);
         }
 
         @Override
