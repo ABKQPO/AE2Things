@@ -7,11 +7,12 @@ import java.util.List;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.IIcon;
 
 import com.asdflj.ae2thing.api.Constants;
+import com.asdflj.ae2thing.client.textures.BlockTexture;
 import com.asdflj.ae2thing.inventory.IPatternTerminal;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
-import com.glodblock.github.client.textures.FCPartsTexture;
 
 import appeng.api.AEApi;
 import appeng.api.implementations.ICraftingPatternItem;
@@ -42,10 +43,6 @@ public class PartInfusionPatternTerminal extends THPart implements IPatternTermi
                     .isSameAs(itemstack);
         }
     }
-
-    private static final FCPartsTexture FRONT_BRIGHT_ICON = FCPartsTexture.PartTerminalBroad;
-    private static final FCPartsTexture FRONT_DARK_ICON = FCPartsTexture.PartTerminalBroad;
-    private static final FCPartsTexture FRONT_COLORED_ICON = FCPartsTexture.PartTerminalBroad;
 
     protected final AppEngInternalInventory pattern = new AppEngInternalInventory(this, 2);
     protected AppEngInternalInventory crafting = new BiggerAppEngInventory(this, 1);
@@ -132,13 +129,13 @@ public class PartInfusionPatternTerminal extends THPart implements IPatternTermi
     }
 
     @Override
-    public FCPartsTexture getFrontBright() {
-        return FRONT_BRIGHT_ICON;
+    public IIcon getFrontBright() {
+        return BlockTexture.PatternTerminal_Bright.getIcon();
     }
 
     @Override
-    public FCPartsTexture getFrontColored() {
-        return FRONT_COLORED_ICON;
+    public IIcon getFrontColored() {
+        return BlockTexture.PatternTerminal_Medium.getIcon();
     }
 
     @Override
@@ -183,8 +180,8 @@ public class PartInfusionPatternTerminal extends THPart implements IPatternTermi
     }
 
     @Override
-    public FCPartsTexture getFrontDark() {
-        return FRONT_DARK_ICON;
+    public IIcon getFrontDark() {
+        return BlockTexture.PatternTerminal_Dark.getIcon();
     }
 
     @Override

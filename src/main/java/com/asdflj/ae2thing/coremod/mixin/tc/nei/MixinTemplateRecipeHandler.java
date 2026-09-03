@@ -1,6 +1,6 @@
 package com.asdflj.ae2thing.coremod.mixin.tc.nei;
 
-import static com.asdflj.ae2thing.coremod.mixin.tc.nei.Util.itemPhial2ItemAspect;
+import static com.asdflj.ae2thing.coremod.nei.AspectRecipeIndexUtil.itemPhial2ItemAspect;
 
 import net.minecraft.item.ItemStack;
 

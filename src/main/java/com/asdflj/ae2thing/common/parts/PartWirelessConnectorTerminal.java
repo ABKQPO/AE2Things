@@ -1,19 +1,16 @@
 package com.asdflj.ae2thing.common.parts;
 
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.IIcon;
 
+import com.asdflj.ae2thing.client.textures.BlockTexture;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.inventory.item.INetworkTerminal;
-import com.glodblock.github.client.textures.FCPartsTexture;
 
 import appeng.api.networking.IGrid;
 import appeng.me.GridAccessException;
 
 public class PartWirelessConnectorTerminal extends THPart implements INetworkTerminal {
-
-    private static final FCPartsTexture FRONT_BRIGHT_ICON = FCPartsTexture.PartTerminalBroad;
-    private static final FCPartsTexture FRONT_DARK_ICON = FCPartsTexture.PartTerminalBroad;
-    private static final FCPartsTexture FRONT_COLORED_ICON = FCPartsTexture.PartTerminalBroad;
 
     public PartWirelessConnectorTerminal(ItemStack is) {
         super(is, true);
@@ -25,18 +22,18 @@ public class PartWirelessConnectorTerminal extends THPart implements INetworkTer
     }
 
     @Override
-    public FCPartsTexture getFrontBright() {
-        return FRONT_BRIGHT_ICON;
+    public IIcon getFrontBright() {
+        return BlockTexture.WirelessConnectorTerminal_Bright.getIcon();
     }
 
     @Override
-    public FCPartsTexture getFrontColored() {
-        return FRONT_COLORED_ICON;
+    public IIcon getFrontColored() {
+        return BlockTexture.WirelessConnectorTerminal_Medium.getIcon();
     }
 
     @Override
-    public FCPartsTexture getFrontDark() {
-        return FRONT_DARK_ICON;
+    public IIcon getFrontDark() {
+        return BlockTexture.WirelessConnectorTerminal_Dark.getIcon();
     }
 
     @Override

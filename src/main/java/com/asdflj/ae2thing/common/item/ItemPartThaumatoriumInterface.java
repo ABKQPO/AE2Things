@@ -43,7 +43,9 @@ public class ItemPartThaumatoriumInterface extends BaseItem implements IPartItem
     }
 
     @Override
-    public void registerIcons(IIconRegister _iconRegister) {}
+    public void registerIcons(IIconRegister iconRegister) {
+        this.itemIcon = iconRegister.registerIcon(AE2Thing.MODID + ":" + NameConst.ITEM_PART_THAUMATORIUM_INTERFACE);
+    }
 
     @Override
     public ItemPartThaumatoriumInterface register() {

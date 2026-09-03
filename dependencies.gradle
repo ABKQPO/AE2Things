@@ -33,7 +33,14 @@ dependencies {
     compileOnlyApi("thaumcraft:Thaumcraft:1.7.10-4.2.3.5:dev")
     compileOnlyApi("com.github.GTNewHorizons:ThaumicEnergistics:1.7.53-GTNH:dev") { transitive = false }
     compileOnlyApi("com.github.GTNewHorizons:thaumicinsurgence:0.4.1:dev") { transitive = false }
+    compileOnlyApi(rfg.deobf("curse.maven:thaumcraft-nei-plugin-225095:2241913")) { transitive = false } // Deprecated, use Aspect Recipe Index
     compileOnlyApi("com.github.GTNewHorizons:AspectRecipeIndex:1.1.1:dev")
+
+    runtimeOnlyNonPublishable("thaumcraft:Thaumcraft:1.7.10-4.2.3.5:dev")
+    runtimeOnlyNonPublishable("com.github.GTNewHorizons:ThaumicEnergistics:1.7.53-GTNH:dev")
+    runtimeOnlyNonPublishable("com.github.GTNewHorizons:thaumicinsurgence:0.4.1:dev")
+    runtimeOnlyNonPublishable(rfg.deobf("curse.maven:thaumcraft-nei-plugin-225095:2241913"))
+    runtimeOnlyNonPublishable("com.github.GTNewHorizons:AspectRecipeIndex:1.1.1:dev")
 
     compileOnlyApi("com.github.GTNewHorizons:GT5-Unofficial:5.09.52.594:dev") {
         exclude group: "com.github.GTNewHorizons", module: "Applied-Energistics-2-Unofficial"

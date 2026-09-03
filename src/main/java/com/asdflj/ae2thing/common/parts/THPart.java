@@ -17,10 +17,10 @@ import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.common.util.ForgeDirection;
 
+import com.asdflj.ae2thing.client.textures.BlockTexture;
 import com.asdflj.ae2thing.inventory.InventoryHandler;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.util.BlockPos;
-import com.glodblock.github.client.textures.FCPartsTexture;
 import com.glodblock.github.util.Util;
 
 import appeng.api.config.SecurityPermissions;
@@ -363,31 +363,19 @@ public abstract class THPart extends AEBasePart implements IPowerChannelState, I
             sideTexture,
             sideTexture,
             backTexture,
-            FCPartsTexture.PartTerminalBroad.getIcon(),
+            BlockTexture.TerminalBroad.getIcon(),
             sideTexture,
             sideTexture);
         rh.renderInventoryBox(renderer);
 
         rh.setInvColor(this.getColor().whiteVariant);
-        rh.renderInventoryFace(
-            this.getFrontBright()
-                .getIcon(),
-            ForgeDirection.SOUTH,
-            renderer);
+        rh.renderInventoryFace(this.getFrontBright(), ForgeDirection.SOUTH, renderer);
 
         rh.setInvColor(this.getColor().mediumVariant);
-        rh.renderInventoryFace(
-            this.getFrontDark()
-                .getIcon(),
-            ForgeDirection.SOUTH,
-            renderer);
+        rh.renderInventoryFace(this.getFrontDark(), ForgeDirection.SOUTH, renderer);
 
         rh.setInvColor(this.getColor().blackVariant);
-        rh.renderInventoryFace(
-            this.getFrontColored()
-                .getIcon(),
-            ForgeDirection.SOUTH,
-            renderer);
+        rh.renderInventoryFace(this.getFrontColored(), ForgeDirection.SOUTH, renderer);
 
         rh.setBounds(4, 4, 13, 12, 12, 14);
         rh.renderInventoryBox(renderer);
@@ -406,7 +394,7 @@ public abstract class THPart extends AEBasePart implements IPowerChannelState, I
             sideTexture,
             sideTexture,
             backTexture,
-            FCPartsTexture.PartTerminalBroad.getIcon(),
+            BlockTexture.TerminalBroad.getIcon(),
             sideTexture,
             sideTexture);
 
@@ -422,34 +410,13 @@ public abstract class THPart extends AEBasePart implements IPowerChannelState, I
             .getSpin();
 
         Tessellator.instance.setColorOpaque_I(this.getColor().whiteVariant);
-        rh.renderFace(
-            x,
-            y,
-            z,
-            this.getFrontBright()
-                .getIcon(),
-            ForgeDirection.SOUTH,
-            renderer);
+        rh.renderFace(x, y, z, this.getFrontBright(), ForgeDirection.SOUTH, renderer);
 
         Tessellator.instance.setColorOpaque_I(this.getColor().mediumVariant);
-        rh.renderFace(
-            x,
-            y,
-            z,
-            this.getFrontDark()
-                .getIcon(),
-            ForgeDirection.SOUTH,
-            renderer);
+        rh.renderFace(x, y, z, this.getFrontDark(), ForgeDirection.SOUTH, renderer);
 
         Tessellator.instance.setColorOpaque_I(this.getColor().blackVariant);
-        rh.renderFace(
-            x,
-            y,
-            z,
-            this.getFrontColored()
-                .getIcon(),
-            ForgeDirection.SOUTH,
-            renderer);
+        rh.renderFace(x, y, z, this.getFrontColored(), ForgeDirection.SOUTH, renderer);
 
         renderer.uvRotateBottom = renderer.uvRotateEast = renderer.uvRotateNorth = renderer.uvRotateSouth = renderer.uvRotateTop = renderer.uvRotateWest = 0;
 
@@ -459,8 +426,7 @@ public abstract class THPart extends AEBasePart implements IPowerChannelState, I
             sideStatusTexture,
             sideStatusTexture,
             backTexture,
-            this.getItemStack()
-                .getIconIndex(),
+            BlockTexture.TerminalBroad.getIcon(),
             sideStatusTexture,
             sideStatusTexture);
 
@@ -497,21 +463,21 @@ public abstract class THPart extends AEBasePart implements IPowerChannelState, I
      * <p>
      * The final texture can overlap any of the texture in no particular order.
      */
-    public abstract FCPartsTexture getFrontBright();
+    public abstract IIcon getFrontBright();
 
     /**
      * The texture used for the colored (medium) front layer.
      * <p>
      * The final texture can overlap any of the texture in no particular order.
      */
-    public abstract FCPartsTexture getFrontColored();
+    public abstract IIcon getFrontColored();
 
     /**
      * The texture used for the dark front layer.
      * <p>
      * The final texture can overlap any of the texture in no particular order.
      */
-    public abstract FCPartsTexture getFrontDark();
+    public abstract IIcon getFrontDark();
 
     /**
      * Should the part emit light. This actually only affects the light level, light source use a level of 15 and

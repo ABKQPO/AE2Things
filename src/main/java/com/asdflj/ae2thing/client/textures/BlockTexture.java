@@ -16,6 +16,13 @@ import cpw.mods.fml.relauncher.SideOnly;
 
 public enum BlockTexture {
 
+    PatternTerminal_Bright("pattern_terminal_bright"),
+    PatternTerminal_Medium("pattern_terminal_medium"),
+    PatternTerminal_Dark("pattern_terminal_dark"),
+    WirelessConnectorTerminal_Bright("wireless_connector_terminal_bright"),
+    WirelessConnectorTerminal_Medium("wireless_connector_terminal_medium"),
+    WirelessConnectorTerminal_Dark("wireless_connector_terminal_dark"),
+    TerminalBroad("terminal_broad"),
     ExIOPort_Side("ex_io_portSide"),
     ExIOPort_Side_Off("ex_io_port_offSide"),
     ExIOPort_Bottom("ex_io_portBottom"),
