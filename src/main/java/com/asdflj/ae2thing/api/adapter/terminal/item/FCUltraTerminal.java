@@ -68,6 +68,7 @@ public class FCUltraTerminal implements IItemTerminal {
     @Override
     public List<TerminalItems> getBaublesInvTerminals(IInventory handler) {
         List<TerminalItems> terminal = new ArrayList<>();
+        if (handler == null) return terminal;
         for (int i = 0; i < handler.getSizeInventory(); ++i) {
             ItemStack item = handler.getStackInSlot(i);
             terminal.addAll(getTerminalItems(item, i));

@@ -26,6 +26,11 @@ public class FCBaseItemTerminal implements IItemTerminal {
     }
 
     @Override
+    public boolean supportBaubles() {
+        return true;
+    }
+
+    @Override
     public void openCraftAmount() {
         NetworkHandler.instance.sendToServer(new PacketInventoryAction(InventoryAction.AUTO_CRAFT, 0, 0L));
     }

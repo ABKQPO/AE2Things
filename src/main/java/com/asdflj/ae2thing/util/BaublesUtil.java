@@ -12,7 +12,6 @@ import baubles.api.BaublesApi;
 import baubles.common.lib.PlayerHandler;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 
 public class BaublesUtil {
 
@@ -20,15 +19,12 @@ public class BaublesUtil {
         return BaublesApi.getBaubles(player);
     }
 
-    @SideOnly(Side.SERVER)
-    public static void syncBaubles(EntityPlayer player) {
+    public static void syncBaubles(EntityPlayer player, int slot) {
         Side side = FMLCommonHandler.instance()
             .getEffectiveSide();
         if (side == Side.SERVER) {
-            for (int a = 0; a < 4; a++) {
-                PlayerHandler.getPlayerBaubles(player)
-                    .syncSlotToClients(a);
-            }
+            PlayerHandler.getPlayerBaubles(player)
+                .syncSlotToClients(slot);
         }
     }
 
@@ -40,5 +36,9 @@ public class BaublesUtil {
             return slotIndex == slot;
         }
         return false;
+    }
+
+    public static int toAESlotIndex(int baublesSlot) {
+        return baublesSlot + Platform.baublesSlotsOffset;
     }
 }

@@ -26,8 +26,7 @@ public class BRLoader implements Runnable {
     public void run() {
         IRecipeHandler handler = (container, inputs, outputs, identifier, adapter, message) -> {
             if (container instanceof ContainerPatternTerm c) {
-                c.getPatternTerminal()
-                    .setCraftingRecipe(false);
+                c.setCraftingMode(false);
                 IInventory inputSlot = adapter.getInventoryByName(c, adapter.getCraftingInvName());
                 IInventory outputSlot = adapter.getInventoryByName(c, adapter.getOutputInvName());
                 if (inputSlot == null || outputSlot == null) {
