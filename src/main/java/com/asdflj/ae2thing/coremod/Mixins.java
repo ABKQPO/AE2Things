@@ -54,6 +54,10 @@ public enum Mixins implements IMixins {
 
     WIRELESS_CRAFTING_TERMINAL(new MixinBuilder().addCommonMixins("wct.MixinRandomUtils")
         .addRequiredMod(Mods.WIRELESS_CRAFTING_TERMINAL)
+        .setPhase(Phase.LATE)),
+
+    NOT_ENOUGH_ENERGISTICS(new MixinBuilder().addCommonMixins("nee.MixinBotaniaRecipeProcessor")
+        .addRequiredMod(Mods.NOT_ENOUGH_ENERGISTICS)
         .setPhase(Phase.LATE));
 
     private final MixinBuilder builder;
