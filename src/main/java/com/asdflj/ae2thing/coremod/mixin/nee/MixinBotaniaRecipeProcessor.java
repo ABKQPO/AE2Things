@@ -17,7 +17,10 @@ import com.github.vfyjxf.nee.processor.RecipeProcessor;
 /**
  * inspired by <a href=
  * "https://github.com/GTNewHorizons/GT-New-Horizons-Modpack/issues/26601#issuecomment-5582181225">GTNewHorizons/GT-New-Horizons-Modpack#26601</a>
+ * <p>
+ * TODO: need to remove in future
  */
+@Deprecated
 @Mixin(value = BotaniaRecipeProcessor.class, remap = false)
 public class MixinBotaniaRecipeProcessor {
 
