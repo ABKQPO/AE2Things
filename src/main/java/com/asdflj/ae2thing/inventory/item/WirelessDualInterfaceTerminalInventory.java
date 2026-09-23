@@ -37,8 +37,8 @@ import appeng.tile.inventory.AppEngInternalInventory;
 import appeng.tile.inventory.IAEAppEngInventory;
 import appeng.tile.inventory.InvOperation;
 import appeng.util.ConfigManager;
-import appeng.util.MonitorableTypeFilter;
 import appeng.util.Platform;
+import appeng.util.TerminalSettings;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal implements IGridHost, IPatternTerminal,
@@ -57,7 +57,7 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal imp
     protected boolean beSubstitute = false;
     protected int activePage = 0;
     private Util.DimensionalCoordSide tile;
-    private final MonitorableTypeFilter typeFilters = new MonitorableTypeFilter();
+    private final TerminalSettings terminalSettings = new TerminalSettings();
 
     public WirelessDualInterfaceTerminalInventory(WirelessObject obj) {
         super(obj);
@@ -104,7 +104,7 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal imp
             NBTTagCompound tileMsg = (NBTTagCompound) data.getTag("clickedInterface");
             this.tile = Util.DimensionalCoordSide.readFromNBT(tileMsg);
         }
-        this.typeFilters.readFromNBT(data);
+        this.terminalSettings.readFromNBT(data);
     }
 
     @Override
@@ -393,7 +393,7 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal imp
             tile.writeToNBT(tileMsg);
         }
         data.setTag("clickedInterface", tileMsg);
-        this.typeFilters.writeToNBT(data);
+        this.terminalSettings.writeToNBT(data);
     }
 
     @Override
@@ -414,7 +414,8 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal imp
 
     @Override
     public Reference2BooleanMap<IAEStackType<?>> getTypeFilter(EntityPlayer player) {
-        return this.typeFilters.getFilters(player);
+        return this.terminalSettings.getFilters(player)
+            .getFiltersMap();
     }
 
     @Override

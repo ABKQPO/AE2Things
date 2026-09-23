@@ -37,8 +37,8 @@ import appeng.container.interfaces.IInventorySlotAware;
 import appeng.tile.inventory.AppEngInternalInventory;
 import appeng.util.ConfigManager;
 import appeng.util.IterationCounter;
-import appeng.util.MonitorableTypeFilter;
 import appeng.util.Platform;
+import appeng.util.TerminalSettings;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack> implements ITerminalHost,
@@ -50,7 +50,7 @@ public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack> im
     private final int inventorySlot;
     protected AppEngInternalInventory crafting;
     protected EntityPlayer player;
-    private final MonitorableTypeFilter typeFilters = new MonitorableTypeFilter();
+    private final TerminalSettings terminalSettings = new TerminalSettings();
     private IItemList<IAEItemStack> lastExternalSnapshot;
     private int lastExternalRefreshTick = Integer.MIN_VALUE;
 
@@ -61,7 +61,7 @@ public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack> im
         this.inventorySlot = slot;
         this.player = player;
         this.crafting = new ItemBiggerAppEngInventory(is, Constants.CRAFTING, 9, player, slot);
-        this.typeFilters.readFromNBT(Platform.openNbtData(this.target));
+        this.terminalSettings.readFromNBT(Platform.openNbtData(this.target));
     }
 
     @Override
@@ -158,12 +158,13 @@ public class BackpackTerminalInventory extends MEMonitorHandler<IAEItemStack> im
 
     @Override
     public Reference2BooleanMap<IAEStackType<?>> getTypeFilter(EntityPlayer player) {
-        return this.typeFilters.getFilters(player);
+        return this.terminalSettings.getFilters(player)
+            .getFiltersMap();
     }
 
     @Override
     public void saveTypeFilter() {
-        this.typeFilters.writeToNBT(this.target);
+        this.terminalSettings.writeToNBT(this.target);
         this.saveSettings();
     }
 

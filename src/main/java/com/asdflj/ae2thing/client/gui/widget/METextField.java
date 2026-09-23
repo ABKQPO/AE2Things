@@ -8,7 +8,7 @@ import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.Info;
 
 import appeng.client.gui.widgets.MEGuiTextField;
-import appeng.core.localization.GuiColors;
+import appeng.core.localization.ColorUtils;
 
 public class METextField extends MEGuiTextField implements IClickable {
 
@@ -63,7 +63,7 @@ public class METextField extends MEGuiTextField implements IClickable {
             this.y + 1,
             this.x - 2 + this.w,
             this.y + 9 + 1,
-            GuiColors.SearchboxFocused.getColor());
+            ColorUtils.searchboxFocused.getColor());
     }
 
     @Override

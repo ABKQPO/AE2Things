@@ -13,12 +13,11 @@ import com.asdflj.ae2thing.inventory.IPatternTerminal;
 import com.asdflj.ae2thing.nei.NEIUtils;
 import com.asdflj.ae2thing.nei.object.OrderStack;
 
-import appeng.api.storage.StorageName;
 import appeng.api.storage.data.IAEStack;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.item.AEItemStack;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 public class BRLoader implements Runnable {
 
@@ -30,29 +29,27 @@ public class BRLoader implements Runnable {
                 IInventory inputSlot = adapter.getInventoryByName(c, adapter.getCraftingInvName());
                 IInventory outputSlot = adapter.getInventoryByName(c, adapter.getOutputInvName());
                 if (inputSlot == null || outputSlot == null) {
-                    Int2ObjectOpenHashMap<IAEStack<?>> inputStacks = new Int2ObjectOpenHashMap<>();
-                    Int2ObjectOpenHashMap<IAEStack<?>> outputStacks = new Int2ObjectOpenHashMap<>();
-                    int inputSize = c.getPatternInputsWidth() * c.getPatternInputsHeigh() * c.getPatternInputPages();
-                    int outputSize = c.getPatternOutputsWidth() * c.getPatternOutputsHeigh()
-                        * c.getPatternOutputPages();
-                    for (int i = 0; i < inputSize; i++) {
-                        inputStacks.put(i, null);
+                    final IAEStackInventory inputsInv = c.inputsSync.get();
+                    final IAEStackInventory outputsInv = c.outputsSync.get();
+                    for (int i = 0; i < inputsInv.getSizeInventory(); i++) {
+                        inputsInv.putAEStackInSlot(i, null);
                     }
-                    for (int i = 0; i < outputSize; i++) {
-                        outputStacks.put(i, null);
+                    for (int i = 0; i < outputsInv.getSizeInventory(); i++) {
+                        outputsInv.putAEStackInSlot(i, null);
                     }
                     for (OrderStack<?> stack : NEIUtils.clearNull(inputs)) {
                         if (stack.getStack() instanceof ItemStack item) {
-                            inputStacks.put(stack.getIndex(), AEItemStack.create(item.copy()));
+                            putAEStack(inputsInv, stack.getIndex(), AEItemStack.create(item.copy()));
                         }
                     }
                     for (OrderStack<?> stack : NEIUtils.clearNull(outputs)) {
                         if (stack.getStack() instanceof ItemStack item) {
-                            outputStacks.put(stack.getIndex(), AEItemStack.create(item.copy()));
+                            putAEStack(outputsInv, stack.getIndex(), AEItemStack.create(item.copy()));
                         }
                     }
-                    c.receiveSlotStacks(StorageName.CRAFTING_INPUT, inputStacks);
-                    c.receiveSlotStacks(StorageName.CRAFTING_OUTPUT, outputStacks);
+                    // let the pattern terminal sync handlers push the new slots to the client
+                    c.inputsSync.markDirty();
+                    c.outputsSync.markDirty();
                     c.getPatternTerminal()
                         .saveChanges();
                     return;
@@ -108,5 +105,12 @@ public class BRLoader implements Runnable {
                 }
             });
 
+    }
+
+    private static void putAEStack(final IAEStackInventory inventory, final int index, final IAEStack<?> stack) {
+        if (index < 0 || index >= inventory.getSizeInventory()) {
+            return;
+        }
+        inventory.putAEStackInSlot(index, stack);
     }
 }

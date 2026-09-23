@@ -12,6 +12,7 @@ import com.asdflj.ae2thing.util.NameConst;
 
 import appeng.block.AEBaseItemBlock;
 import appeng.block.storage.BlockIOPort;
+import appeng.client.render.BlockRenderInfo;
 import appeng.core.features.ActivityState;
 import appeng.core.features.BlockStackSrc;
 import appeng.tile.AEBaseTile;
@@ -20,6 +21,9 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 public class BlockExIOPort extends BlockIOPort implements IRegister<BlockExIOPort> {
+
+    @SideOnly(Side.CLIENT)
+    private BlockRenderInfo exIOPortRenderInfo;
 
     public BlockExIOPort() {
         super();
@@ -54,8 +58,11 @@ public class BlockExIOPort extends BlockIOPort implements IRegister<BlockExIOPor
 
     @Override
     @SideOnly(Side.CLIENT)
-    protected RenderBlockExIOPort getRenderer() {
-        return new RenderBlockExIOPort();
+    public BlockRenderInfo getRendererInstance() {
+        if (this.exIOPortRenderInfo == null) {
+            this.exIOPortRenderInfo = new BlockRenderInfo(new RenderBlockExIOPort());
+        }
+        return this.exIOPortRenderInfo;
     }
 
     public ItemStack stack() {

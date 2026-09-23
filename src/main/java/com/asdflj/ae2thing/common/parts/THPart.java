@@ -52,8 +52,8 @@ import appeng.tile.inventory.IAEAppEngInventory;
 import appeng.tile.inventory.InvOperation;
 import appeng.util.ConfigManager;
 import appeng.util.IConfigManagerHost;
-import appeng.util.MonitorableTypeFilter;
 import appeng.util.Platform;
+import appeng.util.TerminalSettings;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
@@ -72,7 +72,7 @@ public abstract class THPart extends AEBasePart implements IPowerChannelState, I
 
     private final IConfigManager cm = new ConfigManager(this);
     private final AppEngInternalInventory viewCell = new AppEngInternalInventory(this, 5);
-    private final MonitorableTypeFilter typeFilters = new MonitorableTypeFilter();
+    private final TerminalSettings terminalSettings = new TerminalSettings();
 
     public THPart(final ItemStack is) {
         this(is, false);
@@ -147,7 +147,7 @@ public abstract class THPart extends AEBasePart implements IPowerChannelState, I
         this.spin = data.getByte("spin");
         this.cm.readFromNBT(data);
         this.viewCell.readFromNBT(data, "viewCell");
-        this.typeFilters.readFromNBT(data);
+        this.terminalSettings.readFromNBT(data);
     }
 
     @Override
@@ -157,12 +157,13 @@ public abstract class THPart extends AEBasePart implements IPowerChannelState, I
         data.setByte("spin", this.getSpin());
         this.cm.writeToNBT(data);
         this.viewCell.writeToNBT(data, "viewCell");
-        this.typeFilters.writeToNBT(data);
+        this.terminalSettings.writeToNBT(data);
     }
 
     @Override
     public Reference2BooleanMap<IAEStackType<?>> getTypeFilter(EntityPlayer player) {
-        return this.typeFilters.getFilters(player);
+        return this.terminalSettings.getFilters(player)
+            .getFiltersMap();
     }
 
     @Override
