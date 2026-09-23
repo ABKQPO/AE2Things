@@ -14,6 +14,7 @@ import com.asdflj.ae2thing.network.CPacketTypeFilter;
 import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEStackType;
 import appeng.client.gui.widgets.TypeToggleButton;
+import appeng.util.AEStackTypeFilter;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 /**
@@ -30,6 +31,14 @@ public class TypeFilterWidget {
 
     public TypeFilterWidget(int windowId) {
         this.windowId = windowId;
+    }
+
+    /**
+     * @return a fresh filter map with every registered {@link IAEStackType} enabled, used until the server sends the
+     *         authoritative per-player filter.
+     */
+    public static Reference2BooleanMap<IAEStackType<?>> createDefaultFilters() {
+        return new AEStackTypeFilter().getFiltersMap();
     }
 
     public void init(List<GuiButton> buttonList, int x, int yStart) {

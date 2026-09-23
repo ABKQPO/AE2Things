@@ -70,7 +70,6 @@ import appeng.integration.IntegrationRegistry;
 import appeng.integration.IntegrationType;
 import appeng.integration.modules.NEI;
 import appeng.util.IConfigManagerHost;
-import appeng.util.MonitorableTypeFilter;
 import appeng.util.Platform;
 import codechicken.nei.util.TextHistory;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
@@ -111,7 +110,7 @@ public abstract class GuiMonitor extends BaseMEGui implements IConfigManagerHost
         this.setScrollBar(scrollbar);
         this.container = (ContainerMonitor) container;
         this.typeFilter = new TypeFilterWidget(container.windowId);
-        this.typeFilter.setFilters(MonitorableTypeFilter.createDefaultMap());
+        this.typeFilter.setFilters(TypeFilterWidget.createDefaultFilters());
         this.repo = new AdvItemRepo(getScrollBar(), this);
         this.repo.setPowered(true);
     }

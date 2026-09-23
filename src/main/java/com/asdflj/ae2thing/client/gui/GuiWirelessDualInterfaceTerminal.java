@@ -32,6 +32,7 @@ import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 
 import appeng.api.config.Settings;
+import appeng.api.parts.IPatternTerminal;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
@@ -43,7 +44,6 @@ import appeng.client.gui.slots.VirtualMESlot;
 import appeng.client.gui.widgets.GuiTabButton;
 import appeng.client.gui.widgets.IDropToFillTextField;
 import appeng.client.gui.widgets.ISortSource;
-import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotPatternTerm;
@@ -51,7 +51,6 @@ import appeng.container.slot.SlotRestrictedInput;
 import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.GuiText;
 import appeng.util.IConfigManagerHost;
-import appeng.util.MonitorableTypeFilter;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless implements IWidgetGui, IGuiDrawSlot,
@@ -67,14 +66,14 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private boolean dragging = false;
     private final ItemPanel itemPanel;
     private final TypeFilterWidget typeFilter;
-    private IAEItemStack blankPatternView = ContainerPatternTerm.createBlankPattern()
+    private IAEItemStack blankPatternView = IPatternTerminal.createBlankPattern()
         .setStackSize(0);
 
     public GuiWirelessDualInterfaceTerminal(InventoryPlayer inventoryPlayer, ITerminalHost te) {
         super(inventoryPlayer, te);
         container = (ContainerWirelessDualInterfaceTerminal) this.inventorySlots;
         this.typeFilter = new TypeFilterWidget(this.inventorySlots.windowId);
-        this.typeFilter.setFilters(MonitorableTypeFilter.createDefaultMap());
+        this.typeFilter.setFilters(TypeFilterWidget.createDefaultFilters());
         this.itemPanel = new ItemPanel(this, container, this.configSrc, this);
         this.panels.add(new PatternPanel(this, container));
         this.panels.add(this.itemPanel);

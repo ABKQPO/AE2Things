@@ -67,7 +67,7 @@ import appeng.core.AELog;
 import appeng.core.AppEng;
 import appeng.core.CommonHelper;
 import appeng.core.localization.ButtonToolTips;
-import appeng.core.localization.GuiColors;
+import appeng.core.localization.ColorUtils;
 import appeng.core.localization.GuiText;
 import appeng.core.localization.PlayerMessages;
 import appeng.core.sync.network.NetworkHandler;
@@ -648,10 +648,10 @@ public class GuiBaseInterfaceWireless extends BaseMEGui implements IDropToFillTe
                     if (!tooltip) {
                         if (entry.slotIsBroken(slotIdx)) {
                             GL11.glTranslatef(0.0f, 0.0f, SLOT_Z - ITEM_STACK_OVERLAY_Z);
-                            drawRect(0, 0, 16, 16, GuiColors.ItemSlotOverlayInvalid.getColor());
+                            drawRect(0, 0, 16, 16, ColorUtils.itemSlotOverlayInvalid.getColor());
                         } else if (entry.filteredRecipes[slotIdx]) {
                             GL11.glTranslatef(0.0f, 0.0f, ITEM_STACK_OVERLAY_Z);
-                            drawRect(0, 0, 16, 16, GuiColors.ItemSlotOverlayUnpowered.getColor());
+                            drawRect(0, 0, 16, 16, ColorUtils.itemSlotOverlayUnpowered.getColor());
                         }
                     } else {
                         tooltipStack = stack;
@@ -660,7 +660,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui implements IDropToFillTe
                 } else if (entry.filteredRecipes[slotIdx]) {
                     GL11.glPushMatrix();
                     GL11.glTranslatef(colLeft, viewY + rowYTop + 1, ITEM_STACK_OVERLAY_Z);
-                    drawRect(0, 0, 16, 16, GuiColors.ItemSlotOverlayUnpowered.getColor());
+                    drawRect(0, 0, 16, 16, ColorUtils.itemSlotOverlayUnpowered.getColor());
                     GL11.glPopMatrix();
                 } else if (drawHighlightSlot) {
                     // draw first slot bg

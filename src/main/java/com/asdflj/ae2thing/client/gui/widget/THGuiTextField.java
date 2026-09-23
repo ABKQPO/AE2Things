@@ -8,7 +8,7 @@ import org.lwjgl.input.Keyboard;
 
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.widgets.ITooltip;
-import appeng.core.localization.GuiColors;
+import appeng.core.localization.ColorUtils;
 import codechicken.nei.FormattedTextField;
 import codechicken.nei.SearchField;
 import codechicken.nei.SearchTextFormatter;
@@ -69,7 +69,7 @@ public class THGuiTextField extends FormattedTextField {
 
     public THGuiTextField(final int width, final int height, String tooltip) {
         this(Minecraft.getMinecraft().fontRenderer, 0, 0, width, height);
-        this.setTextColor(GuiColors.SearchboxText.getColor());
+        this.setTextColor(ColorUtils.searchboxText.getColor());
         this.setCursorPositionZero();
         this.setMessage(tooltip);
     }
@@ -121,7 +121,7 @@ public class THGuiTextField extends FormattedTextField {
                     this.y + 1,
                     this.x + this._width - 1,
                     this.y + this._height - 1,
-                    isFocused() ? GuiColors.SearchboxFocused.getColor() : GuiColors.SearchboxUnfocused.getColor());
+                    isFocused() ? ColorUtils.searchboxFocused.getColor() : ColorUtils.searchboxUnfocused.getColor());
             }
         }
         drawSuggestion();

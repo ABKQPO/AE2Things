@@ -25,7 +25,7 @@ import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.client.gui.AEBaseGui;
-import appeng.core.localization.GuiColors;
+import appeng.core.localization.ColorUtils;
 import appeng.core.localization.GuiText;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketClickOrDragFakeSlot;
@@ -131,7 +131,7 @@ public class GuiPatternModifier extends AEBaseGui implements INEIGuiHandler {
                     s.yDisplayPosition,
                     16 + s.xDisplayPosition,
                     16 + s.yDisplayPosition,
-                    GuiColors.ItemSlotOverlayUnpowered.getColor());
+                    ColorUtils.itemSlotOverlayUnpowered.getColor());
                 GL11.glEnable(GL11.GL_LIGHTING);
                 this.zLevel = 0.0F;
                 itemRender.zLevel = 0.0F;
