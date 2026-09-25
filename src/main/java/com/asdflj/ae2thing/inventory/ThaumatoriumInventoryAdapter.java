@@ -13,6 +13,7 @@ import com.asdflj.ae2thing.common.parts.PartThaumatoriumInterface;
 
 import appeng.api.config.FuzzyMode;
 import appeng.util.InventoryAdaptor;
+import appeng.util.Platform;
 import appeng.util.inv.IInventoryDestination;
 import appeng.util.inv.ItemSlot;
 
@@ -32,7 +33,7 @@ public class ThaumatoriumInventoryAdapter extends InventoryAdaptor {
         if (ad == null) return null;
         TileEntity inter = tile.getWorldObj()
             .getTileEntity(tile.xCoord + d.offsetX, tile.yCoord + d.offsetY, tile.zCoord + d.offsetZ);
-        if (com.glodblock.github.util.Util.getPart(inter, d.getOpposite()) instanceof PartThaumatoriumInterface part) {
+        if (Platform.getPartFromTE(inter, d.getOpposite()) instanceof PartThaumatoriumInterface part) {
             return new ThaumatoriumInventoryAdapter(ad, part);
         }
         return ad;
