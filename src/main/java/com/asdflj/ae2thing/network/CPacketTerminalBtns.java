@@ -14,6 +14,7 @@ import com.asdflj.ae2thing.client.gui.container.IPatternContainer;
 import com.asdflj.ae2thing.client.gui.container.widget.IWidgetPatternContainer;
 import com.asdflj.ae2thing.util.Util;
 
+import appeng.container.implementations.ContainerCraftConfirm;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -161,6 +162,9 @@ public class CPacketTerminalBtns implements IMessage {
                     case "InterfaceTerminal.SetStick" -> {
                         if (tag != null) ciw.setStick(tag);
                     }
+                    case "InterfaceTerminal.ToggleVisibility" -> {
+                        if (tag != null) ciw.toggleVisibility(tag);
+                    }
                     case "InterfaceTerminal.PatternModifier" -> {
                         if (intValue != null && tag != null) ciw.setModifier(intValue, tag);
                     }
@@ -178,8 +182,7 @@ public class CPacketTerminalBtns implements IMessage {
                     case "WirelessConnectorTerminal.Color" -> cwt.setColor(tag);
                 }
             }
-            if (name.equals("GuiCraftConfirm.replan")
-                && c instanceof appeng.container.implementations.ContainerCraftConfirm ccc) {
+            if (name.equals("GuiCraftConfirm.replan") && c instanceof ContainerCraftConfirm ccc) {
                 Util.replan(ctx.getServerHandler().playerEntity, ccc);
             }
             return null;

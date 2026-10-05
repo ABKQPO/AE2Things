@@ -41,6 +41,8 @@ import com.glodblock.github.common.item.ItemFluidPacket;
 import com.glodblock.github.util.Util;
 
 import appeng.api.AEApi;
+import appeng.api.config.Settings;
+import appeng.api.config.YesNo;
 import appeng.api.implementations.ICraftingPatternItem;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
@@ -66,6 +68,7 @@ import appeng.core.AELog;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketInterfaceTerminalUpdate;
 import appeng.helpers.IContainerCraftingPacket;
+import appeng.helpers.IInterfaceHost;
 import appeng.helpers.InventoryAction;
 import appeng.me.cache.CraftingGridCache;
 import appeng.me.helpers.ChannelPowerSrc;
@@ -213,6 +216,10 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
         this.delegateContainer.detectAndSendChanges();
     }
 
+    private void scheduleInterfaceRefresh() {
+        this.delegateContainer.scheduleUpdate();
+    }
+
     private void syncPatternState() {
         this.craftingModeSync.set(this.craftingMode);
         this.substituteSync.set(this.substitute);
@@ -341,6 +348,21 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
         doublePatterns(value, result.left, result.right);
     }
 
+    public void toggleVisibility(NBTTagCompound tag) {
+        ImmutablePair<World, IInterfaceViewable> result = getWorldAndHost(tag);
+        if (result == null || !(result.right instanceof IInterfaceHost host)) {
+            return;
+        }
+        final YesNo current = (YesNo) host.getInterfaceDuality()
+            .getConfigManager()
+            .getSetting(Settings.INTERFACE_TERMINAL);
+        host.getInterfaceDuality()
+            .getConfigManager()
+            .putSetting(Settings.INTERFACE_TERMINAL, current == YesNo.YES ? YesNo.NO : YesNo.YES);
+        host.saveChanges();
+        this.scheduleInterfaceRefresh();
+    }
+
     private ImmutablePair<World, IInterfaceViewable> getWorldAndHost(NBTTagCompound tag) {
         Util.DimensionalCoordSide intMsg = Util.DimensionalCoordSide.readFromNBT(tag);
         World w = DimensionManager.getWorld(intMsg.getDimension());
@@ -409,15 +431,17 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
                 .getDeclaredField("invNbt");
             f1.setAccessible(true);
             NBTTagList tag = (NBTTagList) f1.get(o);
-            int[] size = new int[host.rowSize() * host.rows()];
+            int[] size = new int[host.numSlots()];
             for (int i = 0; i < size.length; i++) {
                 size[i] = i;
             }
             update.addOverwriteEntry(id)
                 .setOnline(true)
-                .setItems(size, tag);
+                .setItems(size, tag)
+                .setSize(host.rows(), host.rowSize(), host.numSlots());
             update.encode();
             NetworkHandler.instance.sendTo(update, (EntityPlayerMP) this.getPlayerInv().player);
+            this.scheduleInterfaceRefresh();
         } catch (Exception ignored) {}
     }
 
