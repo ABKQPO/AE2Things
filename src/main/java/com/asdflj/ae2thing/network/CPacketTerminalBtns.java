@@ -185,6 +185,9 @@ public class CPacketTerminalBtns implements IMessage {
             if (name.equals("GuiCraftConfirm.replan") && c instanceof ContainerCraftConfirm ccc) {
                 Util.replan(ctx.getServerHandler().playerEntity, ccc);
             }
+            if (name.equals("GuiCraftConfirm.cancel") && c instanceof ContainerCraftConfirm ccc) {
+                ccc.switchToOriginalGUI();
+            }
             return null;
         }
     }

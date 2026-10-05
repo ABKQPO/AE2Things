@@ -345,7 +345,67 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     public void doubleStacks(int value, NBTTagCompound tag) {
         ImmutablePair<World, IInterfaceViewable> result = getWorldAndHost(tag);
         if (result == null) return;
-        doublePatterns(value, result.left, result.right);
+        // The GUI biases the slot by one when packing it into the high bits, so a negative slot means the section's
+        // double button was pressed and every pattern in the interface should be scaled instead of a single one.
+        final int slot = (value >> 2) - 1;
+        if (slot < 0) {
+            doublePatterns(value & 0b11, result.left, result.right);
+        } else {
+            modifyPatternInSlot(slot, value, result.left, result.right);
+        }
+    }
+
+    /** Multiplies or divides every processing pattern in the interface, as the section's double button requests. */
+    private void doublePatterns(int val, World w, IInterfaceViewable host) {
+        IInventory patterns = host.getPatterns();
+        final boolean fast = (val & 1) != 0;
+        final boolean backwards = (val & 2) != 0;
+        CraftingGridCache.pauseRebuilds();
+        try {
+            for (int i = 0; i < patterns.getSizeInventory(); i++) {
+                ItemStack stack = patterns.getStackInSlot(i);
+                if (stack == null || !(stack.getItem() instanceof ICraftingPatternItem cpi)) continue;
+                ICraftingPatternDetails details = cpi.getPatternForItem(stack, w);
+                if (details == null || details.isCraftable()) continue;
+                int max = backwards ? PatternMultiplierHelper.getMaxBitDivider(details)
+                    : PatternMultiplierHelper.getMaxBitMultiplier(details);
+                if (max == 0) continue;
+                ItemStack copy = stack.copy();
+                PatternMultiplierHelper.applyModification(copy, (fast ? Math.min(3, max) : 1) * (backwards ? -1 : 1));
+                patterns.setInventorySlotContents(i, copy);
+            }
+        } catch (Throwable ignored) {} finally {
+            CraftingGridCache.unpauseRebuilds();
+        }
+        this.sendToClient(host);
+    }
+
+    /**
+     * Multiplies or divides the stack size of the single pattern in {@code slot}, matching AE2's own
+     * {@code ContainerInterfaceTerminal} behaviour. Only processing patterns can be scaled; crafting patterns encode a
+     * recipe rather than amounts.
+     */
+    private void modifyPatternInSlot(int slot, int val, World w, IInterfaceViewable host) {
+        IInventory patterns = host.getPatterns();
+        if (slot < 0 || slot >= patterns.getSizeInventory()) return;
+        ItemStack stack = patterns.getStackInSlot(slot);
+        if (stack == null || !(stack.getItem() instanceof ICraftingPatternItem cpi)) return;
+        ICraftingPatternDetails details = cpi.getPatternForItem(stack, w);
+        if (details == null || details.isCraftable()) return;
+        boolean fast = (val & 1) != 0;
+        boolean backwards = (val & 2) != 0;
+        int max = backwards ? PatternMultiplierHelper.getMaxBitDivider(details)
+            : PatternMultiplierHelper.getMaxBitMultiplier(details);
+        if (max == 0) return;
+        CraftingGridCache.pauseRebuilds();
+        try {
+            ItemStack copy = stack.copy();
+            PatternMultiplierHelper.applyModification(copy, (fast ? Math.min(3, max) : 1) * (backwards ? -1 : 1));
+            patterns.setInventorySlotContents(slot, copy);
+        } catch (Throwable ignored) {} finally {
+            CraftingGridCache.unpauseRebuilds();
+        }
+        this.sendToClient(host);
     }
 
     public void toggleVisibility(NBTTagCompound tag) {
@@ -384,33 +444,6 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
         if (!Ae2Reflect.getTracked(this.delegateContainer)
             .containsKey(host)) return null;
         return ImmutablePair.of(w, host);
-    }
-
-    private void doublePatterns(int val, World w, IInterfaceViewable host) {
-        IInventory patterns = host.getPatterns();
-        boolean fast = (val & 1) != 0;
-        boolean backwards = (val & 2) != 0;
-        CraftingGridCache.pauseRebuilds();
-        try {
-            for (int i = 0; i < patterns.getSizeInventory(); i++) {
-                ItemStack stack = patterns.getStackInSlot(i);
-                if (stack != null && stack.getItem() instanceof ICraftingPatternItem cpi) {
-                    ICraftingPatternDetails details = cpi.getPatternForItem(stack, w);
-                    if (details != null && !details.isCraftable()) {
-                        int max = backwards ? PatternMultiplierHelper.getMaxBitDivider(details)
-                            : PatternMultiplierHelper.getMaxBitMultiplier(details);
-                        if (max > 0) {
-                            ItemStack copy = stack.copy();
-                            PatternMultiplierHelper
-                                .applyModification(copy, (fast ? Math.min(3, max) : 1) * (backwards ? -1 : 1));
-                            patterns.setInventorySlotContents(i, copy);
-                        }
-                    }
-                }
-            }
-        } catch (Throwable ignored) {}
-        CraftingGridCache.unpauseRebuilds();
-        this.sendToClient(host);
     }
 
     private void sendToClient(IInterfaceViewable host) {

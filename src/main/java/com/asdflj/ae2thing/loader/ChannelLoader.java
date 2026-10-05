@@ -24,6 +24,7 @@ import com.asdflj.ae2thing.network.CPacketValueConfig;
 import com.asdflj.ae2thing.network.SPacketCraftingDebugCardUpdate;
 import com.asdflj.ae2thing.network.SPacketCraftingStateUpdate;
 import com.asdflj.ae2thing.network.SPacketFindCellItem;
+import com.asdflj.ae2thing.network.SPacketFlowRates;
 import com.asdflj.ae2thing.network.SPacketMEFluidInvUpdate;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 import com.asdflj.ae2thing.network.SPacketNBTDataUpdate;
@@ -47,7 +48,7 @@ public class ChannelLoader implements Runnable {
         CPacketPatternNameSet.class, CPacketPatternValueSet.class, CPacketRenamer.class, CPacketSwitchGuis.class,
         CPacketTerminalBtns.class, CPacketTransferRecipe.class, CPacketTypeFilter.class, CPacketValueConfig.class,
         SPacketCraftingDebugCardUpdate.class, SPacketCraftingStateUpdate.class, SPacketFindCellItem.class,
-        SPacketMEFluidInvUpdate.class, SPacketMEItemInvUpdate.class, SPacketNBTDataUpdate.class,
+        SPacketFlowRates.class, SPacketMEFluidInvUpdate.class, SPacketMEItemInvUpdate.class, SPacketNBTDataUpdate.class,
         SPacketSetItemAmount.class, SPacketSetItemName.class, SPacketStringUpdate.class, SPacketSwitchBack.class,
         SPacketTypeFilter.class };
 
