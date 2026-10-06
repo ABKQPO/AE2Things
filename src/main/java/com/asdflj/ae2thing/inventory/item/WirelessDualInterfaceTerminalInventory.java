@@ -44,6 +44,10 @@ import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal implements IGridHost, IPatternTerminal,
     IClickableInTerminal, IAEAppEngInventory, IInterfaceTerminal, ITerminalTypeFilterProvider {
 
+    private static final String PANEL_POSITIONS_TAG = "ae2thingPanelPositions";
+    private static final int MIN_PANEL_POSITION = -10000;
+    private static final int MAX_PANEL_POSITION = 10000;
+
     protected AppEngInternalInventory craftingEx;
     protected AppEngInternalInventory outputEx;
     protected AppEngInternalInventory pattern;
@@ -260,6 +264,42 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal imp
     @Override
     public void saveSettings() {
         writeToNBT();
+    }
+
+    public NBTTagCompound getPanelPositions() {
+        NBTTagCompound data = Platform.openNbtData(this.getItemStack());
+        if (!data.hasKey(PANEL_POSITIONS_TAG)) {
+            return new NBTTagCompound();
+        }
+        NBTTagCompound stored = data.getCompoundTag(PANEL_POSITIONS_TAG);
+        NBTTagCompound positions = new NBTTagCompound();
+        copyPanelPosition(stored, positions, "patternX");
+        copyPanelPosition(stored, positions, "patternY");
+        copyPanelPosition(stored, positions, "itemX");
+        copyPanelPosition(stored, positions, "itemY");
+        return positions;
+    }
+
+    public void setPanelPositions(NBTTagCompound positions) {
+        if (positions == null) return;
+        NBTTagCompound stored = this.getPanelPositions();
+        copyPanelPosition(positions, stored, "patternX");
+        copyPanelPosition(positions, stored, "patternY");
+        copyPanelPosition(positions, stored, "itemX");
+        copyPanelPosition(positions, stored, "itemY");
+        NBTTagCompound data = Platform.openNbtData(this.getItemStack());
+        data.setTag(PANEL_POSITIONS_TAG, stored);
+        this.saveSettings();
+    }
+
+    private static void copyPanelPosition(NBTTagCompound source, NBTTagCompound target, String key) {
+        if (source.hasKey(key)) {
+            target.setInteger(key, clampPanelPosition(source.getInteger(key)));
+        }
+    }
+
+    private static int clampPanelPosition(int value) {
+        return Math.max(MIN_PANEL_POSITION, Math.min(MAX_PANEL_POSITION, value));
     }
 
     @Override

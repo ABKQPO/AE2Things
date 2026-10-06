@@ -21,6 +21,7 @@ import com.asdflj.ae2thing.api.InventoryActionExtend;
 import com.asdflj.ae2thing.client.event.EncodeEvent;
 import com.asdflj.ae2thing.client.gui.IWidgetGui;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
+import com.asdflj.ae2thing.client.gui.container.slot.SlotPattern;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.network.CPacketInventoryActionExtend;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
@@ -40,9 +41,11 @@ import appeng.client.gui.widgets.GuiImgButton;
 import appeng.client.gui.widgets.GuiScrollbar;
 import appeng.client.gui.widgets.GuiTabButton;
 import appeng.container.AEBaseContainer;
+import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.SlotFake;
 import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotPatternTerm;
+import appeng.container.slot.SlotRestrictedInput;
 import appeng.core.localization.GuiText;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketInventoryAction;
@@ -72,8 +75,16 @@ public class PatternPanel implements IAEBasePanel {
     protected final GuiScrollbar processingScrollBar = new GuiScrollbar();
     private final AEBaseContainer inventorySlots;
     protected final Set<Slot> drag_click;
-    private final int w;
-    private final int h;
+    private static final int PANEL_X = 209;
+    private static final int PANEL_Y = 0;
+    private static final int MAIN_PANEL_WIDTH = 133;
+    private static final int PANEL_WIDTH = 205;
+    private static final int PANEL_HEIGHT = 202;
+    private int absX;
+    private int absY;
+    private int appliedSlotOffsetX;
+    private int appliedSlotOffsetY;
+    private boolean initialized;
 
     public PatternPanel(IWidgetGui gui, ContainerWirelessDualInterfaceTerminal container) {
         this.gui = gui;
@@ -86,8 +97,6 @@ public class PatternPanel implements IAEBasePanel {
             .setLeft(6)
             .setRange(0, 1, 1);
         processingScrollBar.setTexture(AE2Thing.MODID, getBackground(), 242, 0);
-        this.w = 110;
-        this.h = 92;
     }
 
     @Override
@@ -119,28 +128,30 @@ public class PatternPanel implements IAEBasePanel {
     public void drawBG(int offsetX, int offsetY, int mouseX, int mouseY) {
         this.bindTextureBack(getBackground());
         if (this.container.isCraftingMode() || this.container.inverted) {
-            this.parent.drawTexturedModalRect(offsetX + 209, offsetY, 0, 0, 133, 93);
+            this.parent.drawTexturedModalRect(this.absX, this.absY, 0, 0, 133, 93);
         } else {
-            this.parent.drawTexturedModalRect(offsetX + 209, offsetY, 0, 93, 133, 93);
+            this.parent.drawTexturedModalRect(this.absX, this.absY, 0, 93, 133, 93);
         }
-        this.parent.drawTexturedModalRect(offsetX + 209, offsetY + 93, 133, 0, 40, 77);
-        this.parent.drawTexturedModalRect(offsetX + 209, offsetY + 93 + 77, 173, 0, 32, 32);
+        this.parent.drawTexturedModalRect(this.absX, this.absY + 93, 133, 0, 40, 77);
+        this.parent.drawTexturedModalRect(this.absX, this.absY + 93 + 77, 173, 0, 32, 32);
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float btn) {
+        this.updateFixedButtonPositions();
         if (this.container.isCraftingMode()) {
-            substitutionsEnabledBtn.xPosition = this.parent.getGuiLeft() + 291;
-            substitutionsEnabledBtn.yPosition = this.parent.getGuiTop() + 14;
+            substitutionsEnabledBtn.xPosition = this.absX + 82;
+            substitutionsEnabledBtn.yPosition = this.absY + 14;
 
-            substitutionsDisabledBtn.xPosition = this.parent.getGuiLeft() + 291;
-            substitutionsDisabledBtn.yPosition = this.parent.getGuiTop() + 14;
+            substitutionsDisabledBtn.xPosition = this.absX + 82;
+            substitutionsDisabledBtn.yPosition = this.absY + 14;
 
-            beSubstitutionsEnabledBtn.xPosition = this.parent.getGuiLeft() + 291;
-            beSubstitutionsEnabledBtn.yPosition = this.parent.getGuiTop() + 24;
-
-            beSubstitutionsDisabledBtn.xPosition = this.parent.getGuiLeft() + 291;
-            beSubstitutionsDisabledBtn.yPosition = this.parent.getGuiTop() + 24;
+            if (beSubstitutionsEnabledBtn != null) {
+                beSubstitutionsEnabledBtn.xPosition = this.absX + 82;
+                beSubstitutionsEnabledBtn.yPosition = this.absY + 24;
+                beSubstitutionsDisabledBtn.xPosition = this.absX + 82;
+                beSubstitutionsDisabledBtn.yPosition = this.absY + 24;
+            }
 
             fluidPrioritizedEnabledBtn.xPosition = -9000;
             fluidPrioritizedEnabledBtn.yPosition = -9000;
@@ -148,11 +159,13 @@ public class PatternPanel implements IAEBasePanel {
             fluidPrioritizedDisabledBtn.xPosition = -9000;
             fluidPrioritizedDisabledBtn.yPosition = -9000;
 
-            doubleBtn.xPosition = -9000;
-            doubleBtn.yPosition = -9000;
+            if (doubleBtn != null) {
+                doubleBtn.xPosition = -9000;
+                doubleBtn.yPosition = -9000;
+            }
 
-            clearBtn.xPosition = this.parent.getGuiLeft() + 281;
-            clearBtn.yPosition = this.parent.getGuiTop() + 14;
+            clearBtn.xPosition = this.absX + 72;
+            clearBtn.yPosition = this.absY + 14;
 
             invertBtn.xPosition = -9000;
             invertBtn.yPosition = -9000;
@@ -165,70 +178,80 @@ public class PatternPanel implements IAEBasePanel {
 
         } else {
             final int offset = container.inverted ? 18 * -3 : 0;
-            substitutionsEnabledBtn.xPosition = this.parent.getGuiLeft() + 306 + offset;
-            substitutionsEnabledBtn.yPosition = this.parent.getGuiTop() + 10;
+            substitutionsEnabledBtn.xPosition = this.absX + 97 + offset;
+            substitutionsEnabledBtn.yPosition = this.absY + 10;
 
-            substitutionsDisabledBtn.xPosition = this.parent.getGuiLeft() + 306 + offset;
-            substitutionsDisabledBtn.yPosition = this.parent.getGuiTop() + 10;
+            substitutionsDisabledBtn.xPosition = this.absX + 97 + offset;
+            substitutionsDisabledBtn.yPosition = this.absY + 10;
 
-            beSubstitutionsEnabledBtn.xPosition = this.parent.getGuiLeft() + 306 + offset;
-            beSubstitutionsEnabledBtn.yPosition = this.parent.getGuiTop() + 69;
+            if (beSubstitutionsEnabledBtn != null) {
+                beSubstitutionsEnabledBtn.xPosition = this.absX + 97 + offset;
+                beSubstitutionsEnabledBtn.yPosition = this.absY + 69;
+                beSubstitutionsDisabledBtn.xPosition = this.absX + 97 + offset;
+                beSubstitutionsDisabledBtn.yPosition = this.absY + 69;
+            }
 
-            beSubstitutionsDisabledBtn.xPosition = this.parent.getGuiLeft() + 306 + offset;
-            beSubstitutionsDisabledBtn.yPosition = this.parent.getGuiTop() + 69;
+            fluidPrioritizedEnabledBtn.xPosition = this.absX + 97 + offset;
+            fluidPrioritizedEnabledBtn.yPosition = this.absY + 59;
 
-            fluidPrioritizedEnabledBtn.xPosition = this.parent.getGuiLeft() + 306 + offset;
-            fluidPrioritizedEnabledBtn.yPosition = this.parent.getGuiTop() + 59;
+            fluidPrioritizedDisabledBtn.xPosition = this.absX + 97 + offset;
+            fluidPrioritizedDisabledBtn.yPosition = this.absY + 59;
 
-            fluidPrioritizedDisabledBtn.xPosition = this.parent.getGuiLeft() + 306 + offset;
-            fluidPrioritizedDisabledBtn.yPosition = this.parent.getGuiTop() + 59;
+            if (doubleBtn != null) {
+                doubleBtn.xPosition = this.absX + 97 + offset;
+                doubleBtn.yPosition = this.absY + 20;
+            }
 
-            doubleBtn.xPosition = this.parent.getGuiLeft() + 306 + offset;
-            doubleBtn.yPosition = this.parent.getGuiTop() + 20;
+            clearBtn.xPosition = this.absX + 87 + offset;
+            clearBtn.yPosition = this.absY + 10;
 
-            clearBtn.xPosition = this.parent.getGuiLeft() + 296 + offset;
-            clearBtn.yPosition = this.parent.getGuiTop() + 10;
+            invertBtn.xPosition = this.absX + 87 + offset;
+            invertBtn.yPosition = this.absY + 20;
 
-            invertBtn.xPosition = this.parent.getGuiLeft() + 296 + offset;
-            invertBtn.yPosition = this.parent.getGuiTop() + 20;
+            combineEnableBtn.xPosition = this.absX + 87 + offset;
+            combineEnableBtn.yPosition = this.absY + 59;
 
-            combineEnableBtn.xPosition = this.parent.getGuiLeft() + 296 + offset;
-            combineEnableBtn.yPosition = this.parent.getGuiTop() + 59;
-
-            combineDisableBtn.xPosition = this.parent.getGuiLeft() + 296 + offset;
-            combineDisableBtn.yPosition = this.parent.getGuiTop() + 59;
+            combineDisableBtn.xPosition = this.absX + 87 + offset;
+            combineDisableBtn.yPosition = this.absY + 59;
             processingScrollBar.setCurrentScroll(container.activePage);
         }
     }
 
     @Override
     public void initGui() {
+        if (!this.initialized) {
+            this.absX = this.parent.getGuiLeft() + PANEL_X;
+            this.absY = this.parent.getGuiTop() + PANEL_Y;
+            this.appliedSlotOffsetX = 0;
+            this.appliedSlotOffsetY = 0;
+            this.initialized = true;
+        }
         this.gui.getButtonList()
             .add(
                 this.encodeBtn = new GuiImgButton(
-                    this.parent.getGuiLeft() + 220,
-                    this.parent.getGuiTop() + 118,
+                    this.absX + 11,
+                    this.absY + 118,
                     Settings.ACTIONS,
                     ActionItems.ENCODE));
         this.gui.getButtonList()
             .add(
                 this.tabProcessButton = new GuiTabButton(
-                    this.parent.getGuiLeft() + 248,
-                    this.parent.getGuiTop() + 93,
+                    this.absX + 39,
+                    this.absY + 93,
                     new ItemStack(Blocks.furnace),
                     GuiText.ProcessingPattern.getLocal(),
                     this.gui.getRenderItem()));
         this.gui.getButtonList()
             .add(
                 this.tabCraftButton = new GuiTabButton(
-                    this.parent.getGuiLeft() + 248,
-                    this.parent.getGuiTop() + 93,
+                    this.absX + 39,
+                    this.absY + 93,
                     new ItemStack(Blocks.crafting_table),
                     GuiText.CraftingPattern.getLocal(),
                     this.gui.getRenderItem()));
         this.substitutionsEnabledBtn = new GuiImgButton(
-            this.parent.getGuiLeft() + 306,
-            this.parent.getGuiTop() + 10,
+            this.absX + 97,
+            this.absY + 10,
             Settings.ACTIONS,
             ItemSubstitution.ENABLED);
         this.substitutionsEnabledBtn.setHalfSize(true);
@@ -236,82 +259,58 @@ public class PatternPanel implements IAEBasePanel {
             .add(this.substitutionsEnabledBtn);
 
         this.substitutionsDisabledBtn = new GuiImgButton(
-            this.parent.getGuiLeft() + 306,
-            this.parent.getGuiTop() + 10,
+            this.absX + 97,
+            this.absY + 10,
             Settings.ACTIONS,
             ItemSubstitution.DISABLED);
         this.substitutionsDisabledBtn.setHalfSize(true);
         this.gui.getButtonList()
             .add(this.substitutionsDisabledBtn);
 
-        this.fluidPrioritizedEnabledBtn = new GuiFCImgButton(
-            this.parent.getGuiLeft() + 306,
-            this.parent.getGuiTop() + 59,
-            "FORCE_PRIO",
-            "DO_PRIO");
+        this.fluidPrioritizedEnabledBtn = new GuiFCImgButton(this.absX + 97, this.absY + 59, "FORCE_PRIO", "DO_PRIO");
         this.fluidPrioritizedEnabledBtn.setHalfSize(true);
         this.gui.getButtonList()
             .add(this.fluidPrioritizedEnabledBtn);
 
-        this.fluidPrioritizedDisabledBtn = new GuiFCImgButton(
-            this.parent.getGuiLeft() + 306,
-            this.parent.getGuiTop() + 59,
-            "NOT_PRIO",
-            "DONT_PRIO");
+        this.fluidPrioritizedDisabledBtn = new GuiFCImgButton(this.absX + 97, this.absY + 59, "NOT_PRIO", "DONT_PRIO");
         this.fluidPrioritizedDisabledBtn.setHalfSize(true);
         this.gui.getButtonList()
             .add(this.fluidPrioritizedDisabledBtn);
 
         this.invertBtn = new GuiImgButton(
-            this.parent.getGuiLeft() + 296,
-            this.parent.getGuiTop() + 20,
+            this.absX + 87,
+            this.absY + 20,
             Settings.ACTIONS,
             container.inverted ? PatternSlotConfig.C_4_16 : PatternSlotConfig.C_16_4);
         this.invertBtn.setHalfSize(true);
         this.gui.getButtonList()
             .add(this.invertBtn);
 
-        this.clearBtn = new GuiImgButton(
-            this.parent.getGuiLeft() + 296,
-            this.parent.getGuiTop() + 10,
-            Settings.ACTIONS,
-            ActionItems.CLOSE);
+        this.clearBtn = new GuiImgButton(this.absX + 87, this.absY + 10, Settings.ACTIONS, ActionItems.CLOSE);
         this.clearBtn.setHalfSize(true);
         this.gui.getButtonList()
             .add(this.clearBtn);
 
         if (ModAndClassUtil.isDoubleButton) {
-            this.doubleBtn = new GuiImgButton(
-                this.parent.getGuiLeft() + 306,
-                this.parent.getGuiTop() + 20,
-                Settings.ACTIONS,
-                ActionItems.DOUBLE);
+            this.doubleBtn = new GuiImgButton(this.absX + 97, this.absY + 20, Settings.ACTIONS, ActionItems.DOUBLE);
             this.doubleBtn.setHalfSize(true);
             this.gui.getButtonList()
                 .add(this.doubleBtn);
         }
 
-        this.combineEnableBtn = new GuiFCImgButton(
-            this.parent.getGuiLeft() + 296,
-            this.parent.getGuiTop() + 59,
-            "FORCE_COMBINE",
-            "DO_COMBINE");
+        this.combineEnableBtn = new GuiFCImgButton(this.absX + 87, this.absY + 59, "FORCE_COMBINE", "DO_COMBINE");
         this.combineEnableBtn.setHalfSize(true);
         this.gui.getButtonList()
             .add(this.combineEnableBtn);
 
-        this.combineDisableBtn = new GuiFCImgButton(
-            this.parent.getGuiLeft() + 296,
-            this.parent.getGuiTop() + 59,
-            "NOT_COMBINE",
-            "DONT_COMBINE");
+        this.combineDisableBtn = new GuiFCImgButton(this.absX + 87, this.absY + 59, "NOT_COMBINE", "DONT_COMBINE");
         this.combineDisableBtn.setHalfSize(true);
         this.gui.getButtonList()
             .add(this.combineDisableBtn);
         if (ModAndClassUtil.isBeSubstitutionsButton) {
             this.beSubstitutionsEnabledBtn = new GuiImgButton(
-                this.parent.getGuiLeft() + 306,
-                this.parent.getGuiTop() + 69,
+                this.absX + 97,
+                this.absY + 69,
                 Settings.ACTIONS,
                 PatternBeSubstitution.ENABLED);
             this.beSubstitutionsEnabledBtn.setHalfSize(true);
@@ -319,16 +318,31 @@ public class PatternPanel implements IAEBasePanel {
                 .add(this.beSubstitutionsEnabledBtn);
 
             this.beSubstitutionsDisabledBtn = new GuiImgButton(
-                this.parent.getGuiLeft() + 306,
-                this.parent.getGuiTop() + 69,
+                this.absX + 97,
+                this.absY + 69,
                 Settings.ACTIONS,
                 PatternBeSubstitution.DISABLED);
             this.beSubstitutionsDisabledBtn.setHalfSize(true);
             this.gui.getButtonList()
                 .add(this.beSubstitutionsDisabledBtn);
         }
-        processingScrollBar.setTop(9);
-        processingScrollBar.setLeft(215);
+        this.updateScrollBarPosition();
+        this.updateFixedButtonPositions();
+    }
+
+    private void updateFixedButtonPositions() {
+        if (this.encodeBtn != null) {
+            this.encodeBtn.xPosition = this.absX + 11;
+            this.encodeBtn.yPosition = this.absY + 118;
+        }
+        if (this.tabProcessButton != null) {
+            this.tabProcessButton.xPosition = this.absX + 39;
+            this.tabProcessButton.yPosition = this.absY + 93;
+        }
+        if (this.tabCraftButton != null) {
+            this.tabCraftButton.xPosition = this.absX + 39;
+            this.tabCraftButton.yPosition = this.absY + 93;
+        }
     }
 
     protected void updateButton(GuiButton button, boolean vis) {
@@ -339,14 +353,14 @@ public class PatternPanel implements IAEBasePanel {
 
     @Override
     public boolean hideItemPanelSlot(int tx, int ty, int tw, int th) {
-        int rw = this.w;
-        int rh = this.h;
+        int rw = PANEL_WIDTH;
+        int rh = PANEL_HEIGHT;
         if (tw <= 0 || th <= 0) {
             return false;
         }
 
-        int rx = this.parent.getGuiLeft() + this.parent.getXSize();
-        int ry = this.parent.getGuiTop();
+        int rx = this.absX;
+        int ry = this.absY;
 
         rw += rx;
         rh += ry;
@@ -516,18 +530,53 @@ public class PatternPanel implements IAEBasePanel {
 
     @Override
     public boolean draggable() {
-        return false;
+        return true;
     }
 
     @Override
     public Rectangle getRectangle() {
-        return new Rectangle(
-            this.parent.getGuiLeft() + this.parent.getXSize(),
-            this.parent.getGuiTop(),
-            this.w,
-            this.h);
+        return new Rectangle(this.absX, this.absY, PANEL_WIDTH, PANEL_HEIGHT);
     }
 
     @Override
-    public void setRectangle(int x, int y) {}
+    public Rectangle getDragHandle() {
+        return new Rectangle(this.absX + MAIN_PANEL_WIDTH - 6, this.absY, 6, 6);
+    }
+
+    @Override
+    public void setRectangle(int x, int y) {
+        this.absX = x;
+        this.absY = y;
+        this.updateScrollBarPosition();
+        this.updateFixedButtonPositions();
+        this.updateSlotPositions();
+    }
+
+    private void updateScrollBarPosition() {
+        this.processingScrollBar.setTop(this.absY - this.parent.getGuiTop() + 9)
+            .setLeft(this.absX - this.parent.getGuiLeft() + 6);
+    }
+
+    public void updateSlotPositions() {
+        int offsetX = this.absX - (this.parent.getGuiLeft() + PANEL_X);
+        int offsetY = this.absY - (this.parent.getGuiTop() + PANEL_Y);
+        for (Object object : this.container.inventorySlots) {
+            if (!(object instanceof AppEngSlot slot) || !this.ownsSlot(slot) || slot.xDisplayPosition <= -8000)
+                continue;
+            int baseX = slot.xDisplayPosition - this.appliedSlotOffsetX;
+            int baseY = slot.yDisplayPosition - this.appliedSlotOffsetY;
+            if (slot.xDisplayPosition == slot.getX() || baseX == slot.getX()) baseX = slot.getX();
+            slot.xDisplayPosition = baseX + offsetX;
+            slot.yDisplayPosition = baseY + offsetY;
+        }
+        this.appliedSlotOffsetX = offsetX;
+        this.appliedSlotOffsetY = offsetY;
+    }
+
+    private boolean ownsSlot(Slot slot) {
+        return slot instanceof SlotPattern || slot instanceof SlotPatternFake
+            || slot instanceof SlotFakeCraftingMatrix
+            || slot instanceof SlotPatternTerm
+            || slot instanceof SlotRestrictedInput;
+    }
 }

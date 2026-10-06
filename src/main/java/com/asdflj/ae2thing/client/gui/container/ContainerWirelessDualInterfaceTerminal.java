@@ -36,6 +36,7 @@ import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.IPatternTerminal;
 import com.asdflj.ae2thing.inventory.item.INetworkTerminal;
 import com.asdflj.ae2thing.inventory.item.PatternModifierInventory;
+import com.asdflj.ae2thing.inventory.item.WirelessDualInterfaceTerminalInventory;
 import com.asdflj.ae2thing.inventory.item.WirelessTerminal;
 import com.asdflj.ae2thing.util.Ae2Reflect;
 import com.asdflj.ae2thing.util.GTUtil;
@@ -560,6 +561,19 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     public void saveChanges() {
         if (Platform.isServer()) {
             this.it.saveSettings();
+        }
+    }
+
+    public NBTTagCompound getPanelPositions() {
+        if (this.host instanceof WirelessDualInterfaceTerminalInventory terminal) {
+            return terminal.getPanelPositions();
+        }
+        return new NBTTagCompound();
+    }
+
+    public void setPanelPositions(NBTTagCompound positions) {
+        if (Platform.isServer() && this.host instanceof WirelessDualInterfaceTerminalInventory terminal) {
+            terminal.setPanelPositions(positions);
         }
     }
 

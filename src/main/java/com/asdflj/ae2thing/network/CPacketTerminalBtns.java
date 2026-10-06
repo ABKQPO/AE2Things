@@ -174,6 +174,11 @@ public class CPacketTerminalBtns implements IMessage {
                 }
 
             }
+            if (name.equals("DualInterfaceTerminal.PanelPositions")
+                && c instanceof ContainerWirelessDualInterfaceTerminal ciw
+                && tag != null) {
+                ciw.setPanelPositions(tag);
+            }
             if (name.startsWith("WirelessConnectorTerminal.") && c instanceof ContainerWirelessConnectorTerminal cwt) {
                 switch (name) {
                     case "WirelessConnectorTerminal.SetName" -> cwt.setName(value, tag);

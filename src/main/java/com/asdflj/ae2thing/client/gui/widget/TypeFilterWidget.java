@@ -1,5 +1,6 @@
 package com.asdflj.ae2thing.client.gui.widget;
 
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 public class TypeFilterWidget {
 
     private final Map<TypeToggleButton, IAEStackType<?>> buttons = new IdentityHashMap<>();
+    private final List<TypeToggleButton> orderedButtons = new ArrayList<>();
     private Reference2BooleanMap<IAEStackType<?>> filters;
     private final int windowId;
 
@@ -43,6 +45,7 @@ public class TypeFilterWidget {
 
     public void init(List<GuiButton> buttonList, int x, int yStart) {
         this.buttons.clear();
+        this.orderedButtons.clear();
         if (this.filters == null) {
             return;
         }
@@ -56,6 +59,7 @@ public class TypeFilterWidget {
             final TypeToggleButton btn = new TypeToggleButton(x, y, texture, icon, type.getDisplayName());
             btn.setEnabled(this.filters.getBoolean(type));
             this.buttons.put(btn, type);
+            this.orderedButtons.add(btn);
             buttonList.add(btn);
             y += 20;
         }
@@ -81,6 +85,19 @@ public class TypeFilterWidget {
             entry.getKey()
                 .setEnabled(this.filters.getBoolean(entry.getValue()));
         }
+    }
+
+    public void setPosition(int x, int y) {
+        int currentY = y;
+        for (TypeToggleButton button : this.orderedButtons) {
+            button.xPosition = x;
+            button.yPosition = currentY;
+            currentY += 20;
+        }
+    }
+
+    public void removeButtonsFrom(List<GuiButton> buttonList) {
+        buttonList.removeAll(this.orderedButtons);
     }
 
     /**

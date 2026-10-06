@@ -4,6 +4,7 @@ import static appeng.client.gui.AEBaseGui.isCtrlKeyDown;
 import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -84,9 +85,11 @@ public class ItemPanel
     private GuiImgButton SortDirBox;
     private GuiImgButton searchBoxSettings;
     private final TypeFilterWidget typeFilter;
+    private final List<VirtualMEMonitorableSlot> virtualSlots = new ArrayList<>();
     private static String memoryText = "";
     private final TextHistory history;
     private boolean needsViewUpdate = false;
+    private boolean initialized;
 
     public ItemPanel(IWidgetGui gui, ContainerWirelessDualInterfaceTerminal container, IConfigManager configSrc) {
         this.gui = gui;
@@ -170,25 +173,38 @@ public class ItemPanel
 
     @Override
     public void initGui() {
-        this.absX = this.parent.getGuiLeft() - 101;
-        this.absY = this.parent.getGuiTop() + this.parent.getYSize() - 96;
+        this.initGui(true);
+    }
+
+    private void initGui(boolean rebuildVirtualSlots) {
+        final boolean firstInitialization = !this.initialized;
+        if (firstInitialization) {
+            this.absX = this.parent.getGuiLeft() - 101;
+            this.absY = this.parent.getGuiTop() + this.parent.getYSize() - 96;
+            this.initialized = true;
+        }
+        this.typeFilter.removeButtonsFrom(this.gui.getButtonList());
         this.searchField = new THGuiTextField(this.parent.getFontRenderer(), absX + 3, absY + 4, 72, 12);
         this.searchField.setEnableBackgroundDrawing(false);
         this.searchField.setMaxStringLength(25);
         this.searchField.setTextColor(0xFFFFFF);
         this.searchField.setVisible(true);
         // this.searchField.setMessage(ButtonToolTips.SearchStringTooltip.getLocal());
-        this.gui.getMeSlots()
-            .clear();
-        for (int y = 0; y < this.rows; y++) {
-            for (int x = 0; x < this.perRow; x++) {
-                this.gui.registerMESlot(
-                    new VirtualMEMonitorableSlot(
+        if (rebuildVirtualSlots) {
+            this.virtualSlots.clear();
+            this.gui.getMeSlots()
+                .clear();
+            for (int y = 0; y < this.rows; y++) {
+                for (int x = 0; x < this.perRow; x++) {
+                    VirtualMEMonitorableSlot slot = new VirtualMEMonitorableSlot(
                         (this.absX - this.parent.getGuiLeft() + 5) + x * 18,
                         (this.absY + 18 - this.parent.getGuiTop()) + y * 18,
                         this.repo,
                         x + y * this.perRow,
-                        type -> true));
+                        type -> true);
+                    this.virtualSlots.add(slot);
+                    this.gui.registerMESlot(slot);
+                }
             }
         }
         this.offsetY = this.absY;
@@ -439,8 +455,15 @@ public class ItemPanel
     private void reInitalize() {
         final boolean wasFocused = this.searchField != null && this.searchField.isFocused();
         this.gui.getButtonList()
-            .clear();
-        this.initGui();
+            .remove(this.SortByBox);
+        this.gui.getButtonList()
+            .remove(this.ViewBox);
+        this.gui.getButtonList()
+            .remove(this.SortDirBox);
+        this.gui.getButtonList()
+            .remove(this.searchBoxSettings);
+        this.typeFilter.removeButtonsFrom(this.gui.getButtonList());
+        this.initGui(false);
         if (wasFocused) {
             this.searchField.setFocused(true);
         }
@@ -547,7 +570,7 @@ public class ItemPanel
 
     @Override
     public boolean draggable() {
-        return false;
+        return true;
     }
 
     @Override
@@ -559,6 +582,28 @@ public class ItemPanel
     public void setRectangle(int x, int y) {
         this.absX = x;
         this.absY = y;
+        this.updateLayout();
+    }
+
+    private void updateLayout() {
+        if (this.searchField == null) return;
+        this.searchField.x = this.absX + 3;
+        this.searchField.y = this.absY + 4;
+        this.SortByBox.xPosition = this.absX - 18;
+        this.SortByBox.yPosition = this.absY;
+        this.ViewBox.xPosition = this.absX - 18;
+        this.ViewBox.yPosition = this.absY + 20;
+        this.SortDirBox.xPosition = this.absX - 18;
+        this.SortDirBox.yPosition = this.absY + 40;
+        this.searchBoxSettings.xPosition = this.absX - 18;
+        this.searchBoxSettings.yPosition = this.absY + 60;
+        this.typeFilter.setPosition(this.absX - 36, this.absY);
+        this.setScrollBar();
+        for (VirtualMEMonitorableSlot slot : this.virtualSlots) {
+            int index = slot.getSlotIndex();
+            slot.setX(this.absX - this.parent.getGuiLeft() + 5 + index % this.perRow * 18);
+            slot.setY(this.absY - this.parent.getGuiTop() + 18 + index / this.perRow * 18);
+        }
     }
 
     @Override
