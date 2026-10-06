@@ -3,6 +3,7 @@ package com.asdflj.ae2thing.client.me;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
@@ -28,6 +29,7 @@ import appeng.api.storage.data.IItemList;
 import appeng.client.gui.widgets.IScrollSource;
 import appeng.client.gui.widgets.ISortSource;
 import appeng.client.me.ItemRepo;
+import appeng.me.cache.ItemFlowGridCache.FlowRate;
 
 public class AdvItemRepo extends ItemRepo implements Runnable {
 
@@ -98,6 +100,18 @@ public class AdvItemRepo extends ItemRepo implements Runnable {
             repo.setViewCell(list);
         }
         super.setViewCell(list);
+    }
+
+    /**
+     * Flow rates drive the FLOWING view mode, which the background repo is the one to actually evaluate, so they must
+     * reach it as well as the outer instance.
+     */
+    @Override
+    public void updateFlowRates(final Map<IAEStack<?>, FlowRate> rates) {
+        if (this.hasCache()) {
+            repo.updateFlowRates(rates);
+        }
+        super.updateFlowRates(rates);
     }
 
     @Override

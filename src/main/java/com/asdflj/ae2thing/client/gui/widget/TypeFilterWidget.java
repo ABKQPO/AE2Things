@@ -70,6 +70,20 @@ public class TypeFilterWidget {
     }
 
     /**
+     * Pushes the current filter state onto the already-created toggle buttons, so a filter map received from the server
+     * is reflected in the button visuals instead of only in the repo.
+     */
+    public void syncButtonState() {
+        if (this.filters == null) {
+            return;
+        }
+        for (final Map.Entry<TypeToggleButton, IAEStackType<?>> entry : this.buttons.entrySet()) {
+            entry.getKey()
+                .setEnabled(this.filters.getBoolean(entry.getValue()));
+        }
+    }
+
+    /**
      * @return true when the click hit a type-toggle button and was handled.
      */
     public boolean handleButtonClick(GuiButton btn) {

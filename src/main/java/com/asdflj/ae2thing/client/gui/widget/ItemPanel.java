@@ -4,7 +4,9 @@ import static appeng.client.gui.AEBaseGui.isCtrlKeyDown;
 import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import net.minecraft.client.Minecraft;
@@ -32,6 +34,7 @@ import com.glodblock.github.common.item.ItemFluidDrop;
 import appeng.api.config.SearchBoxMode;
 import appeng.api.config.Settings;
 import appeng.api.config.TerminalStyle;
+import appeng.api.config.ViewItems;
 import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
@@ -43,7 +46,6 @@ import appeng.client.gui.slots.VirtualMESlot;
 import appeng.client.gui.widgets.GuiImgButton;
 import appeng.client.gui.widgets.GuiScrollbar;
 import appeng.client.gui.widgets.IDropToFillTextField;
-import appeng.client.gui.widgets.ISortSource;
 import appeng.container.AEBaseContainer;
 import appeng.core.AEConfig;
 import appeng.core.AELog;
@@ -52,12 +54,15 @@ import appeng.core.sync.packets.PacketMonitorableAction;
 import appeng.core.sync.packets.PacketValueConfig;
 import appeng.helpers.InventoryAction;
 import appeng.helpers.MonitorableAction;
+import appeng.me.cache.ItemFlowGridCache.FlowRate;
 import appeng.util.IConfigManagerHost;
 import appeng.util.Platform;
 import codechicken.nei.LayoutManager;
 import codechicken.nei.util.TextHistory;
+import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
-public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigManagerHost, IDropToFillTextField {
+public class ItemPanel
+    implements IAEBasePanel, IGuiMonitorTerminal, IConfigManagerHost, IDropToFillTextField, IFlowRateGui {
 
     private final BaseMEGui parent;
     private final IWidgetGui gui;
@@ -74,31 +79,35 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     private final int w;
     private final int h;
     private int offsetY;
-    private final boolean showViewBtn = true;
     private GuiImgButton SortByBox;
     private GuiImgButton ViewBox;
     private GuiImgButton SortDirBox;
     private GuiImgButton searchBoxSettings;
+    private final TypeFilterWidget typeFilter;
     private static String memoryText = "";
     private final TextHistory history;
+    private boolean needsViewUpdate = false;
 
-    public ItemPanel(IWidgetGui gui, ContainerWirelessDualInterfaceTerminal container, IConfigManager configSrc,
-        ISortSource source) {
+    public ItemPanel(IWidgetGui gui, ContainerWirelessDualInterfaceTerminal container, IConfigManager configSrc) {
         this.gui = gui;
         this.container = container;
         this.parent = gui.getGui();
         this.inventorySlots = this.container;
         this.configSrc = configSrc;
         this.scrollbar = new GuiScrollbar();
-        this.repo = new AdvItemRepo(scrollbar, source);
-        this.repo.setCache(this);
-        this.repo.setPowered(true);
         this.w = 101;
         this.h = 96;
-        this.repo.setRowSize(4);
         this.rows = 4;
         this.perRow = 4;
         this.history = Ae2ReflectClient.getHistory(LayoutManager.searchField);
+        // The type filter must exist before the repo is built: this panel is the repo's sort source, so the repo reads
+        // this filter directly and would otherwise see a null filter.
+        this.typeFilter = new TypeFilterWidget(this.inventorySlots.windowId);
+        this.typeFilter.setFilters(TypeFilterWidget.createDefaultFilters());
+        this.repo = new AdvItemRepo(scrollbar, this);
+        this.repo.setCache(this);
+        this.repo.setPowered(true);
+        this.repo.setRowSize(4);
     }
 
     public void saveSearchString() {
@@ -151,7 +160,13 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     }
 
     @Override
-    public void drawScreen(int mouseX, int mouseY, float btn) {}
+    public void drawScreen(int mouseX, int mouseY, float btn) {
+        if (this.needsViewUpdate) {
+            this.needsViewUpdate = false;
+            this.repo.updateView();
+            this.setScrollBar();
+        }
+    }
 
     @Override
     public void initGui() {
@@ -186,16 +201,14 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
                     this.configSrc.getSetting(Settings.SORT_BY)));
         this.offsetY += 20;
 
-        if (this.showViewBtn) {
-            this.gui.getButtonList()
-                .add(
-                    this.ViewBox = new GuiImgButton(
-                        this.absX - 18,
-                        this.offsetY,
-                        Settings.VIEW_MODE,
-                        this.configSrc.getSetting(Settings.VIEW_MODE)));
-            this.offsetY += 20;
-        }
+        this.gui.getButtonList()
+            .add(
+                this.ViewBox = new GuiImgButton(
+                    this.absX - 18,
+                    this.offsetY,
+                    Settings.VIEW_MODE,
+                    this.configSrc.getSetting(Settings.VIEW_MODE)));
+        this.offsetY += 20;
 
         this.gui.getButtonList()
             .add(
@@ -226,6 +239,7 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
             this.repo.updateView();
         }
         this.setScrollBar();
+        this.typeFilter.init(this.gui.getButtonList(), this.absX - 36, this.absY);
     }
 
     @Override
@@ -388,11 +402,20 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
 
     @Override
     public boolean actionPerformed(GuiButton btn) {
+        if (this.typeFilter.handleButtonClick(btn)) {
+            this.getRepo().updateView();
+            return true;
+        }
         if (btn instanceof final GuiImgButton iBtn) {
             final boolean backwards = Mouse.isButtonDown(1);
             if (iBtn.getSetting() != Settings.ACTIONS) {
+                EnumSet<?> validOptions = iBtn.getSetting().getPossibleValues();
+                if (btn == this.ViewBox && !this.container.flowTrackingActive) {
+                    validOptions = EnumSet.copyOf(validOptions);
+                    validOptions.remove(ViewItems.FLOWING);
+                }
                 final Enum<?> cv = iBtn.getCurrentValue();
-                final Enum<?> next = Platform.rotateEnum(cv, backwards, iBtn.getSetting().getPossibleValues());
+                final Enum<?> next = Platform.rotateEnum(cv, backwards, validOptions);
                 if (btn == this.searchBoxSettings) {
                     AEConfig.instance.settings.putSetting(iBtn.getSetting(), next);
                 } else if (btn == this.SortByBox || btn == this.SortDirBox || btn == this.ViewBox) {
@@ -414,9 +437,13 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     }
 
     private void reInitalize() {
+        final boolean wasFocused = this.searchField != null && this.searchField.isFocused();
         this.gui.getButtonList()
             .clear();
         this.initGui();
+        if (wasFocused) {
+            this.searchField.setFocused(true);
+        }
     }
 
     @Override
@@ -561,6 +588,21 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
         return this.configSrc.getSetting(Settings.VIEW_MODE);
     }
 
+    /**
+     * Feeds the type filter into the repo. This panel is the repo's sort source on both the synchronous and the
+     * background-update path, so implementing it here is what actually makes the type toggles affect the item list.
+     */
+    @Override
+    public Reference2BooleanMap<IAEStackType<?>> getTypeFilter() {
+        return this.typeFilter.getFilters();
+    }
+
+    @Override
+    public void updateFlowRates(Map<IAEStack<?>, FlowRate> rates) {
+        this.repo.updateFlowRates(rates);
+        this.needsViewUpdate = true;
+    }
+
     @Override
     public void onGuiClosed() {
         memoryText = this.searchField.getText();
@@ -600,5 +642,9 @@ public class ItemPanel implements IAEBasePanel, IGuiMonitorTerminal, IConfigMana
     @Override
     public THGuiTextField getSearchField() {
         return this.searchField;
+    }
+
+    public TypeFilterWidget typeFilter() {
+        return this.typeFilter;
     }
 }

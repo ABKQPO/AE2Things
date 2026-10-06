@@ -35,6 +35,9 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
     private GuiAeButton startWithFollow;
 
     @Shadow(remap = false)
+    private GuiButton cancel;
+
+    @Shadow(remap = false)
     @Final
     @Mutable
     private IItemList<IAEStack<?>> storage;
@@ -59,8 +62,13 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
         super(container);
     }
 
-    @Inject(method = "actionPerformed", at = @At(value = "HEAD"))
+    @Inject(method = "actionPerformed", at = @At(value = "HEAD"), cancellable = true)
     private void actionPerformed(GuiButton btn, CallbackInfo ci) {
+        if (btn == this.cancel) {
+            AE2Thing.proxy.netHandler.sendToServer(new CPacketTerminalBtns("GuiCraftConfirm.cancel", true));
+            ci.cancel();
+            return;
+        }
         if (btn == start || btn == startWithFollow) {
             clickStart = true;
         } else if (btn == replan) {

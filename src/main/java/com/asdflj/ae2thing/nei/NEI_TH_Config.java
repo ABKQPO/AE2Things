@@ -1,7 +1,12 @@
 package com.asdflj.ae2thing.nei;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import net.minecraftforge.common.MinecraftForge;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.Tags;
@@ -11,16 +16,21 @@ import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.nei.recipes.FluidRecipe;
 import com.github.vfyjxf.nee.nei.NEETerminalBookmarkContainerHandler;
+import com.github.vfyjxf.nee.processor.IRecipeProcessor;
+import com.github.vfyjxf.nee.processor.RecipeProcessor;
 
 import codechicken.lib.config.ConfigTagParent;
 import codechicken.nei.NEIClientConfig;
 import codechicken.nei.api.API;
 import codechicken.nei.api.IConfigureNEI;
+import codechicken.nei.event.NEIConfigsLoadedEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 @SuppressWarnings("unused")
 public class NEI_TH_Config implements IConfigureNEI {
 
     private static final ConfigTagParent tag = NEIClientConfig.global.config;
+    private static boolean registered = false;
 
     @Override
     public void loadConfig() {
@@ -72,6 +82,11 @@ public class NEI_TH_Config implements IConfigureNEI {
             API.registerBookmarkContainerHandler(
                 GuiWirelessDualInterfaceTerminal.class,
                 NEETerminalBookmarkContainerHandler.instance);
+
+            if (!registered) {
+                MinecraftForge.EVENT_BUS.register(this);
+                registered = true;
+            }
         }
     }
 
@@ -88,5 +103,26 @@ public class NEI_TH_Config implements IConfigureNEI {
     @Override
     public String getVersion() {
         return Tags.VERSION;
+    }
+
+    @SubscribeEvent
+    public void installNeeRecipeProcessor(NEIConfigsLoadedEvent event) {
+        Set<String> defaultIdentifiers = new HashSet<>(
+            Arrays.asList("crafting", "crafting2x2", "brewing", "smelting", "fuel", null));
+        Set<String> identifiers = new HashSet<>(defaultIdentifiers);
+
+        RecipeProcessor.recipeProcessors.stream()
+            .map(IRecipeProcessor::getAllOverlayIdentifier)
+            .forEach(identifiers::addAll);
+
+        for (String identifier : identifiers) {
+            if (!API.hasGuiOverlayHandler(GuiWirelessDualInterfaceTerminal.class, identifier)) {
+                API.registerGuiOverlay(GuiWirelessDualInterfaceTerminal.class, identifier);
+                API.registerGuiOverlayHandler(
+                    GuiWirelessDualInterfaceTerminal.class,
+                    PatternTerminalRecipeTransferHandler.INSTANCE,
+                    identifier);
+            }
+        }
     }
 }

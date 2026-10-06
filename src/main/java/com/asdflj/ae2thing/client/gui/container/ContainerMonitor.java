@@ -6,6 +6,7 @@ import static com.asdflj.ae2thing.api.Constants.MessageType.UPDATE_PLAYER_ITEM;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
@@ -27,6 +28,7 @@ import com.asdflj.ae2thing.client.gui.container.BaseMonitor.FluidMonitor;
 import com.asdflj.ae2thing.client.gui.container.BaseMonitor.ItemMonitor;
 import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.item.INetworkTerminal;
+import com.asdflj.ae2thing.network.SPacketFlowRates;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 import com.asdflj.ae2thing.network.SPacketTypeFilter;
 import com.asdflj.ae2thing.util.HBMAeAddonUtil;
@@ -39,6 +41,7 @@ import appeng.api.config.Settings;
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
 import appeng.api.config.ViewItems;
+import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.networking.storage.IBaseMonitor;
@@ -55,11 +58,16 @@ import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
+import appeng.container.sync.SyncRegistrar;
+import appeng.container.sync.handlers.BooleanSyncHandler;
+import appeng.core.AEConfig;
 import appeng.core.AELog;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketValueConfig;
 import appeng.helpers.IContainerCraftingPacket;
 import appeng.helpers.MonitorableAction;
+import appeng.me.cache.ItemFlowGridCache;
+import appeng.me.cache.ItemFlowGridCache.FlowRate;
 import appeng.tile.inventory.IAEAppEngInventory;
 import appeng.util.ConfigManager;
 import appeng.util.IConfigManagerHost;
@@ -87,6 +95,15 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
     protected IGridNode networkNode;
     private boolean typeFilterSynced = false;
 
+    /**
+     * Whether the network currently tracks item flow, mirrored to the client so the view-mode button can hide the
+     * FLOWING option when it would only ever show an empty list.
+     */
+    public boolean flowTrackingActive = false;
+    private BooleanSyncHandler flowTrackingSync;
+    private int flowRateSyncCounter = 0;
+    private boolean lastFlowRatesEmpty = true;
+
     public ContainerMonitor(InventoryPlayer ip, ITerminalHost monitorable) {
         super(ip, monitorable);
         this.host = monitorable;
@@ -96,12 +113,81 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
         this.clientCM.registerSetting(Settings.SORT_DIRECTION, SortDir.ASCENDING);
         this.monitor = new ItemMonitor(this.crafters);
         this.fluidMonitor = new FluidMonitor(this.crafters);
+        final SyncRegistrar sync = this.syncRegistrar();
+        this.flowTrackingSync = sync.booleanS2C("flowTrackingActive")
+            .onClientChange((_, newValue) -> { this.flowTrackingActive = newValue; });
         if (Platform.isServer()) {
             if (monitorable instanceof INetworkTerminal) {
                 this.networkNode = ((INetworkTerminal) monitorable).getGridNode();
             }
             this.serverCM = monitorable.getConfigManager();
             this.setMonitor();
+            this.monitor.registerCraftableListener(this.getFlowGrid());
+        }
+    }
+
+    /**
+     * @return the grid to query for item flow rates, or null when this terminal has no network access.
+     */
+    protected IGrid getFlowGrid() {
+        return this.networkNode == null ? null : this.networkNode.getGrid();
+    }
+
+    /**
+     * Refreshes whether flow tracking is available, and clears a persisted FLOWING view mode that would otherwise leave
+     * the terminal showing an empty list forever.
+     */
+    private void updateFlowTrackingState() {
+        boolean active = false;
+
+        if (AEConfig.instance.enableItemFlowTracking) {
+            final IGrid grid = this.getFlowGrid();
+            if (grid != null) {
+                final ItemFlowGridCache flowCache = grid.getCache(ItemFlowGridCache.class);
+                active = flowCache != null && flowCache.isTrackingEnabled();
+            }
+        }
+
+        this.flowTrackingActive = active;
+        this.flowTrackingSync.set(active);
+
+        if (!active && this.serverCM != null && this.serverCM.getSetting(Settings.VIEW_MODE) == ViewItems.FLOWING) {
+            this.serverCM.putSetting(Settings.VIEW_MODE, ViewItems.ALL);
+        }
+    }
+
+    private void updateFlowRates() {
+        if (!this.flowTrackingActive) {
+            return;
+        }
+
+        if (++this.flowRateSyncCounter < 10) {
+            return;
+        }
+
+        this.flowRateSyncCounter = 0;
+
+        final IGrid grid = this.getFlowGrid();
+        if (grid == null) {
+            return;
+        }
+
+        final ItemFlowGridCache flowCache = grid.getCache(ItemFlowGridCache.class);
+        if (flowCache == null) {
+            return;
+        }
+
+        final Map<IAEStack<?>, FlowRate> rates = flowCache.getAllRecentFlow();
+        if (rates.isEmpty() && this.lastFlowRatesEmpty) {
+            return;
+        }
+        this.lastFlowRatesEmpty = rates.isEmpty();
+
+        final SPacketFlowRates packet = new SPacketFlowRates(rates);
+        for (final Object c : this.crafters) {
+            if (c instanceof EntityPlayerMP player) {
+                AE2Thing.proxy.netHandler.sendTo(packet, player);
+            }
         }
     }
 
@@ -476,6 +562,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
             if (isInvalid()) {
                 this.setValidContainer(false);
             }
+            this.updateFlowTrackingState();
             if (this.serverCM != null) {
                 for (final Settings set : this.serverCM.getSettings()) {
                     final Enum<?> sideLocal = this.serverCM.getSetting(set);
@@ -497,6 +584,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
             }
             processItemList();
             syncTypeFilter();
+            updateFlowRates();
             super.detectAndSendChanges();
         }
     }
@@ -555,6 +643,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
     @Override
     public void onContainerClosed(final EntityPlayer player) {
         super.onContainerClosed(player);
+        this.monitor.unregisterCraftableListener();
         if (this.monitor.getMonitor() != null) this.monitor.removeListener();
     }
 

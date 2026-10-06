@@ -3,6 +3,7 @@ package com.asdflj.ae2thing.client.gui;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.renderer.entity.RenderItem;
@@ -20,13 +21,13 @@ import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTe
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.client.gui.widget.IAEBasePanel;
 import com.asdflj.ae2thing.client.gui.widget.IDraggable;
+import com.asdflj.ae2thing.client.gui.widget.IFlowRateGui;
 import com.asdflj.ae2thing.client.gui.widget.IGuiMonitor;
 import com.asdflj.ae2thing.client.gui.widget.IGuiSelection;
 import com.asdflj.ae2thing.client.gui.widget.ITypeFilterGui;
 import com.asdflj.ae2thing.client.gui.widget.ItemPanel;
 import com.asdflj.ae2thing.client.gui.widget.PatternPanel;
 import com.asdflj.ae2thing.client.gui.widget.THGuiTextField;
-import com.asdflj.ae2thing.client.gui.widget.TypeFilterWidget;
 import com.asdflj.ae2thing.client.me.AdvItemRepo;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
@@ -43,18 +44,18 @@ import appeng.client.gui.slots.VirtualMEMonitorableSlot;
 import appeng.client.gui.slots.VirtualMESlot;
 import appeng.client.gui.widgets.GuiTabButton;
 import appeng.client.gui.widgets.IDropToFillTextField;
-import appeng.client.gui.widgets.ISortSource;
 import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotPatternTerm;
 import appeng.container.slot.SlotRestrictedInput;
 import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.GuiText;
+import appeng.me.cache.ItemFlowGridCache.FlowRate;
 import appeng.util.IConfigManagerHost;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless implements IWidgetGui, IGuiDrawSlot,
-    IGuiMonitorTerminal, ISortSource, IConfigManagerHost, IGuiSelection, IDropToFillTextField, ITypeFilterGui {
+    IGuiMonitorTerminal, IConfigManagerHost, IGuiSelection, IDropToFillTextField, ITypeFilterGui, IFlowRateGui {
 
     public ContainerWirelessDualInterfaceTerminal container;
     private GuiTabButton craftingStatusBtn;
@@ -65,16 +66,13 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private Point mouse;
     private boolean dragging = false;
     private final ItemPanel itemPanel;
-    private final TypeFilterWidget typeFilter;
     private IAEItemStack blankPatternView = IPatternTerminal.createBlankPattern()
         .setStackSize(0);
 
     public GuiWirelessDualInterfaceTerminal(InventoryPlayer inventoryPlayer, ITerminalHost te) {
         super(inventoryPlayer, te);
         container = (ContainerWirelessDualInterfaceTerminal) this.inventorySlots;
-        this.typeFilter = new TypeFilterWidget(this.inventorySlots.windowId);
-        this.typeFilter.setFilters(TypeFilterWidget.createDefaultFilters());
-        this.itemPanel = new ItemPanel(this, container, this.configSrc, this);
+        this.itemPanel = new ItemPanel(this, container, this.configSrc);
         this.panels.add(new PatternPanel(this, container));
         this.panels.add(this.itemPanel);
         ((ContainerMonitor) this.inventorySlots).setGui(this);
@@ -274,7 +272,6 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                 GuiText.CraftingStatus.getLocal(),
                 itemRender));
         this.craftingStatusBtn.setHideEdge(13); // GuiTabButton implementation //
-        this.typeFilter.init(this.buttonList, this.guiLeft - 18, this.guiTop + 8);
     }
 
     @Override
@@ -327,11 +324,6 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     protected void actionPerformed(final GuiButton btn) {
-        if (this.typeFilter.handleButtonClick(btn)) {
-            this.itemPanel.getRepo()
-                .updateView();
-            return;
-        }
         if (this.craftingStatusBtn == btn) {
             AE2Thing.proxy.netHandler.sendToServer(new CPacketSwitchGuis(GuiType.CRAFTING_STATUS_ITEM));
         }
@@ -425,15 +417,18 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     @Override
-    public Reference2BooleanMap<IAEStackType<?>> getTypeFilter() {
-        return this.typeFilter.getFilters();
+    public void updateTypeFilters(Reference2BooleanMap<IAEStackType<?>> map) {
+        this.itemPanel.typeFilter()
+            .setFilters(map);
+        this.itemPanel.typeFilter()
+            .syncButtonState();
+        this.itemPanel.getRepo()
+            .updateView();
     }
 
     @Override
-    public void updateTypeFilters(Reference2BooleanMap<IAEStackType<?>> map) {
-        this.typeFilter.setFilters(map);
-        this.itemPanel.getRepo()
-            .updateView();
+    public void updateFlowRates(Map<IAEStack<?>, FlowRate> rates) {
+        this.itemPanel.updateFlowRates(rates);
     }
 
     @Override

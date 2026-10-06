@@ -44,6 +44,8 @@ public class CPacketCraftRequest implements IMessage {
 
     private long amount;
     private boolean heldShift;
+    private boolean heldCtrl;
+    private boolean liteMode;
     private IAEItemStack item = null;
     private Mode mode;
     private CraftingMode craftingMode;
@@ -77,10 +79,23 @@ public class CPacketCraftRequest implements IMessage {
         this(craftAmt, shift, CraftingMode.STANDARD);
     }
 
+    /** Mirrors upstream's {@code PacketCraftRequest}, which also carries ctrl and the lite crafting mode. */
+    public CPacketCraftRequest(final long craftAmt, final boolean shift, final boolean ctrl,
+        final CraftingMode currentValue, final boolean liteMode) {
+        this.amount = craftAmt;
+        this.heldShift = shift;
+        this.heldCtrl = ctrl;
+        this.mode = Mode.STACK_SIZE;
+        this.craftingMode = currentValue;
+        this.liteMode = liteMode;
+    }
+
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeByte(mode.ordinal());
         buf.writeByte(craftingMode.ordinal());
+        buf.writeBoolean(heldCtrl);
+        buf.writeBoolean(liteMode);
         if (mode == Mode.ITEM) {
             try {
                 item.writeToPacket(buf);
@@ -99,6 +114,8 @@ public class CPacketCraftRequest implements IMessage {
     public void fromBytes(ByteBuf buf) {
         mode = PacketDecodeUtil.readByteEnum(buf, Mode.values(), "craft request mode");
         craftingMode = PacketDecodeUtil.readByteEnum(buf, CraftingMode.values(), "crafting mode");
+        heldCtrl = buf.readBoolean();
+        liteMode = buf.readBoolean();
         if (mode == Mode.ITEM) {
             try {
                 item = AEItemStack.loadItemStackFromPacket(buf);
@@ -147,7 +164,7 @@ public class CPacketCraftRequest implements IMessage {
                                 cca.getActionSrc(),
                                 cca.getItemToCraft(),
                                 message.craftingMode,
-                                cgc.getLiteCraftingDefault(),
+                                message.liteMode,
                                 null);
                         } else {
                             futureJob = cg.beginCraftingJob(
@@ -179,7 +196,7 @@ public class CPacketCraftRequest implements IMessage {
 
                             if (player.openContainer instanceof final ContainerCraftConfirm ccc) {
                                 ccc.setItemToCraft(cca.getItemToCraft());
-                                ccc.setAutoStart(message.heldShift);
+                                ccc.setAutoStart(message.heldShift || message.heldCtrl);
                                 ccc.setJob(futureJob);
                                 ccc.detectAndSendChanges();
                             }
@@ -219,7 +236,7 @@ public class CPacketCraftRequest implements IMessage {
                                 new PlayerSource(player, (IActionHost)target),
                                 message.item,
                                 message.craftingMode,
-                                cgc.getLiteCraftingDefault(),
+                                message.liteMode,
                                 null);
                         } else {
                             futureJob = cg.beginCraftingJob(
@@ -239,7 +256,7 @@ public class CPacketCraftRequest implements IMessage {
                             }
                             if (player.openContainer instanceof final ContainerCraftConfirm ccc) {
                                 ccc.setItemToCraft(message.item);
-                                ccc.setAutoStart(message.heldShift);
+                                ccc.setAutoStart(message.heldShift || message.heldCtrl);
                                 ccc.setJob(futureJob);
                                 ccc.detectAndSendChanges();
                             }
