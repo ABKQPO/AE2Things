@@ -26,6 +26,8 @@ import net.minecraftforge.fluids.IFluidContainerItem;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
+import com.asdflj.ae2thing.api.adapter.pattern.DualInterfacePatternTarget;
+import com.asdflj.ae2thing.api.adapter.pattern.DualInterfacePatternValidators;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.client.gui.container.widget.IWidgetPatternContainer;
 import com.asdflj.ae2thing.client.gui.container.widget.PatternContainer;
@@ -74,8 +76,10 @@ import appeng.me.cache.CraftingGridCache;
 import appeng.me.helpers.ChannelPowerSrc;
 import appeng.tile.inventory.InvOperation;
 import appeng.tile.networking.TileCableBus;
+import appeng.util.InventoryAdaptor;
 import appeng.util.PatternMultiplierHelper;
 import appeng.util.Platform;
+import appeng.util.inv.AdaptorPlayerHand;
 import appeng.util.item.AEFluidStackType;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.AEItemStackType;
@@ -254,6 +258,9 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     public void doAction(final EntityPlayerMP player, final InventoryAction action, final int slotId, final long id) {
         try {
             if (id >= 0) {
+                if (this.handleExtendedPatternAction(player, action, slotId, id)) {
+                    return;
+                }
                 delegateContainer.doAction(player, action, slotId, id);
             } else if (id == -1) {
                 Slot s = this.inventorySlots.get(slotId);
@@ -305,6 +312,33 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
         }
     }
 
+    private boolean handleExtendedPatternAction(EntityPlayerMP player, InventoryAction action, int slotId, long id) {
+        if (action != InventoryAction.PICKUP_OR_SET_DOWN) return false;
+        ItemStack handStack = player.inventory.getItemStack();
+        if (handStack == null) return false;
+        DualInterfacePatternTarget target = Ae2Reflect.getPatternTarget(this.delegateContainer, id);
+        if (!DualInterfacePatternValidators.accepts(handStack, target, player)) return false;
+        IInventory patterns = target.patterns();
+        if (slotId < 0 || slotId >= target.numSlots() || slotId >= patterns.getSizeInventory()) return true;
+        for (int slot = 0; slot < patterns.getSizeInventory(); slot++) {
+            if (Platform.isSameItemPrecise(patterns.getStackInSlot(slot), handStack)) return true;
+        }
+        ItemStack slotStack = patterns.getStackInSlot(slotId);
+        if (slotStack == null) {
+            if (!patterns.isItemValidForSlot(slotId, handStack)) return true;
+            InventoryAdaptor playerHand = new AdaptorPlayerHand(player);
+            patterns.setInventorySlotContents(slotId, playerHand.removeItems(1, null, null));
+        } else {
+            if (handStack.stackSize > 1 || !patterns.isItemValidForSlot(slotId, handStack)) return true;
+            InventoryAdaptor playerHand = new AdaptorPlayerHand(player);
+            patterns.setInventorySlotContents(slotId, playerHand.removeItems(1, null, null));
+            playerHand.addItems(slotStack.copy());
+        }
+        this.delegateContainer.scheduleUpdate();
+        this.updateHeld(player);
+        return true;
+    }
+
     protected boolean validPatternSlot(Slot slot) {
         return slot instanceof SlotPatternFake || slot instanceof SlotPatternOutputs;
     }
@@ -335,6 +369,10 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
 
     @Override
     public IPatternContainer getContainer() {
+        return this.patternPanel;
+    }
+
+    public IPatternContainer getPatternContainer() {
         return this.patternPanel;
     }
 

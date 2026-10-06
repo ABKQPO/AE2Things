@@ -18,6 +18,12 @@ public interface IPatternContainer {
 
     void encode();
 
+    default ItemStack encodeAndGetPattern() {
+        encode();
+        Slot output = getPatternOutputSlot();
+        return output == null ? null : output.getStack();
+    }
+
     void encodeAndMoveToInventory();
 
     void encodeAllItemAndMoveToInventory();
