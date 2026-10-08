@@ -37,17 +37,6 @@ import appeng.tile.inventory.InvOperation;
 import appeng.util.ConfigManager;
 import appeng.util.item.AEItemStack;
 
-/**
- * Adapts AE2Things' slot based pattern terminal ({@link com.asdflj.ae2thing.inventory.IPatternTerminal} backed by
- * {@code AppEngInternalInventory} fake slots) to AE2's {@link appeng.api.parts.IPatternTerminal}, so that writing a
- * pattern is done by AE2's own {@link PatternEncodingHelper} instead of a second, diverging implementation living in
- * this mod.
- * <p>
- * The encoder only ever uses a small part of the interface: the AE stack views of the input/output inventories, the
- * {@code "pattern"} inventory, the crafting/substitute flags and the encode listeners. Everything else is implemented
- * as a harmless stub, because an instance of this bridge is created per encode call and never escapes into AE2's
- * machinery.
- */
 public class PatternEncodingBridge implements appeng.api.parts.IPatternTerminal {
 
     private final com.asdflj.ae2thing.inventory.IPatternTerminal terminal;
@@ -88,11 +77,6 @@ public class PatternEncodingBridge implements appeng.api.parts.IPatternTerminal 
         }
     }
 
-    /**
-     * Writes a pattern for the given terminal using AE2's {@link PatternEncodingHelper}.
-     *
-     * @return whether a pattern was written to the terminal's pattern output slot.
-     */
     public static boolean encode(final com.asdflj.ae2thing.inventory.IPatternTerminal terminal,
         final boolean craftingMode, final boolean substitution, final boolean beSubstitution,
         final IMEMonitor<IAEItemStack> itemMonitor, final IEnergySource powerSource,
