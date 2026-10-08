@@ -31,6 +31,7 @@ import com.asdflj.ae2thing.client.gui.widget.IGuiMonitor;
 import com.asdflj.ae2thing.client.gui.widget.IGuiSelection;
 import com.asdflj.ae2thing.client.gui.widget.ITypeFilterGui;
 import com.asdflj.ae2thing.client.gui.widget.ItemPanel;
+import com.asdflj.ae2thing.client.gui.widget.PanelDragButton;
 import com.asdflj.ae2thing.client.gui.widget.PatternPanel;
 import com.asdflj.ae2thing.client.gui.widget.THGuiTextField;
 import com.asdflj.ae2thing.client.me.AdvItemRepo;
@@ -69,6 +70,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     public ContainerWirelessDualInterfaceTerminal container;
     private GuiTabButton craftingStatusBtn;
+    private PanelDragButton patternDragButton;
+    private PanelDragButton itemDragButton;
     private final int baseXSize;
     private final DualTerminalComponentTree componentTree = new DualTerminalComponentTree();
     private IAEBasePanel activePanel = null;
@@ -79,6 +82,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private int lastMouseX;
     private int lastMouseY;
     private boolean panelPositionsDirty;
+    private boolean panelPositionsInitialized;
     private final ItemPanel itemPanel;
     private final PatternPanel patternPanel;
     private final List<DualTerminalComponentTree.Component> itemSlotComponents = new ArrayList<>();
@@ -311,6 +315,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         if (dragging) {
             this.moveActivePanel();
         }
+        this.updateDragButtons();
         for (IAEBasePanel panel : this.componentTree.getPanels()) {
             if (panel.isActive()) {
                 panel.drawScreen(mouseX, mouseY, btn);
@@ -355,9 +360,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         if (this.pointerPanel != null) {
             this.bringToFront(this.pointerPanel);
             this.clearBaseSearchFocus();
-            if (btn == 0 && this.pointerPanel.draggable()
-                && this.componentTree.isDraggableAt(this.pointerPanel, xCoord, yCoord)
-                && !this.isInteractiveAt(this.pointerPanel, xCoord, yCoord)) {
+            if (btn == 0 && this.pointerPanel.draggable() && this.isDragButtonAt(this.pointerPanel, xCoord, yCoord)) {
                 this.beginDrag(this.pointerPanel, xCoord, yCoord);
                 return;
             }
@@ -616,6 +619,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     private void drawPanelComponents(int mouseX, int mouseY) {
+        this.updateDragButtons();
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         for (IAEBasePanel panel : this.componentTree.getPanels()) {
             if (!panel.isActive()) continue;
@@ -821,6 +825,11 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         }
         this.bindItemSlotsToComponents();
         this.restorePanelPositions();
+        this.patternDragButton = new PanelDragButton(0, 0);
+        this.itemDragButton = new PanelDragButton(0, 0);
+        this.buttonList.add(this.patternDragButton);
+        this.buttonList.add(this.itemDragButton);
+        this.updateDragButtons();
         this.buttonList.add(
             this.craftingStatusBtn = new GuiTabButton(
                 this.guiLeft + 184,
@@ -917,6 +926,21 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         this.moveActivePanel();
     }
 
+    private boolean isDragButtonAt(IAEBasePanel panel, int x, int y) {
+        PanelDragButton button = this.getPanelDragButton(panel);
+        return button != null && button.visible
+            && x >= button.xPosition
+            && x < button.xPosition + button.width
+            && y >= button.yPosition
+            && y < button.yPosition + button.height;
+    }
+
+    private PanelDragButton getPanelDragButton(IAEBasePanel panel) {
+        if (panel == this.patternPanel) return this.patternDragButton;
+        if (panel == this.itemPanel) return this.itemDragButton;
+        return null;
+    }
+
     private void moveActivePanel() {
         if (!this.dragging || this.activePanel == null || this.mouse == null) return;
         IDraggable.Rectangle rectangle = this.activePanel.getRectangle();
@@ -930,13 +954,24 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     private void restorePanelPositions() {
+        if (this.panelPositionsInitialized) {
+            IDraggable.Rectangle patternRectangle = this.patternPanel.getRectangle();
+            IDraggable.Rectangle itemRectangle = this.itemPanel.getRectangle();
+            this.patternPanel.setRectangle(
+                this.clampPanelX(patternRectangle.x(), patternRectangle.width()),
+                this.clampPanelY(patternRectangle.y(), PATTERN_DRAG_REGION_HEIGHT));
+            this.itemPanel.setRectangle(
+                this.clampPanelX(itemRectangle.x(), itemRectangle.width()),
+                this.clampPanelY(itemRectangle.y(), itemRectangle.height()));
+            return;
+        }
         NBTTagCompound positions = this.container.getPanelPositions();
         IDraggable.Rectangle patternRectangle = this.patternPanel.getRectangle();
         IDraggable.Rectangle itemRectangle = this.itemPanel.getRectangle();
-        int patternDefaultX = this.guiLeft + this.baseXSize + 8;
-        int patternDefaultY = this.guiTop + (this.ySize - patternRectangle.height()) / 2;
-        int itemDefaultX = this.guiLeft - itemRectangle.width() - 8;
-        int itemDefaultY = this.guiTop + (this.ySize - itemRectangle.height()) / 2;
+        int patternDefaultX = this.guiLeft + 209;
+        int patternDefaultY = this.guiTop;
+        int itemDefaultX = this.guiLeft - itemRectangle.width();
+        int itemDefaultY = this.guiTop + this.ySize - itemRectangle.height() + 45;
         this.patternPanel.setRectangle(
             this.clampPanelX(this.getPanelPosition(positions, "patternX", patternDefaultX), patternRectangle.width()),
             this.clampPanelY(
@@ -945,6 +980,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         this.itemPanel.setRectangle(
             this.clampPanelX(this.getPanelPosition(positions, "itemX", itemDefaultX), itemRectangle.width()),
             this.clampPanelY(this.getPanelPosition(positions, "itemY", itemDefaultY), itemRectangle.height()));
+        this.panelPositionsInitialized = true;
     }
 
     private int getPanelPosition(NBTTagCompound positions, String key, int defaultValue) {
@@ -987,6 +1023,25 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         }
     }
 
+    private void updateDragButtons() {
+        this.updateDragButton(this.patternDragButton, this.patternPanel);
+        this.updateDragButton(this.itemDragButton, this.itemPanel);
+    }
+
+    private void updateDragButton(PanelDragButton button, IAEBasePanel panel) {
+        if (button == null || panel == null) return;
+        IDraggable.Rectangle handle = panel.getDragHandle();
+        if (handle.x() + handle.width() > this.width) {
+            IDraggable.Rectangle rectangle = panel.getRectangle();
+            handle = new IDraggable.Rectangle(rectangle.x(), rectangle.y(), handle.width(), handle.height());
+        }
+        button.xPosition = handle.x();
+        button.yPosition = handle.y();
+        button.width = handle.width();
+        button.height = handle.height();
+        button.visible = panel.isActive();
+    }
+
     private void bringToFront(IAEBasePanel panel) {
         this.componentTree.bringToFront(panel);
         this.orderPanelButtons();
@@ -1011,8 +1066,12 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     private boolean ownsPanelButton(IAEBasePanel panel, GuiButton button) {
-        if (panel == this.patternPanel) return this.patternPanel.ownsButton(button);
-        if (panel == this.itemPanel) return this.itemPanel.ownsButton(button);
+        if (panel == this.patternPanel) {
+            return button == this.patternDragButton || this.patternPanel.ownsButton(button);
+        }
+        if (panel == this.itemPanel) {
+            return button == this.itemDragButton || this.itemPanel.ownsButton(button);
+        }
         return false;
     }
 
