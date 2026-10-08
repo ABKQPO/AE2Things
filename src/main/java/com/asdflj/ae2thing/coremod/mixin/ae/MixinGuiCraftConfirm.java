@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -35,9 +36,6 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
     private GuiAeButton startWithFollow;
 
     @Shadow(remap = false)
-    private GuiButton cancel;
-
-    @Shadow(remap = false)
     @Final
     @Mutable
     private IItemList<IAEStack<?>> storage;
@@ -55,42 +53,54 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
     @Shadow(remap = false)
     @Final
     private List<IAEStack<?>> filteredVisual;
+
+    @Shadow(remap = false)
+    private GuiCraftConfirm.DisplayMode displayMode;
+
     private GuiAeButton replan = null;
     private boolean clickStart = false;
+
+    @Unique
+    private boolean ae2thing$awaitingReplan = false;
+
+    @Unique
+    private boolean ae2thing$treeRequested = false;
 
     public MixinGuiCraftConfirm(Container container) {
         super(container);
     }
 
-    @Inject(method = "actionPerformed", at = @At(value = "HEAD"), cancellable = true)
+    @Inject(method = "actionPerformed", at = @At(value = "HEAD"))
     private void actionPerformed(GuiButton btn, CallbackInfo ci) {
-        if (btn == this.cancel) {
-            AE2Thing.proxy.netHandler.sendToServer(new CPacketTerminalBtns("GuiCraftConfirm.cancel", true));
-            ci.cancel();
-            return;
-        }
         if (btn == start || btn == startWithFollow) {
             clickStart = true;
         } else if (btn == replan) {
             clickStart = false;
             start.enabled = false;
             replan.visible = false;
-            // Rebuild instead of resetStatus(): zeroed entries stay in the list, and
-            // handleInput() only copies stackSize onto existing entries, dropping the
-            // incoming usedPercent -> "<0.01%" shown after replanning.
-            this.storage = AEApi.instance()
-                .storage()
-                .createAEStackList();
-            this.pending = AEApi.instance()
-                .storage()
-                .createAEStackList();
-            this.missing = AEApi.instance()
-                .storage()
-                .createAEStackList();
-            this.visual.clear();
-            this.filteredVisual.clear();
+            this.ae2thing$awaitingReplan = true;
+            this.ae2thing$treeRequested = false;
             AE2Thing.proxy.netHandler.sendToServer(new CPacketTerminalBtns("GuiCraftConfirm.replan", true));
         }
+    }
+
+    @Inject(method = "postUpdate", at = @At("HEAD"), remap = false)
+    public void postUpdate(List<IAEStack<?>> list, byte ref, CallbackInfo ci) {
+        if (!this.ae2thing$awaitingReplan) {
+            return;
+        }
+        this.ae2thing$awaitingReplan = false;
+        this.storage = AEApi.instance()
+            .storage()
+            .createAEStackList();
+        this.pending = AEApi.instance()
+            .storage()
+            .createAEStackList();
+        this.missing = AEApi.instance()
+            .storage()
+            .createAEStackList();
+        this.visual.clear();
+        this.filteredVisual.clear();
     }
 
     @Inject(method = "initGui", at = @At("TAIL"))
@@ -120,6 +130,9 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
                 startWithFollow.visible = true;
             }
         } catch (Exception ignored) {}
-
+        if (!this.ae2thing$treeRequested && this.displayMode == GuiCraftConfirm.DisplayMode.TREE) {
+            this.ae2thing$treeRequested = true;
+            AE2Thing.proxy.netHandler.sendToServer(new CPacketTerminalBtns("GuiCraftConfirm.requestTree", true));
+        }
     }
 }

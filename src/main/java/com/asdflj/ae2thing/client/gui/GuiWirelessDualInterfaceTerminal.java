@@ -427,6 +427,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     protected void handleMouseClick(Slot slot, int slotIdx, int ctrlDown, int mouseButton) {
+        if (slot != null) slotIdx = slot.slotNumber;
         IAEBasePanel inputPanel = this.pointerPanel != null ? this.pointerPanel
             : this.findInputPanelAt(this.lastMouseX, this.lastMouseY);
         if (inputPanel != null) {
@@ -1084,7 +1085,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     @Override
     protected void repositionSlots() {
         for (final Object obj : this.inventorySlots.inventorySlots) {
-            if(obj instanceof SlotPatternFake s){
+            if (obj instanceof SlotPatternFake s) {
                 s.yDisplayPosition = this.ySize + s.getY() - this.viewHeight - 78 - 4;
             } else if (obj instanceof SlotRestrictedInput s) {
                 s.yDisplayPosition = this.ySize + s.getY() - this.viewHeight - 78 - 4;

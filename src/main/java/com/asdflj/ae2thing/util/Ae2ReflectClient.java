@@ -3,7 +3,6 @@ package com.asdflj.ae2thing.util;
 import static com.glodblock.github.util.Ae2Reflect.readField;
 import static com.glodblock.github.util.Ae2Reflect.reflectField;
 import static com.glodblock.github.util.Ae2Reflect.reflectMethod;
-import static com.glodblock.github.util.Ae2Reflect.writeField;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -12,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 
 import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemStack;
 
 import com.glodblock.github.client.gui.GuiFluidInterface;
 import com.glodblock.github.client.gui.container.ContainerFluidInterface;
@@ -21,8 +19,6 @@ import com.glodblock.github.inventory.IDualHost;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.client.gui.AEBaseGui;
-import appeng.client.gui.implementations.GuiCraftingStatus;
-import appeng.client.gui.widgets.GuiTabButton;
 import appeng.client.me.ItemRepo;
 import codechicken.nei.SearchField;
 import codechicken.nei.util.TextHistory;
@@ -32,8 +28,6 @@ import cpw.mods.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class Ae2ReflectClient {
 
-    private static final Field fGuiCraftingStatus_icon;
-    private static final Field fGuiCraftingStatus_originalGuiBtn;
     private static final Field fGui_drag;
     private static final Field fSearchField_history;
     private static final Field fTextHistory_history;
@@ -44,8 +38,6 @@ public class Ae2ReflectClient {
 
     static {
         try {
-            fGuiCraftingStatus_icon = findOptionalField(GuiCraftingStatus.class, "myIcon");
-            fGuiCraftingStatus_originalGuiBtn = reflectField(GuiCraftingStatus.class, "originalGuiBtn");
             fGui_drag = reflectFirstField(AEBaseGui.class, "draggedSlots", "drag_click");
             mGui_inventorySlots = reflectMethod(AEBaseGui.class, "getInventorySlots");
             fItemRepo_view = reflectField(ItemRepo.class, "view");
@@ -65,16 +57,6 @@ public class Ae2ReflectClient {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to invoke method: " + mGui_inventorySlots, e);
         }
-    }
-
-    public static void rewriteIcon(GuiCraftingStatus gui, ItemStack icon) {
-        if (fGuiCraftingStatus_icon != null) {
-            writeField(gui, fGuiCraftingStatus_icon, icon);
-        }
-    }
-
-    public static GuiTabButton getOriginalGuiButton(GuiCraftingStatus gui) {
-        return readField(gui, fGuiCraftingStatus_originalGuiBtn);
     }
 
     public static Set<Slot> getDragClick(AEBaseGui gui) {
@@ -100,14 +82,6 @@ public class Ae2ReflectClient {
     public static IDualHost getHost(GuiFluidInterface gui) {
         ContainerFluidInterface container = readField(gui, fGuiFluidInterface_cont);
         return container == null ? null : container.getTile();
-    }
-
-    private static Field findOptionalField(Class<?> type, String name) throws SecurityException {
-        try {
-            return reflectField(type, name);
-        } catch (NoSuchFieldException ignored) {
-            return null;
-        }
     }
 
     private static Field reflectFirstField(Class<?> type, String... names) throws NoSuchFieldException {

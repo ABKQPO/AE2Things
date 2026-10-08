@@ -264,6 +264,9 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
                 }
                 delegateContainer.doAction(player, action, slotId, id);
             } else if (id == -1) {
+                if (slotId < 0 || slotId >= this.inventorySlots.size()) {
+                    return;
+                }
                 Slot s = this.inventorySlots.get(slotId);
                 if (((s instanceof SlotPatternFake) || (s instanceof SlotFakeCraftingMatrix)
                     || (s instanceof SlotPatternTerm))) {

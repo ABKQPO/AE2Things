@@ -267,7 +267,7 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal imp
     }
 
     public NBTTagCompound getPanelPositions() {
-        NBTTagCompound data = Platform.openNbtData(this.getItemStack());
+        NBTTagCompound data = Platform.openNbtData(this.nbtSource());
         if (!data.hasKey(PANEL_POSITIONS_TAG)) {
             return new NBTTagCompound();
         }
@@ -280,6 +280,16 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal imp
         return positions;
     }
 
+    private ItemStack nbtSource() {
+        ItemStack cached = this.getItemStack();
+        EntityPlayer player = this.obj.getPlayer();
+        if (player != null) {
+            ItemStack live = player.inventory.getStackInSlot(this.obj.getSlot());
+            if (live != null && live.getItem() == cached.getItem()) return live;
+        }
+        return cached;
+    }
+
     public void setPanelPositions(NBTTagCompound positions) {
         if (positions == null) return;
         NBTTagCompound stored = this.getPanelPositions();
@@ -287,7 +297,7 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal imp
         copyPanelPosition(positions, stored, "patternY");
         copyPanelPosition(positions, stored, "itemX");
         copyPanelPosition(positions, stored, "itemY");
-        NBTTagCompound data = Platform.openNbtData(this.getItemStack());
+        NBTTagCompound data = Platform.openNbtData(this.nbtSource());
         data.setTag(PANEL_POSITIONS_TAG, stored);
         this.saveSettings();
     }
