@@ -351,10 +351,6 @@ public class PatternContainer implements IPatternContainer, IOptionalSlotHost, I
         if (this.hasRefillerUpgrade()) {
             refillBlankPatterns(this.patternSlotIN);
         }
-        // Writing a pattern is delegated to AE2's own encoder (appeng.helpers.PatternEncodingHelper) through a facade
-        // over this panel's slots, so AE2Things no longer maintains a second, diverging encoder. The facade exposes the
-        // processing pages (or the 3x3 grid in crafting mode) and translates AE2FC fluid packets into AE fluid stacks,
-        // which is what AE2's pattern terminals write as well.
         PatternEncodingBridge.encode(
             this.it,
             this.it.isCraftingRecipe(),
