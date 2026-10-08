@@ -94,10 +94,6 @@ public class Util {
     }
 
     public static boolean replan(EntityPlayer player, appeng.container.implementations.ContainerCraftConfirm c) {
-        // Ae2Reflect.getJob() reads the container's `result` field, which is only filled in once a plan has been
-        // delivered, so a non-null value means "there is a finished plan to replan". Requiring a CraftingJobV2 here
-        // used to refuse every replan when AE2's lite crafting mode is enabled (it produces a CraftingJobFast), which
-        // silently left the screen empty because the client clears its lists when sending the request.
         if (Ae2Reflect.getJob(c) == null) {
             return false;
         }
@@ -144,11 +140,6 @@ public class Util {
         return false;
     }
 
-    /**
-     * Sends the crafting tree of the plan the player is currently looking at, so the tree view keeps working after the
-     * initial delivery was missed or the plan was replanned. AE2 can only serialise the tree of a {@link CraftingJobV2}
-     * job; when lite crafting mode is enabled the job is a CraftingJobFast and the player is told why no tree exists.
-     */
     public static void sendCraftingTree(EntityPlayer player, ContainerCraftConfirm c) {
         ICraftingJob job = Ae2Reflect.getJob(c);
         if (job instanceof CraftingJobV2 jobV2 && player instanceof EntityPlayerMP playerMP) {
