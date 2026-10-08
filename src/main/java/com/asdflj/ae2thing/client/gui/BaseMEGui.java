@@ -68,7 +68,17 @@ public abstract class BaseMEGui extends AEBaseGui implements IGuiSelection {
         super.drawScreen(mouseX, mouseY, btn);
         boolean topRowVisible = this.getScrollBar() == null || this.getScrollBar()
             .getCurrentScroll() == 0;
-        drawPinnedSlots(this, this.meSlots, this.guiLeft, this.guiTop, topRowVisible);
+        if (this instanceof GuiWirelessDualInterfaceTerminal terminal) {
+            drawPinnedSlots(
+                this,
+                this.meSlots,
+                this.guiLeft,
+                this.guiTop,
+                topRowVisible,
+                terminal::isVirtualSlotVisible);
+        } else {
+            drawPinnedSlots(this, this.meSlots, this.guiLeft, this.guiTop, topRowVisible);
+        }
         this.drawVirtualSlotTooltip(mouseX, mouseY);
     }
 

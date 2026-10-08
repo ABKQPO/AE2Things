@@ -14,11 +14,14 @@ import net.minecraftforge.fluids.FluidStack;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.asdflj.ae2thing.api.AE2ThingAPI;
+import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.widget.IGuiMonitor;
 import com.asdflj.ae2thing.client.render.RenderHelper;
 import com.asdflj.ae2thing.nei.ButtonConstants;
@@ -45,9 +48,42 @@ public abstract class MixinGuiContainerManager {
     @Shadow(remap = false)
     public GuiContainer window;
 
+    @Inject(method = "renderToolTips", at = @At("HEAD"), cancellable = true, remap = false)
+    private void ae2thing$cancelCoveredSlotTooltip(int mousex, int mousey, CallbackInfo ci) {
+        if (this.window instanceof GuiWirelessDualInterfaceTerminal terminal && terminal
+            .suppressCoveredSlotTooltip(mousex, mousey, this.ae2thing$getStackForMouse(this.window, mousex, mousey))) {
+            ci.cancel();
+        }
+    }
+
+    @Unique
+    private ItemStack ae2thing$getStackForMouse(GuiContainer window, int mouseX, int mouseY) {
+        if (window instanceof GuiWirelessDualInterfaceTerminal terminal
+            && terminal.isFloatingComponentAt(mouseX, mouseY)) {
+            return terminal.getVisibleStackAt(mouseX, mouseY);
+        }
+        return getStackMouseOver(window);
+    }
+
+    @Redirect(
+        method = "renderToolTips",
+        at = @At(
+            value = "INVOKE",
+            target = "Lcodechicken/nei/guihook/GuiContainerManager;getStackMouseOver(Lnet/minecraft/client/gui/inventory/GuiContainer;)Lnet/minecraft/item/ItemStack;"),
+        remap = false)
+    private ItemStack ae2thing$getTopComponentStack(GuiContainer window) {
+        if (window instanceof GuiWirelessDualInterfaceTerminal terminal && terminal.isFloatingComponentAtLastMouse()) {
+            return terminal.getVisibleStackAtLastMouse();
+        }
+        return getStackMouseOver(window);
+    }
+
+    @Unique
     private static RenderItem ae2thing$r = RenderHelper.itemRender;
 
+    @Unique
     private static ItemStack ae2Thing$lastStack = null;
+    @Unique
     private static IAEItemStack ae2thing$lastAEStack = null;
 
     @Inject(
@@ -59,7 +95,7 @@ public abstract class MixinGuiContainerManager {
     private void ae2thing$renderToolTips(int mousex, int mousey, CallbackInfo ci) {
         if (!NEI_TH_Config.getConfigValue(ButtonConstants.INVENTORY_STATE)) return;
         ItemStack stack;
-        stack = getStackMouseOver(this.window);
+        stack = this.ae2thing$getStackForMouse(this.window, mousex, mousey);
         if (stack == null) return;
         boolean displayFluid = false;
         if (window instanceof GuiRecipe<?>gui) {
@@ -90,6 +126,7 @@ public abstract class MixinGuiContainerManager {
 
     }
 
+    @Unique
     private void ae2thing$render(IAEItemStack item, int x, int y) {
         ItemStack stack = item.getItemStack();
         GL11.glPushMatrix();

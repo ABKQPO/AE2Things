@@ -5,6 +5,8 @@ import static com.asdflj.ae2thing.api.Constants.MODE_PROCESSING;
 import static net.minecraft.client.gui.GuiScreen.isCtrlKeyDown;
 import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import net.minecraft.client.gui.GuiButton;
@@ -77,13 +79,15 @@ public class PatternPanel implements IAEBasePanel {
     protected final Set<Slot> drag_click;
     private static final int PANEL_X = 209;
     private static final int PANEL_Y = 0;
-    private static final int MAIN_PANEL_WIDTH = 133;
-    private static final int PANEL_WIDTH = 205;
+    private static final int PANEL_WIDTH = 133;
     private static final int PANEL_HEIGHT = 202;
+    private static final int MODE_TAB_X = 39;
+    private static final int MODE_TAB_Y = 93;
+    private static final int MODE_TAB_SIZE = 22;
+    private final List<PanelSection> sections = new ArrayList<>();
+    private final List<SlotLayout> slotLayouts = new ArrayList<>();
     private int absX;
     private int absY;
-    private int appliedSlotOffsetX;
-    private int appliedSlotOffsetY;
     private boolean initialized;
 
     public PatternPanel(IWidgetGui gui, ContainerWirelessDualInterfaceTerminal container) {
@@ -92,6 +96,9 @@ public class PatternPanel implements IAEBasePanel {
         this.parent = gui.getGui();
         this.inventorySlots = this.container;
         this.drag_click = Ae2ReflectClient.getDragClick(this.parent);
+        this.sections.add(new PanelSection(0, 0, 133, 93, 0, 0));
+        this.sections.add(new PanelSection(0, 93, 40, 77, 133, 0));
+        this.sections.add(new PanelSection(0, 170, 32, 32, 173, 0));
         processingScrollBar.setHeight(70)
             .setWidth(7)
             .setLeft(6)
@@ -106,6 +113,15 @@ public class PatternPanel implements IAEBasePanel {
         } else {
             return "gui/widget/pattern.png";
         }
+    }
+
+    public List<IDraggable.Rectangle> getVisualRegions() {
+        List<IDraggable.Rectangle> regions = new ArrayList<>(this.sections.size() + 1);
+        for (PanelSection section : this.sections) {
+            regions.add(new IDraggable.Rectangle(section.x, section.y, section.width, section.height));
+        }
+        regions.add(new IDraggable.Rectangle(MODE_TAB_X, MODE_TAB_Y, MODE_TAB_SIZE, MODE_TAB_SIZE));
+        return regions;
     }
 
     @Override
@@ -127,13 +143,16 @@ public class PatternPanel implements IAEBasePanel {
     @Override
     public void drawBG(int offsetX, int offsetY, int mouseX, int mouseY) {
         this.bindTextureBack(getBackground());
-        if (this.container.isCraftingMode() || this.container.inverted) {
-            this.parent.drawTexturedModalRect(this.absX, this.absY, 0, 0, 133, 93);
-        } else {
-            this.parent.drawTexturedModalRect(this.absX, this.absY, 0, 93, 133, 93);
+        int patternTextureY = this.container.isCraftingMode() || this.container.inverted ? 0 : 93;
+        for (PanelSection section : this.sections) {
+            this.parent.drawTexturedModalRect(
+                this.absX + section.x,
+                this.absY + section.y,
+                section.textureX,
+                section.textureY + (section.y == 0 ? patternTextureY : 0),
+                section.width,
+                section.height);
         }
-        this.parent.drawTexturedModalRect(this.absX, this.absY + 93, 133, 0, 40, 77);
-        this.parent.drawTexturedModalRect(this.absX, this.absY + 93 + 77, 173, 0, 32, 32);
     }
 
     @Override
@@ -222,10 +241,9 @@ public class PatternPanel implements IAEBasePanel {
         if (!this.initialized) {
             this.absX = this.parent.getGuiLeft() + PANEL_X;
             this.absY = this.parent.getGuiTop() + PANEL_Y;
-            this.appliedSlotOffsetX = 0;
-            this.appliedSlotOffsetY = 0;
             this.initialized = true;
         }
+        this.captureSlotLayout();
         this.gui.getButtonList()
             .add(
                 this.encodeBtn = new GuiImgButton(
@@ -236,16 +254,16 @@ public class PatternPanel implements IAEBasePanel {
         this.gui.getButtonList()
             .add(
                 this.tabProcessButton = new GuiTabButton(
-                    this.absX + 39,
-                    this.absY + 93,
+                    this.absX + MODE_TAB_X,
+                    this.absY + MODE_TAB_Y,
                     new ItemStack(Blocks.furnace),
                     GuiText.ProcessingPattern.getLocal(),
                     this.gui.getRenderItem()));
         this.gui.getButtonList()
             .add(
                 this.tabCraftButton = new GuiTabButton(
-                    this.absX + 39,
-                    this.absY + 93,
+                    this.absX + MODE_TAB_X,
+                    this.absY + MODE_TAB_Y,
                     new ItemStack(Blocks.crafting_table),
                     GuiText.CraftingPattern.getLocal(),
                     this.gui.getRenderItem()));
@@ -336,12 +354,12 @@ public class PatternPanel implements IAEBasePanel {
             this.encodeBtn.yPosition = this.absY + 118;
         }
         if (this.tabProcessButton != null) {
-            this.tabProcessButton.xPosition = this.absX + 39;
-            this.tabProcessButton.yPosition = this.absY + 93;
+            this.tabProcessButton.xPosition = this.absX + MODE_TAB_X;
+            this.tabProcessButton.yPosition = this.absY + MODE_TAB_Y;
         }
         if (this.tabCraftButton != null) {
-            this.tabCraftButton.xPosition = this.absX + 39;
-            this.tabCraftButton.yPosition = this.absY + 93;
+            this.tabCraftButton.xPosition = this.absX + MODE_TAB_X;
+            this.tabCraftButton.yPosition = this.absY + MODE_TAB_Y;
         }
     }
 
@@ -351,24 +369,35 @@ public class PatternPanel implements IAEBasePanel {
         }
     }
 
+    public boolean ownsButton(GuiButton button) {
+        return button == this.encodeBtn || button == this.substitutionsEnabledBtn
+            || button == this.substitutionsDisabledBtn
+            || button == this.fluidPrioritizedEnabledBtn
+            || button == this.fluidPrioritizedDisabledBtn
+            || button == this.invertBtn
+            || button == this.clearBtn
+            || button == this.doubleBtn
+            || button == this.beSubstitutionsEnabledBtn
+            || button == this.beSubstitutionsDisabledBtn
+            || button == this.combineEnableBtn
+            || button == this.combineDisableBtn
+            || button == this.tabProcessButton
+            || button == this.tabCraftButton;
+    }
+
     @Override
     public boolean hideItemPanelSlot(int tx, int ty, int tw, int th) {
-        int rw = PANEL_WIDTH;
-        int rh = PANEL_HEIGHT;
         if (tw <= 0 || th <= 0) {
             return false;
         }
-
-        int rx = this.absX;
-        int ry = this.absY;
-
-        rw += rx;
-        rh += ry;
-        tw += tx;
-        th += ty;
-
-        // overflow || intersect
-        return (rw < rx || rw > tx) && (rh < ry || rh > ty) && (tw < tx || tw > rx) && (th < ty || th > ry);
+        for (PanelSection section : this.sections) {
+            if (tx < this.absX + section.x + section.width && tx + tw > this.absX + section.x
+                && ty < this.absY + section.y + section.height
+                && ty + th > this.absY + section.y) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -539,11 +568,6 @@ public class PatternPanel implements IAEBasePanel {
     }
 
     @Override
-    public Rectangle getDragHandle() {
-        return new Rectangle(this.absX + MAIN_PANEL_WIDTH - 6, this.absY, 6, 6);
-    }
-
-    @Override
     public void setRectangle(int x, int y) {
         this.absX = x;
         this.absY = y;
@@ -558,19 +582,29 @@ public class PatternPanel implements IAEBasePanel {
     }
 
     public void updateSlotPositions() {
-        int offsetX = this.absX - (this.parent.getGuiLeft() + PANEL_X);
-        int offsetY = this.absY - (this.parent.getGuiTop() + PANEL_Y);
-        for (Object object : this.container.inventorySlots) {
-            if (!(object instanceof AppEngSlot slot) || !this.ownsSlot(slot) || slot.xDisplayPosition <= -8000)
+        int panelX = this.absX - this.parent.getGuiLeft();
+        int panelY = this.absY - this.parent.getGuiTop();
+        for (SlotLayout layout : this.slotLayouts) {
+            AppEngSlot slot = layout.slot;
+            slot.yDisplayPosition = panelY + layout.y;
+            if (!this.container.isCraftingMode()
+                && (slot instanceof SlotFakeCraftingMatrix || slot instanceof SlotPatternTerm)) {
+                slot.xDisplayPosition = -9000;
                 continue;
-            int baseX = slot.xDisplayPosition - this.appliedSlotOffsetX;
-            int baseY = slot.yDisplayPosition - this.appliedSlotOffsetY;
-            if (slot.xDisplayPosition == slot.getX() || baseX == slot.getX()) baseX = slot.getX();
-            slot.xDisplayPosition = baseX + offsetX;
-            slot.yDisplayPosition = baseY + offsetY;
+            }
+            int hiddenOffset = slot instanceof SlotPatternFake fake ? fake.getDisplayPositionOffset() : 0;
+            slot.xDisplayPosition = panelX + layout.x + hiddenOffset;
         }
-        this.appliedSlotOffsetX = offsetX;
-        this.appliedSlotOffsetY = offsetY;
+    }
+
+    private void captureSlotLayout() {
+        this.slotLayouts.clear();
+        for (Object object : this.container.inventorySlots) {
+            if (!(object instanceof AppEngSlot slot) || !this.ownsSlot(slot)) continue;
+            int localX = slot.getX() - PANEL_X;
+            int localY = slot.yDisplayPosition - PANEL_Y;
+            this.slotLayouts.add(new SlotLayout(slot, localX, localY));
+        }
     }
 
     private boolean ownsSlot(Slot slot) {
@@ -578,5 +612,18 @@ public class PatternPanel implements IAEBasePanel {
             || slot instanceof SlotFakeCraftingMatrix
             || slot instanceof SlotPatternTerm
             || slot instanceof SlotRestrictedInput;
+    }
+
+    public boolean isInteractiveAt(int x, int y) {
+        return !this.container.isCraftingMode()
+            && this.processingScrollBar.contains(x - this.parent.getGuiLeft(), y - this.parent.getGuiTop());
+    }
+
+    private record PanelSection(int x, int y, int width, int height, int textureX, int textureY) {
+
+    }
+
+    private record SlotLayout(AppEngSlot slot, int x, int y) {
+
     }
 }

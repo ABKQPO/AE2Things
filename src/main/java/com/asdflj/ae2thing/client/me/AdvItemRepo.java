@@ -6,17 +6,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nonnull;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 
 import com.asdflj.ae2thing.client.gui.widget.IGuiMonitor;
@@ -34,25 +33,14 @@ import appeng.me.cache.ItemFlowGridCache.FlowRate;
 public class AdvItemRepo extends ItemRepo implements Runnable {
 
     private static final int SIZE = 1;
-    private static final int DELAY = 3;
-
-    private static final BlockingQueue<Runnable> IN = new LinkedBlockingQueue<>(SIZE);
+    private static final BlockingQueue<Runnable> IN = new LinkedBlockingQueue<>();
     private static final ThreadPoolExecutor pool = new ThreadPoolExecutor(
         SIZE,
         SIZE,
         60,
         TimeUnit.SECONDS,
         IN,
-        r -> new Thread(r, "AE2 Thing repo sort thread"),
-        new RejectedExecutionHandler() {
-
-            private static final ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(SIZE);
-
-            @Override
-            public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                scheduledThreadPool.schedule(() -> pool.execute(r), DELAY, TimeUnit.SECONDS);
-            }
-        });
+        r -> new Thread(r, "AE2 Thing repo sort thread"));
 
     protected final ArrayList<IAEStack<?>> view = Ae2ReflectClient.getView(this);
     protected final IItemList<IAEStack<?>> list = Ae2ReflectClient.getList(this);
@@ -61,6 +49,8 @@ public class AdvItemRepo extends ItemRepo implements Runnable {
     protected final Set<IAEStack<?>> cache = Collections.synchronizedSet(new HashSet<>());
     protected IGuiMonitor gui;
     private static final Lock lock = new ReentrantLock();
+    private final AtomicBoolean updateQueued = new AtomicBoolean();
+    private final AtomicBoolean updateRequested = new AtomicBoolean();
 
     public AdvItemRepo(IScrollSource src, ISortSource sortSrc) {
         super(src, sortSrc);
@@ -134,14 +124,25 @@ public class AdvItemRepo extends ItemRepo implements Runnable {
     @Override
     public void updateView() {
         if (this.hasCache()) {
-            try {
-                pool.execute(this);
-            } catch (Exception ignored) {
-
-            }
+            this.updateRequested.set(true);
+            this.scheduleViewUpdate();
         } else {
             super.updateView();
         }
+    }
+
+    private void scheduleViewUpdate() {
+        if (!this.updateQueued.compareAndSet(false, true)) return;
+        pool.execute(() -> {
+            try {
+                while (this.updateRequested.getAndSet(false)) {
+                    this.run();
+                }
+            } finally {
+                this.updateQueued.set(false);
+                if (this.updateRequested.get()) this.scheduleViewUpdate();
+            }
+        });
     }
 
     @Override
@@ -161,23 +162,18 @@ public class AdvItemRepo extends ItemRepo implements Runnable {
             this.view.clear();
             this.view.ensureCapacity(this.repo.view.size());
             this.view.addAll(this.repo.view);
-            this.gui.setScrollBar();
         } finally {
             lock.unlock();
         }
+        if (this.gui != null) Minecraft.getMinecraft()
+            .func_152344_a(this.gui::setScrollBar);
     }
 
     @Override
     public void setPaused(boolean paused) {
         if (hasCache() && this.repo instanceof IDisplayRepoExtend dre) {
             dre.setAdvRepoPause(paused);
-            if (!paused) {
-                try {
-                    pool.execute(this);
-                } catch (Exception ignored) {
-
-                }
-            }
+            if (!paused) this.updateView();
         } else {
             super.setPaused(paused);
         }

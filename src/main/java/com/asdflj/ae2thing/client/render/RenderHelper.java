@@ -5,6 +5,7 @@ import static net.minecraft.client.renderer.RenderHelper.enableGUIStandardItemLi
 
 import java.awt.Color;
 import java.util.List;
+import java.util.function.Predicate;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.RenderItem;
@@ -115,6 +116,11 @@ public class RenderHelper {
      */
     public static void drawPinnedSlots(BaseMEGui gui, List<VirtualMEMonitorableSlot> slots, int guiLeft, int guiTop,
         boolean topRowVisible) {
+        drawPinnedSlots(gui, slots, guiLeft, guiTop, topRowVisible, slot -> true);
+    }
+
+    public static void drawPinnedSlots(BaseMEGui gui, List<VirtualMEMonitorableSlot> slots, int guiLeft, int guiTop,
+        boolean topRowVisible, Predicate<VirtualMESlot> isVisible) {
         if (!AE2ThingAPI.instance()
             .terminal()
             .isPinTerminal(gui)) {
@@ -125,7 +131,7 @@ public class RenderHelper {
             .isEmpty()) {
             return;
         }
-        if (topRowVisible) {
+        if (topRowVisible && isVisible.test(slots.get(0))) {
             VirtualMESlot first = slots.get(0);
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
             Minecraft.getMinecraft()
@@ -134,7 +140,7 @@ public class RenderHelper {
             gui.drawTexturedModalRect(guiLeft + first.getX() - 1, guiTop + first.getY() - 1, 0, 0, 195, 18);
         }
         for (VirtualMESlot slot : slots) {
-            if (slot.isHidden()) {
+            if (slot.isHidden() || !isVisible.test(slot)) {
                 continue;
             }
             IAEStack<?> stack = slot.getAEStack();

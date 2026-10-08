@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Slot;
@@ -15,11 +17,13 @@ import net.minecraft.nbt.NBTTagCompound;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.client.gui.container.ContainerMonitor;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
+import com.asdflj.ae2thing.client.gui.widget.DualTerminalComponentTree;
 import com.asdflj.ae2thing.client.gui.widget.IAEBasePanel;
 import com.asdflj.ae2thing.client.gui.widget.IDraggable;
 import com.asdflj.ae2thing.client.gui.widget.IFlowRateGui;
@@ -27,17 +31,18 @@ import com.asdflj.ae2thing.client.gui.widget.IGuiMonitor;
 import com.asdflj.ae2thing.client.gui.widget.IGuiSelection;
 import com.asdflj.ae2thing.client.gui.widget.ITypeFilterGui;
 import com.asdflj.ae2thing.client.gui.widget.ItemPanel;
-import com.asdflj.ae2thing.client.gui.widget.PanelDragButton;
 import com.asdflj.ae2thing.client.gui.widget.PatternPanel;
 import com.asdflj.ae2thing.client.gui.widget.THGuiTextField;
 import com.asdflj.ae2thing.client.me.AdvItemRepo;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
+import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.config.Settings;
 import appeng.api.parts.IPatternTerminal;
 import appeng.api.storage.ITerminalHost;
+import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
@@ -60,21 +65,33 @@ import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless implements IWidgetGui, IGuiDrawSlot,
     IGuiMonitorTerminal, IConfigManagerHost, IGuiSelection, IDropToFillTextField, ITypeFilterGui, IFlowRateGui {
 
+    private static final int PATTERN_DRAG_REGION_HEIGHT = 93;
+
     public ContainerWirelessDualInterfaceTerminal container;
     private GuiTabButton craftingStatusBtn;
     private final int baseXSize;
-    private static final int fullXSize = 1000;
-    private final List<IAEBasePanel> panels = new ArrayList<>();
+    private final DualTerminalComponentTree componentTree = new DualTerminalComponentTree();
     private IAEBasePanel activePanel = null;
     private IAEBasePanel pointerPanel = null;
     private Point mouse;
     private boolean dragging = false;
+    private boolean drawingPanelSlots;
     private int lastMouseX;
     private int lastMouseY;
-    private PanelDragButton patternDragButton;
-    private PanelDragButton itemDragButton;
     private boolean panelPositionsDirty;
     private final ItemPanel itemPanel;
+    private final PatternPanel patternPanel;
+    private final List<DualTerminalComponentTree.Component> itemSlotComponents = new ArrayList<>();
+    private VirtualMEMonitorableSlot renderedVirtualSlotUnderMouse;
+    private IAEBasePanel tooltipSourcePanel;
+    private List<?> deferredPanelTooltip;
+    private int deferredPanelTooltipX;
+    private int deferredPanelTooltipY;
+    private FontRenderer deferredPanelTooltipFont;
+    private String deferredButtonTooltip;
+    private int deferredButtonTooltipX;
+    private int deferredButtonTooltipY;
+    private boolean renderingDeferredButtonTooltip;
     private IAEItemStack blankPatternView = IPatternTerminal.createBlankPattern()
         .setStackSize(0);
 
@@ -82,20 +99,75 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         super(inventoryPlayer, te);
         container = (ContainerWirelessDualInterfaceTerminal) this.inventorySlots;
         this.itemPanel = new ItemPanel(this, container, this.configSrc);
-        this.panels.add(new PatternPanel(this, container));
-        this.panels.add(this.itemPanel);
+        this.patternPanel = new PatternPanel(this, container);
+        this.addPanelComponents();
         ((ContainerMonitor) this.inventorySlots).setGui(this);
         this.baseXSize = this.xSize;
+    }
+
+    private void addPanelComponents() {
+        DualTerminalComponentTree.Panel pattern = this.componentTree.addPanel(this.patternPanel)
+            .setRootBehavior(false, false);
+        for (IDraggable.Rectangle region : this.patternPanel.getVisualRegions()) {
+            pattern.addComponent(region.x(), region.y(), region.width(), region.height());
+        }
+
+        DualTerminalComponentTree.Panel items = this.componentTree.addPanel(this.itemPanel)
+            .setRootBehavior(false, false);
+        DualTerminalComponentTree.Component itemFrame = items.addComponent(0, 0, 101, 96);
+        itemFrame.addChild(3, 4, 72, 12)
+            .setBlocksNEI(false)
+            .setDraggable(false)
+            .setFocusedWhen(this.itemPanel::isSearchFocused);
+        for (int row = 0; row < 4; row++) {
+            for (int column = 0; column < 4; column++) {
+                this.itemSlotComponents.add(
+                    itemFrame.addChild(5 + column * 18, 18 + row * 18, 18, 18)
+                        .setBlocksNEI(false)
+                        .setDraggable(false));
+            }
+        }
+        items.addComponent(-18, 0, 18, 80)
+            .setBlocksNEI(false)
+            .setDraggable(false);
+        items.addComponent(-36, 0, 18, 96)
+            .setBlocksNEI(false)
+            .setDraggable(false);
+    }
+
+    private void bindItemSlotsToComponents() {
+        for (DualTerminalComponentTree.Component component : this.itemSlotComponents) {
+            component.clearSlots();
+        }
+        List<VirtualMEMonitorableSlot> slots = this.itemPanel.getComponentSlots();
+        for (int i = 0; i < Math.min(slots.size(), this.itemSlotComponents.size()); i++) {
+            this.itemSlotComponents.get(i)
+                .bindSlot(slots.get(i));
+        }
     }
 
     @Override
     public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
         super.drawFG(offsetX, offsetY, mouseX, mouseY);
-        for (IAEBasePanel panel : this.panels) {
-            if (panel.isActive()) {
-                this.resetPanelColor();
-                panel.drawFG(offsetX, offsetY, mouseX, mouseY);
-                this.resetPanelColor();
+    }
+
+    @Override
+    protected void drawVirtualSlotTooltips(int mouseX, int mouseY) {
+        GL11.glPushMatrix();
+        try {
+            GL11.glTranslatef(-this.guiLeft, -this.guiTop, 0.0F);
+            this.drawPanelComponents(this.lastMouseX, this.lastMouseY);
+        } finally {
+            GL11.glPopMatrix();
+        }
+
+        if (this.renderedVirtualSlotUnderMouse != null
+            && this.componentTree.findTopPanel(this.lastMouseX, this.lastMouseY) == this.itemPanel) {
+            this.tooltipSourcePanel = this.itemPanel;
+            try {
+                super.drawVirtualSlotTooltips(mouseX, mouseY);
+            } finally {
+                this.tooltipSourcePanel = null;
             }
         }
     }
@@ -103,14 +175,6 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     @Override
     public void drawBG(int offsetX, int offsetY, int mouseX, int mouseY) {
         super.drawBG(offsetX, offsetY, mouseX, mouseY);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        for (IAEBasePanel panel : this.panels) {
-            if (panel.isActive()) {
-                this.resetPanelColor();
-                panel.drawBG(offsetX, offsetY, mouseX, mouseY);
-                this.resetPanelColor();
-            }
-        }
     }
 
     @Override
@@ -123,8 +187,116 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     public void setTextFieldValue(String displayName, int mousex, int mousey, ItemStack stack) {
+        IAEBasePanel panel = this.componentTree.findTopPanel(mousex, mousey);
+        if (panel == null) panel = this.findPanelButtonAt(mousex, mousey);
+        if (panel != null) {
+            if (panel == this.itemPanel) this.itemPanel.setTextFieldValue(displayName, mousex, mousey, stack);
+            return;
+        }
         super.setTextFieldValue(displayName, mousex, mousey, stack);
-        this.itemPanel.setTextFieldValue(displayName, mousex, mousey, stack);
+    }
+
+    @Override
+    protected boolean capturesMouseAt(int mouseX, int mouseY) {
+        return this.findInputPanelAt(mouseX, mouseY) != null;
+    }
+
+    private IAEBasePanel findInputPanelAt(int mouseX, int mouseY) {
+        IAEBasePanel panel = this.componentTree.findTopPanel(mouseX, mouseY);
+        return panel != null ? panel : this.findPanelButtonAt(mouseX, mouseY);
+    }
+
+    public boolean suppressCoveredSlotTooltip(int mouseX, int mouseY, ItemStack hoveredStack) {
+        IAEBasePanel panel = this.componentTree.findTopPanel(mouseX, mouseY);
+        if (panel == this.patternPanel) {
+            Slot slot = super.getSlot(mouseX, mouseY);
+            return !this.isPatternSlot(slot);
+        }
+        if (panel == this.itemPanel) {
+            VirtualMEMonitorableSlot slot = this.findItemPanelSlotAt(mouseX, mouseY);
+            return slot == null || slot.getAEStack() == null;
+        }
+        return panel != null || this.findPanelButtonAt(mouseX, mouseY) != null;
+    }
+
+    private VirtualMEMonitorableSlot findItemPanelSlotAt(int mouseX, int mouseY) {
+        for (VirtualMEMonitorableSlot slot : this.itemPanel.getComponentSlots()) {
+            if (slot.isHidden()) continue;
+            int x = this.guiLeft + slot.getX();
+            int y = this.guiTop + slot.getY();
+            DualTerminalComponentTree.Component owner = this.componentTree.getSlotOwner(slot);
+            if (mouseX >= x && mouseX < x + 18
+                && mouseY >= y
+                && mouseY < y + 18
+                && this.componentTree.isTopComponent(owner, mouseX, mouseY)) return slot;
+        }
+        return null;
+    }
+
+    public boolean isFloatingComponentAt(int mouseX, int mouseY) {
+        return this.componentTree.findTopPanel(mouseX, mouseY) != null
+            || this.findPanelButtonAt(mouseX, mouseY) != null;
+    }
+
+    public boolean isFloatingComponentAtLastMouse() {
+        return this.isFloatingComponentAt(this.lastMouseX, this.lastMouseY);
+    }
+
+    public ItemStack getVisibleStackAtLastMouse() {
+        return this.getVisibleStackAt(this.lastMouseX, this.lastMouseY);
+    }
+
+    public ItemStack getVisibleStackAt(int mouseX, int mouseY) {
+        IAEBasePanel panel = this.componentTree.findTopPanel(mouseX, mouseY);
+        if (panel == this.patternPanel) {
+            Slot slot = super.getSlot(mouseX, mouseY);
+            return this.isPatternSlot(slot) ? slot.getStack() : null;
+        }
+        if (panel == this.itemPanel) {
+            VirtualMEMonitorableSlot slot = this.findItemPanelSlotAt(mouseX, mouseY);
+            return slot == null ? null : this.getItemStackForTooltip(slot.getAEStack());
+        }
+        return null;
+    }
+
+    private ItemStack getItemStackForTooltip(IAEStack<?> stack) {
+        if (stack instanceof IAEItemStack itemStack) return itemStack.getItemStack();
+        if (stack instanceof IAEFluidStack fluidStack && fluidStack.getFluidStack() != null) {
+            return ItemFluidDrop.newDisplayStack(fluidStack.getFluidStack());
+        }
+        return null;
+    }
+
+    public boolean isVirtualSlotVisible(VirtualMESlot slot) {
+        if (!(slot instanceof VirtualMEMonitorableSlot) || slot.isHidden()) return false;
+        DualTerminalComponentTree.Component owner = this.componentTree.getSlotOwner(slot);
+        int x = this.guiLeft + slot.getX() + 9;
+        int y = this.guiTop + slot.getY() + 9;
+        return owner != null && this.componentTree.isTopComponent(owner, x, y);
+    }
+
+    private boolean isNativeSlotVisibleAt(Slot slot, int mouseX, int mouseY) {
+        if (slot == null) return false;
+        IAEBasePanel topPanel = this.componentTree.findTopPanel(mouseX, mouseY);
+        return topPanel == null || topPanel == this.patternPanel && this.isPatternSlot(slot);
+    }
+
+    @Override
+    protected boolean func_146978_c(int left, int top, int width, int height, int mouseX, int mouseY) {
+        if (width == 16 && height == 16) {
+            boolean foundSlot = false;
+            for (Object object : this.inventorySlots.inventorySlots) {
+                if (!(object instanceof Slot slot) || slot.xDisplayPosition != left || slot.yDisplayPosition != top) {
+                    continue;
+                }
+                foundSlot = true;
+                if (this.isNativeSlotVisibleAt(slot, mouseX, mouseY)) {
+                    return super.func_146978_c(left, top, width, height, mouseX, mouseY);
+                }
+            }
+            if (foundSlot) return false;
+        }
+        return super.func_146978_c(left, top, width, height, mouseX, mouseY);
     }
 
     @Override
@@ -132,16 +304,20 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         this.xSize = baseXSize;
         this.lastMouseX = mouseX;
         this.lastMouseY = mouseY;
+        this.deferredPanelTooltip = null;
+        this.deferredButtonTooltip = null;
+        this.renderedVirtualSlotUnderMouse = null;
+        this.orderPanelButtons();
         if (dragging) {
             this.moveActivePanel();
         }
-        for (IAEBasePanel panel : this.panels) {
+        for (IAEBasePanel panel : this.componentTree.getPanels()) {
             if (panel.isActive()) {
                 panel.drawScreen(mouseX, mouseY, btn);
             }
         }
+        this.orderPanelButtons();
         this.updatePanelSlots();
-        this.updateDragButtons();
         if (this.itemPanel.getRepo()
             .hasCache()) {
             try {
@@ -149,6 +325,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                     .getLock()
                     .lock();
                 super.drawScreen(mouseX, mouseY, btn);
+                this.clearOccludedHoveredSlot(mouseX, mouseY);
             } finally {
                 this.itemPanel.getRepo()
                     .getLock()
@@ -156,26 +333,52 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             }
         } else {
             super.drawScreen(mouseX, mouseY, btn);
+            this.clearOccludedHoveredSlot(mouseX, mouseY);
         }
-        this.xSize = fullXSize;
+        this.drawDeferredTooltips();
+    }
+
+    private void clearOccludedHoveredSlot(int mouseX, int mouseY) {
+        IAEBasePanel panel = this.componentTree.findTopPanel(mouseX, mouseY);
+        Slot slot = super.getSlot(mouseX, mouseY);
+        if (panel != null && (panel != this.patternPanel || !this.isPatternSlot(slot))) {
+            this.theSlot = null;
+        }
     }
 
     @Override
     protected void mouseClicked(int xCoord, int yCoord, int btn) {
-        if (btn == 0) {
-            for (int index = this.panels.size() - 1; index >= 0; index--) {
-                IAEBasePanel panel = this.panels.get(index);
-                if (panel.isActive() && panel.draggable() && this.isInside(panel.getDragHandle(), xCoord, yCoord)) {
-                    this.beginDrag(panel, xCoord, yCoord);
-                    return;
-                }
-            }
-        }
-        this.pointerPanel = this.findTopPanel(xCoord, yCoord);
+        this.lastMouseX = xCoord;
+        this.lastMouseY = yCoord;
+        this.pointerPanel = this.findInputPanelAt(xCoord, yCoord);
+        if (this.pointerPanel != this.itemPanel) this.itemPanel.clearSearchFocus();
         if (this.pointerPanel != null) {
+            this.bringToFront(this.pointerPanel);
+            this.clearBaseSearchFocus();
+            if (btn == 0 && this.pointerPanel.draggable()
+                && this.componentTree.isDraggableAt(this.pointerPanel, xCoord, yCoord)
+                && !this.isInteractiveAt(this.pointerPanel, xCoord, yCoord)) {
+                this.beginDrag(this.pointerPanel, xCoord, yCoord);
+                return;
+            }
             this.pointerPanel.mouseClicked(xCoord, yCoord, btn);
         }
         super.mouseClicked(xCoord, yCoord, btn);
+    }
+
+    private boolean isInteractiveAt(IAEBasePanel panel, int x, int y) {
+        if (panel == this.itemPanel && this.itemPanel.isOverTextField(x, y)) return true;
+        for (GuiButton button : this.buttonList) {
+            if (this.ownsPanelButton(panel, button) && button.visible
+                && x >= button.xPosition
+                && x < button.xPosition + button.width
+                && y >= button.yPosition
+                && y < button.yPosition + button.height) return true;
+        }
+        Slot slot = super.getSlot(x, y);
+        if (slot != null && panel == this.patternPanel && this.isPatternSlot(slot)) return true;
+        if (panel == this.itemPanel && this.findItemPanelSlotAt(x, y) != null) return true;
+        return panel == this.patternPanel && this.patternPanel.isInteractiveAt(x, y);
     }
 
     @Override
@@ -186,10 +389,11 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             this.moveActivePanel();
             return;
         }
+        if (this.pointerPanel == null) this.pointerPanel = this.findInputPanelAt(x, y);
         if (this.pointerPanel != null) {
             this.pointerPanel.mouseClickMove(x, y, c, d);
         } else {
-            for (IAEBasePanel panel : this.panels) {
+            for (IAEBasePanel panel : this.componentTree.getPanels()) {
                 if (panel.isActive()) {
                     panel.mouseClickMove(x, y, c, d);
                 }
@@ -201,25 +405,30 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     public void handleMouseInput() {
-        if (Mouse.getEventButton() != -1 && !Mouse.getEventButtonState()) {
-            if (Mouse.getEventButton() == 0) {
-                if (this.dragging) {
-                    this.sendPanelPositions();
-                }
+        boolean mouseReleased = Mouse.getEventButton() != -1 && !Mouse.getEventButtonState();
+        boolean leftMouseReleased = mouseReleased && Mouse.getEventButton() == 0;
+        if (leftMouseReleased && this.dragging) {
+            this.sendPanelPositions();
+        }
+        try {
+            super.handleMouseInput();
+        } finally {
+            if (leftMouseReleased) {
                 this.activePanel = null;
                 this.mouse = null;
                 this.dragging = false;
             }
-            this.pointerPanel = null;
+            if (mouseReleased) this.pointerPanel = null;
         }
-        super.handleMouseInput();
     }
 
     @Override
     protected void handleMouseClick(Slot slot, int slotIdx, int ctrlDown, int mouseButton) {
-        if (this.pointerPanel != null) {
-            if (this.pointerPanel.handleMouseClick(slot, slotIdx, ctrlDown, mouseButton)) return;
-            if (this.pointerPanel instanceof PatternPanel && this.isPatternSlot(slot)) {
+        IAEBasePanel inputPanel = this.pointerPanel != null ? this.pointerPanel
+            : this.findInputPanelAt(this.lastMouseX, this.lastMouseY);
+        if (inputPanel != null) {
+            if (inputPanel.handleMouseClick(slot, slotIdx, ctrlDown, mouseButton)) return;
+            if (inputPanel instanceof PatternPanel && this.isPatternSlot(slot)) {
                 super.handleMouseClick(slot, slotIdx, ctrlDown, mouseButton);
             }
             return;
@@ -228,8 +437,9 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             super.handleMouseClick(slot, slotIdx, ctrlDown, mouseButton);
             return;
         }
-        for (int index = this.panels.size() - 1; index >= 0; index--) {
-            IAEBasePanel panel = this.panels.get(index);
+        List<IAEBasePanel> panels = this.componentTree.getPanels();
+        for (int index = panels.size() - 1; index >= 0; index--) {
+            IAEBasePanel panel = panels.get(index);
             if (!panel.isActive()) continue;
             if (panel.handleMouseClick(slot, slotIdx, ctrlDown, mouseButton)) return;
         }
@@ -239,12 +449,15 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     protected boolean handleVirtualSlotClick(VirtualMESlot slot, int mouseButton) {
-        if (this.pointerPanel != null) {
-            this.pointerPanel.handleVirtualSlotClick(slot, mouseButton);
+        IAEBasePanel inputPanel = this.pointerPanel != null ? this.pointerPanel
+            : this.findInputPanelAt(this.lastMouseX, this.lastMouseY);
+        if (inputPanel != null) {
+            inputPanel.handleVirtualSlotClick(slot, mouseButton);
             return true;
         }
-        for (int index = this.panels.size() - 1; index >= 0; index--) {
-            IAEBasePanel panel = this.panels.get(index);
+        List<IAEBasePanel> panels = this.componentTree.getPanels();
+        for (int index = panels.size() - 1; index >= 0; index--) {
+            IAEBasePanel panel = panels.get(index);
             if (!panel.isActive()) continue;
             if (panel.handleVirtualSlotClick(slot, mouseButton)) return true;
         }
@@ -253,13 +466,15 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     protected boolean mouseWheelEvent(int mouseX, int mouseY, int wheel) {
-        IAEBasePanel topPanel = this.findTopPanel(mouseX, mouseY);
+        IAEBasePanel topPanel = this.componentTree.findTopPanel(mouseX, mouseY);
         if (topPanel != null) {
+            this.bringToFront(topPanel);
             topPanel.mouseWheelEvent(mouseX, mouseY, wheel);
             return true;
         }
-        for (int index = this.panels.size() - 1; index >= 0; index--) {
-            IAEBasePanel panel = this.panels.get(index);
+        List<IAEBasePanel> panels = this.componentTree.getPanels();
+        for (int index = panels.size() - 1; index >= 0; index--) {
+            IAEBasePanel panel = panels.get(index);
             if (!panel.isActive()) continue;
             if (panel.mouseWheelEvent(mouseX, mouseY, wheel)) return true;
         }
@@ -269,16 +484,29 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     @Override
     protected void keyTyped(char character, int key) {
         this.xSize = baseXSize;
-        for (int index = this.panels.size() - 1; index >= 0; index--) {
-            IAEBasePanel panel = this.panels.get(index);
+        IAEBasePanel focusedPanel = this.componentTree.getKeyboardFocusedPanel();
+        if (key == Keyboard.KEY_ESCAPE) {
+            if (focusedPanel != null) focusedPanel.keyTyped(character, key);
+            super.keyTyped(character, key);
+            return;
+        }
+
+        List<IAEBasePanel> panels = this.componentTree.getPanels();
+        for (int index = panels.size() - 1; index >= 0; index--) {
+            IAEBasePanel panel = panels.get(index);
             if (!panel.isActive()) continue;
-            if (!this.checkHotbarKeys(key) && panel.keyTyped(character, key)) return;
+            if (focusedPanel != null && panel != focusedPanel) continue;
+            if (panel.keyTyped(character, key)) return;
         }
         super.keyTyped(character, key);
     }
 
     @Override
     public void func_146977_a(final Slot s) {
+        int slotX = this.guiLeft + s.xDisplayPosition + 8;
+        int slotY = this.guiTop + s.yDisplayPosition + 8;
+        IAEBasePanel occludingPanel = this.componentTree.findTopPanel(slotX, slotY);
+        if (!this.drawingPanelSlots && occludingPanel != null) return;
         if (s == this.container.getContainer()
             .getPatternInputSlot() && !s.getHasStack()) {
             this.blankPatternView.drawInGui(this.mc, s.xDisplayPosition, s.yDisplayPosition);
@@ -291,6 +519,16 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     public List<String> handleItemTooltip(ItemStack stack, int mouseX, int mouseY, List<String> lines) {
+        IAEBasePanel panel = this.componentTree.findTopPanel(mouseX, mouseY);
+        Slot hoveredSlot = super.getSlot(mouseX, mouseY);
+        if (panel == this.patternPanel) {
+            if (!this.isPatternSlot(hoveredSlot)) return new ArrayList<>();
+        } else if (panel == this.itemPanel) {
+            VirtualMEMonitorableSlot virtualSlot = this.findItemPanelSlotAt(mouseX, mouseY);
+            if (virtualSlot == null || virtualSlot.getAEStack() == null) return new ArrayList<>();
+        } else if (panel != null || this.findPanelButtonAt(mouseX, mouseY) != null) {
+            return new ArrayList<>();
+        }
         super.handleItemTooltip(stack, mouseX, mouseY, lines);
         Slot input = this.container.getContainer()
             .getPatternInputSlot();
@@ -302,19 +540,287 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     @Override
+    public void renderToolTip(ItemStack stack, int mouseX, int mouseY) {
+        IAEBasePanel panel = this.componentTree.findTopPanel(mouseX, mouseY);
+        Slot hoveredSlot = super.getSlot(mouseX, mouseY);
+        if (panel != null && (panel != this.patternPanel || !this.isPatternSlot(hoveredSlot))) return;
+        super.renderToolTip(stack, mouseX, mouseY);
+    }
+
+    @Override
+    @SuppressWarnings("rawtypes")
+    public void drawHoveringText(List textLines, int x, int y, FontRenderer font) {
+        if (this.renderingDeferredButtonTooltip) {
+            super.drawHoveringText(textLines, x, y, font);
+            return;
+        }
+        IAEBasePanel topPanel = this.componentTree.findTopPanel(this.lastMouseX, this.lastMouseY);
+        if (this.tooltipSourcePanel != null && topPanel != this.tooltipSourcePanel) return;
+        if (this.renderedVirtualSlotUnderMouse != null && topPanel != this.itemPanel) return;
+        IAEBasePanel pointerPanel = this.componentTree.findTopPanel(this.lastMouseX, this.lastMouseY);
+        if (pointerPanel == null) pointerPanel = this.findPanelButtonAt(this.lastMouseX, this.lastMouseY);
+        boolean panelTooltip = pointerPanel != null
+            && this.ownsTooltipAt(pointerPanel, this.lastMouseX, this.lastMouseY);
+        if (panelTooltip) {
+            this.deferredPanelTooltip = new ArrayList<>(textLines);
+            this.deferredPanelTooltipX = x;
+            this.deferredPanelTooltipY = y;
+            this.deferredPanelTooltipFont = font;
+            return;
+        }
+        if (pointerPanel != null) return;
+        this.deferredPanelTooltip = new ArrayList<>(textLines);
+        this.deferredPanelTooltipX = x;
+        this.deferredPanelTooltipY = y;
+        this.deferredPanelTooltipFont = font;
+    }
+
+    @Override
+    public void drawTooltip(int x, int y, String message) {
+        if (this.renderingDeferredButtonTooltip) {
+            super.drawTooltip(x, y, message);
+            return;
+        }
+
+        this.deferButtonTooltip(x, y, message);
+    }
+
+    @Override
+    public void drawTooltip(int x, int y, String[] lines) {
+        if (this.renderingDeferredButtonTooltip) {
+            super.drawTooltip(x, y, lines);
+            return;
+        }
+
+        this.deferButtonTooltip(x, y, String.join("\n", lines));
+    }
+
+    private void deferButtonTooltip(int x, int y, String message) {
+        IAEBasePanel hoveredPanel = this.componentTree.findTopPanel(this.lastMouseX, this.lastMouseY);
+        IAEBasePanel buttonPanel = this.findPanelButtonAt(this.lastMouseX, this.lastMouseY);
+        if (hoveredPanel == null) hoveredPanel = buttonPanel;
+        if (this.tooltipSourcePanel != null) {
+            if (hoveredPanel != this.tooltipSourcePanel) return;
+            this.deferredButtonTooltip = message;
+            this.deferredButtonTooltipX = x;
+            this.deferredButtonTooltipY = y;
+            return;
+        }
+        boolean panelOwnsTooltip = buttonPanel == hoveredPanel
+            || hoveredPanel == this.itemPanel && this.itemPanel.isOverTextField(this.lastMouseX, this.lastMouseY);
+        if (hoveredPanel != null && !panelOwnsTooltip) return;
+
+        this.deferredButtonTooltip = message;
+        this.deferredButtonTooltipX = x;
+        this.deferredButtonTooltipY = y;
+    }
+
+    private void drawPanelComponents(int mouseX, int mouseY) {
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        for (IAEBasePanel panel : this.componentTree.getPanels()) {
+            if (!panel.isActive()) continue;
+            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+            GL11.glPushMatrix();
+            try {
+                this.preparePanelOverlay();
+                panel.drawBG(this.guiLeft, this.guiTop, mouseX, mouseY);
+                if (panel == this.itemPanel) this.itemPanel.drawComponentForeground();
+                if (panel == this.patternPanel) this.drawPatternSlots(mouseX, mouseY);
+                if (panel == this.itemPanel) this.drawItemPanelSlots(mouseX, mouseY);
+
+                this.preparePanelOverlay();
+                GL11.glPushMatrix();
+                try {
+                    GL11.glTranslatef(this.guiLeft, this.guiTop, 0.0F);
+                    panel.drawFG(this.guiLeft, this.guiTop, mouseX, mouseY);
+                } finally {
+                    GL11.glMatrixMode(GL11.GL_MODELVIEW);
+                    GL11.glPopMatrix();
+                }
+
+                this.preparePanelOverlay();
+                for (GuiButton button : this.buttonList) {
+                    if (this.ownsPanelButton(panel, button)) button.drawButton(this.mc, mouseX, mouseY);
+                }
+            } finally {
+                GL11.glMatrixMode(GL11.GL_MODELVIEW);
+                GL11.glPopMatrix();
+                GL11.glPopAttrib();
+                this.resetPanelColor();
+                GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            }
+        }
+    }
+
+    private void drawDeferredTooltips() {
+        if (this.deferredButtonTooltip == null && this.deferredPanelTooltip == null) return;
+
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+        float previousGuiZ = this.zLevel;
+        float previousItemZ = this.itemRender.zLevel;
+        try {
+            GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
+            GL11.glDepthMask(false);
+            GL11.glDisable(GL11.GL_SCISSOR_TEST);
+            GL11.glDisable(GL11.GL_LIGHTING);
+            GL11.glEnable(GL11.GL_BLEND);
+            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            this.zLevel = 300.0F;
+            this.itemRender.zLevel = 300.0F;
+
+            if (this.deferredButtonTooltip != null) {
+                this.renderingDeferredButtonTooltip = true;
+                try {
+                    super.drawTooltip(
+                        this.deferredButtonTooltipX,
+                        this.deferredButtonTooltipY,
+                        this.deferredButtonTooltip);
+                } finally {
+                    this.renderingDeferredButtonTooltip = false;
+                }
+            }
+            if (this.deferredPanelTooltip != null) {
+                super.drawHoveringText(
+                    this.deferredPanelTooltip,
+                    this.deferredPanelTooltipX,
+                    this.deferredPanelTooltipY,
+                    this.deferredPanelTooltipFont);
+            }
+        } finally {
+            this.zLevel = previousGuiZ;
+            this.itemRender.zLevel = previousItemZ;
+            this.deferredButtonTooltip = null;
+            this.deferredPanelTooltip = null;
+            this.deferredPanelTooltipFont = null;
+            GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            GL11.glPopMatrix();
+            GL11.glPopAttrib();
+        }
+    }
+
+    private void preparePanelOverlay() {
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glDepthFunc(GL11.GL_ALWAYS);
+        GL11.glDepthMask(false);
+        this.resetPanelColor();
+    }
+
+    private void drawPatternSlots(int mouseX, int mouseY) {
+        this.drawingPanelSlots = true;
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glPushMatrix();
+        RenderHelper.enableGUIStandardItemLighting();
+        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+        GL11.glTranslatef(this.guiLeft, this.guiTop, 0.0F);
+        try {
+            for (Object object : this.inventorySlots.inventorySlots) {
+                if (!(object instanceof Slot slot) || !this.isPatternSlot(slot) || slot.xDisplayPosition <= -8000) {
+                    continue;
+                }
+                if (slot instanceof SlotPatternFake fake && fake.isHidden()) continue;
+                int centerX = this.guiLeft + slot.xDisplayPosition + 8;
+                int centerY = this.guiTop + slot.yDisplayPosition + 8;
+                if (this.componentTree.findTopPanel(centerX, centerY) == this.patternPanel) {
+                    this.func_146977_a(slot);
+                    int screenX = this.guiLeft + slot.xDisplayPosition;
+                    int screenY = this.guiTop + slot.yDisplayPosition;
+                    if (mouseX >= screenX && mouseX < screenX + 16 && mouseY >= screenY && mouseY < screenY + 16) {
+                        GL11.glDisable(GL11.GL_LIGHTING);
+                        GL11.glDepthFunc(GL11.GL_ALWAYS);
+                        GL11.glDepthMask(false);
+                        drawRect(
+                            slot.xDisplayPosition,
+                            slot.yDisplayPosition,
+                            slot.xDisplayPosition + 16,
+                            slot.yDisplayPosition + 16,
+                            0x80FFFFFF);
+                    }
+                }
+            }
+        } finally {
+            GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            GL11.glPopMatrix();
+            this.drawingPanelSlots = false;
+        }
+    }
+
+    private void drawItemPanelSlots(int mouseX, int mouseY) {
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+        GL11.glTranslatef(this.guiLeft, this.guiTop, 0.0F);
+        try {
+            RenderHelper.enableGUIStandardItemLighting();
+            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+            GL11.glEnable(GL11.GL_DEPTH_TEST);
+            GL11.glDepthFunc(GL11.GL_ALWAYS);
+            GL11.glDepthMask(false);
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            int localMouseX = mouseX - this.guiLeft + 1;
+            int localMouseY = mouseY - this.guiTop + 1;
+            for (VirtualMEMonitorableSlot slot : this.itemPanel.getComponentSlots()) {
+                if (slot.isHidden()) continue;
+                DualTerminalComponentTree.Component owner = this.componentTree.getSlotOwner(slot);
+                int centerX = this.guiLeft + slot.getX() + 9;
+                int centerY = this.guiTop + slot.getY() + 9;
+                if (!this.componentTree.isTopComponent(owner, centerX, centerY)) continue;
+                if (slot.drawStackAndOverlay(this.mc, localMouseX, localMouseY)
+                    && this.componentTree.isTopComponent(owner, mouseX, mouseY)) {
+                    this.renderedVirtualSlotUnderMouse = slot;
+                }
+            }
+        } finally {
+            GL11.glPopMatrix();
+            GL11.glPopAttrib();
+        }
+    }
+
+    private boolean ownsTooltipAt(IAEBasePanel panel, int x, int y) {
+        if (panel == this.patternPanel) {
+            Slot slot = super.getSlot(x, y);
+            return this.isPatternSlot(slot) || this.findPanelButtonAt(x, y) == panel;
+        }
+        if (panel == this.itemPanel) {
+            return this.findItemPanelSlotAt(x, y) != null || this.itemPanel.isOverTextField(x, y)
+                || this.findPanelButtonAt(x, y) == panel;
+        }
+        return false;
+    }
+
+    private IAEBasePanel findPanelButtonAt(int x, int y) {
+        List<IAEBasePanel> panels = this.componentTree.getPanels();
+        for (int panelIndex = panels.size() - 1; panelIndex >= 0; panelIndex--) {
+            IAEBasePanel panel = panels.get(panelIndex);
+            for (GuiButton button : this.buttonList) {
+                if (button.visible && this.ownsPanelButton(panel, button)
+                    && x >= button.xPosition
+                    && x < button.xPosition + button.width
+                    && y >= button.yPosition
+                    && y < button.yPosition + button.height) {
+                    return panel;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
     public void initGui() {
         Keyboard.enableRepeatEvents(true);
         this.xSize = baseXSize;
         super.initGui();
-        for (IAEBasePanel panel : this.panels) {
+        for (IAEBasePanel panel : this.componentTree.getPanels()) {
             panel.initGui();
         }
+        this.bindItemSlotsToComponents();
         this.restorePanelPositions();
-        this.patternDragButton = new PanelDragButton(0, 0);
-        this.itemDragButton = new PanelDragButton(0, 0);
-        this.buttonList.add(this.patternDragButton);
-        this.buttonList.add(this.itemDragButton);
-        this.updateDragButtons();
         this.buttonList.add(
             this.craftingStatusBtn = new GuiTabButton(
                 this.guiLeft + 184,
@@ -334,7 +840,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     public void onGuiClosed() {
         this.sendPanelPositions();
         super.onGuiClosed();
-        for (IAEBasePanel panel : this.panels) {
+        for (IAEBasePanel panel : this.componentTree.getPanels()) {
             panel.onGuiClosed();
         }
         Keyboard.enableRepeatEvents(false);
@@ -342,11 +848,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     public boolean hideItemPanelSlot(int x, int y, int w, int h) {
-        for (IAEBasePanel panel : this.panels) {
-            if (!panel.isActive()) continue;
-            if (panel.hideItemPanelSlot(x, y, w, h)) return true;
-        }
-        return false;
+        return this.componentTree.intersectsNEI(x, y, w, h);
     }
 
     @Override
@@ -365,13 +867,25 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     @Override
+    public VirtualMESlot getVirtualMESlotUnderMouse() {
+        return this.renderedVirtualSlotUnderMouse;
+    }
+
+    @Override
     public RenderItem getRenderItem() {
         return itemRender;
     }
 
     @Override
     public Slot getSlot(int mouseX, int mouseY) {
-        return super.getSlot(mouseX, mouseY);
+        Slot slot = super.getSlot(mouseX, mouseY);
+        return this.isNativeSlotVisibleAt(slot, mouseX, mouseY) ? slot : null;
+    }
+
+    @Override
+    protected Slot getSlotAtPosition(int mouseX, int mouseY) {
+        Slot slot = super.getSlotAtPosition(mouseX, mouseY);
+        return this.isNativeSlotVisibleAt(slot, mouseX, mouseY) ? slot : null;
     }
 
     @Override
@@ -384,8 +898,9 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             AE2Thing.proxy.netHandler.sendToServer(new CPacketSwitchGuis(GuiType.CRAFTING_STATUS_ITEM));
             return;
         }
-        for (int index = this.panels.size() - 1; index >= 0; index--) {
-            IAEBasePanel panel = this.panels.get(index);
+        List<IAEBasePanel> panels = this.componentTree.getPanels();
+        for (int index = panels.size() - 1; index >= 0; index--) {
+            IAEBasePanel panel = panels.get(index);
             if (panel.actionPerformed(btn)) return;
         }
         super.actionPerformed(btn);
@@ -407,29 +922,29 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         IDraggable.Rectangle rectangle = this.activePanel.getRectangle();
         int x = this.lastMouseX - this.mouse.x;
         int y = this.lastMouseY - this.mouse.y;
-        x = Math.max(2, Math.min(x, this.width - rectangle.width() - 2));
-        y = Math.max(2, Math.min(y, this.height - rectangle.height() - 2));
+        x = this.clampPanelX(x, rectangle.width());
+        int dragRegionHeight = this.activePanel == this.patternPanel ? PATTERN_DRAG_REGION_HEIGHT : rectangle.height();
+        y = this.clampPanelY(y, dragRegionHeight);
         this.panelPositionsDirty |= x != rectangle.x() || y != rectangle.y();
         this.activePanel.move(x, y);
     }
 
     private void restorePanelPositions() {
-        PatternPanel patternPanel = this.findPanel(PatternPanel.class);
-        ItemPanel itemPanel = this.findPanel(ItemPanel.class);
-        if (patternPanel == null || itemPanel == null) return;
         NBTTagCompound positions = this.container.getPanelPositions();
-        IDraggable.Rectangle patternRectangle = patternPanel.getRectangle();
-        IDraggable.Rectangle itemRectangle = itemPanel.getRectangle();
-        patternPanel.setRectangle(
-            this.clampPanelX(
-                this.getPanelPosition(positions, "patternX", patternRectangle.x()),
-                patternRectangle.width()),
+        IDraggable.Rectangle patternRectangle = this.patternPanel.getRectangle();
+        IDraggable.Rectangle itemRectangle = this.itemPanel.getRectangle();
+        int patternDefaultX = this.guiLeft + this.baseXSize + 8;
+        int patternDefaultY = this.guiTop + (this.ySize - patternRectangle.height()) / 2;
+        int itemDefaultX = this.guiLeft - itemRectangle.width() - 8;
+        int itemDefaultY = this.guiTop + (this.ySize - itemRectangle.height()) / 2;
+        this.patternPanel.setRectangle(
+            this.clampPanelX(this.getPanelPosition(positions, "patternX", patternDefaultX), patternRectangle.width()),
             this.clampPanelY(
-                this.getPanelPosition(positions, "patternY", patternRectangle.y()),
-                patternRectangle.height()));
-        itemPanel.setRectangle(
-            this.clampPanelX(this.getPanelPosition(positions, "itemX", itemRectangle.x()), itemRectangle.width()),
-            this.clampPanelY(this.getPanelPosition(positions, "itemY", itemRectangle.y()), itemRectangle.height()));
+                this.getPanelPosition(positions, "patternY", patternDefaultY),
+                PATTERN_DRAG_REGION_HEIGHT));
+        this.itemPanel.setRectangle(
+            this.clampPanelX(this.getPanelPosition(positions, "itemX", itemDefaultX), itemRectangle.width()),
+            this.clampPanelY(this.getPanelPosition(positions, "itemY", itemDefaultY), itemRectangle.height()));
     }
 
     private int getPanelPosition(NBTTagCompound positions, String key, int defaultValue) {
@@ -438,11 +953,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     private void sendPanelPositions() {
         if (!this.panelPositionsDirty) return;
-        PatternPanel patternPanel = this.findPanel(PatternPanel.class);
-        ItemPanel itemPanel = this.findPanel(ItemPanel.class);
-        if (patternPanel == null || itemPanel == null) return;
-        IDraggable.Rectangle patternRectangle = patternPanel.getRectangle();
-        IDraggable.Rectangle itemRectangle = itemPanel.getRectangle();
+        IDraggable.Rectangle patternRectangle = this.patternPanel.getRectangle();
+        IDraggable.Rectangle itemRectangle = this.itemPanel.getRectangle();
         NBTTagCompound positions = new NBTTagCompound();
         positions.setInteger("patternX", patternRectangle.x());
         positions.setInteger("patternY", patternRectangle.y());
@@ -454,11 +966,13 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     private int clampPanelX(int x, int width) {
-        return Math.max(2, Math.min(x, this.width - width - 2));
+        int visible = Math.min(16, Math.min(width, this.width));
+        return Math.max(visible - width, Math.min(x, this.width - visible));
     }
 
     private int clampPanelY(int y, int height) {
-        return Math.max(2, Math.min(y, this.height - height - 2));
+        int visible = Math.min(16, Math.min(height, this.height));
+        return Math.max(visible - height, Math.min(y, this.height - visible));
     }
 
     private void resetPanelColor() {
@@ -466,56 +980,40 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     private void updatePanelSlots() {
-        for (IAEBasePanel panel : this.panels) {
+        for (IAEBasePanel panel : this.componentTree.getPanels()) {
             if (panel instanceof PatternPanel patternPanel) {
                 patternPanel.updateSlotPositions();
             }
         }
     }
 
-    private void updateDragButtons() {
-        this.updateDragButton(this.patternDragButton, this.findPanel(PatternPanel.class));
-        this.updateDragButton(this.itemDragButton, this.findPanel(ItemPanel.class));
-    }
-
-    private void updateDragButton(PanelDragButton button, IAEBasePanel panel) {
-        if (button == null || panel == null) return;
-        IDraggable.Rectangle handle = panel.getDragHandle();
-        button.xPosition = handle.x();
-        button.yPosition = handle.y();
-        button.visible = panel.isActive();
-    }
-
-    private <T extends IAEBasePanel> T findPanel(Class<T> type) {
-        for (IAEBasePanel panel : this.panels) {
-            if (type.isInstance(panel)) return type.cast(panel);
-        }
-        return null;
-    }
-
     private void bringToFront(IAEBasePanel panel) {
-        if (this.panels.get(this.panels.size() - 1) != panel) {
-            this.panels.remove(panel);
-            this.panels.add(panel);
+        this.componentTree.bringToFront(panel);
+        this.orderPanelButtons();
+    }
+
+    private void orderPanelButtons() {
+        List<GuiButton> panelButtons = new ArrayList<>();
+        for (GuiButton button : this.buttonList) {
+            for (IAEBasePanel panel : this.componentTree.getPanels()) {
+                if (this.ownsPanelButton(panel, button)) {
+                    panelButtons.add(button);
+                    break;
+                }
+            }
         }
-        PanelDragButton dragButton = panel instanceof PatternPanel ? this.patternDragButton : this.itemDragButton;
-        if (dragButton != null && this.buttonList.remove(dragButton)) {
-            this.buttonList.add(dragButton);
+        this.buttonList.removeAll(panelButtons);
+        for (IAEBasePanel panel : this.componentTree.getPanels()) {
+            for (GuiButton button : panelButtons) {
+                if (this.ownsPanelButton(panel, button)) this.buttonList.add(button);
+            }
         }
     }
 
-    private boolean isInside(IDraggable.Rectangle rectangle, int x, int y) {
-        return x >= rectangle.x() && x < rectangle.x() + rectangle.width()
-            && y >= rectangle.y()
-            && y < rectangle.y() + rectangle.height();
-    }
-
-    private IAEBasePanel findTopPanel(int x, int y) {
-        for (int index = this.panels.size() - 1; index >= 0; index--) {
-            IAEBasePanel panel = this.panels.get(index);
-            if (panel.isActive() && this.isInside(panel.getRectangle(), x, y)) return panel;
-        }
-        return null;
+    private boolean ownsPanelButton(IAEBasePanel panel, GuiButton button) {
+        if (panel == this.patternPanel) return this.patternPanel.ownsButton(button);
+        if (panel == this.itemPanel) return this.itemPanel.ownsButton(button);
+        return false;
     }
 
     private boolean isPatternSlot(Slot slot) {
@@ -557,7 +1055,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     public void postStackUpdate(List<? extends IAEStack<?>> list) {
-        for (IAEBasePanel panel : this.panels) {
+        for (IAEBasePanel panel : this.componentTree.getPanels()) {
             if (panel.isActive() && panel instanceof IGuiMonitor monitor) {
                 monitor.postStackUpdate(list);
             }
@@ -569,7 +1067,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     public void setScrollBar() {
-        for (IAEBasePanel panel : this.panels) {
+        for (IAEBasePanel panel : this.componentTree.getPanels()) {
             if (panel.isActive() && panel instanceof IGuiMonitor monitor) {
                 monitor.setScrollBar();
             }
@@ -624,7 +1122,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     public void updateSetting(IConfigManager manager, Enum settingName, Enum newValue) {
-        for (IAEBasePanel panel : this.panels) {
+        for (IAEBasePanel panel : this.componentTree.getPanels()) {
             if (panel.isActive() && panel instanceof IConfigManagerHost host) {
                 host.updateSetting(manager, settingName, newValue);
             }

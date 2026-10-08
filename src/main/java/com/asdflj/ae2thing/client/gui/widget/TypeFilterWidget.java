@@ -100,6 +100,10 @@ public class TypeFilterWidget {
         buttonList.removeAll(this.orderedButtons);
     }
 
+    public boolean ownsButton(GuiButton button) {
+        return this.buttons.containsKey(button);
+    }
+
     /**
      * @return true when the click hit a type-toggle button and was handled.
      */

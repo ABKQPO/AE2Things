@@ -227,7 +227,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
 
         // Some tooltips are auto-grayed by AEBaseGui; this one is drawn manually via drawHoveringText.
         // If the localization already contains formatting, keep it to avoid double formatting.
-        return text.indexOf('\u00a7') >= 0 ? text : EnumChatFormatting.GRAY + text;
+        return text.indexOf('§') >= 0 ? text : EnumChatFormatting.GRAY + text;
     }
 
     private static List<String> buildInterfaceTerminalVisibilityTooltip(final GuiImgButton button) {
@@ -433,6 +433,10 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
 
     @Override
     protected void mouseClicked(final int xCoord, final int yCoord, final int btn) {
+        if (capturesMouseAt(xCoord, yCoord)) {
+            super.mouseClicked(xCoord, yCoord, btn);
+            return;
+        }
         searchFieldInputs.mouseClicked(xCoord, yCoord, btn);
         searchFieldOutputs.mouseClicked(xCoord, yCoord, btn);
         searchFieldNames.mouseClicked(xCoord, yCoord, btn);
@@ -441,6 +445,16 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             return;
         }
         super.mouseClicked(xCoord, yCoord, btn);
+    }
+
+    protected boolean capturesMouseAt(int mouseX, int mouseY) {
+        return false;
+    }
+
+    protected void clearBaseSearchFocus() {
+        this.searchFieldInputs.setFocused(false);
+        this.searchFieldOutputs.setFocused(false);
+        this.searchFieldNames.setFocused(false);
     }
 
     public void setSearchFieldSuggestion(String text) {
@@ -681,9 +695,8 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
      *         (e.g., "r§c")
      */
     public static String getControlCodes(String s) {
-        String controls = s.replaceAll("(?<!\u00a7)(.)", "");
-        String wiped = controls.replaceAll(".*r", "r");
-        return wiped;
+        String controls = s.replaceAll("(?<!§)(.)", "");
+        return controls.replaceAll(".*r", "r");
     }
 
     /**
@@ -1259,67 +1272,72 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
 
     private void parsePacketCmd(PacketInterfaceTerminalUpdate.PacketEntry cmd) {
         long id = cmd.entryId;
-        if (cmd instanceof PacketInterfaceTerminalUpdate.PacketAdd addCmd) {
-            InterfaceWirelessEntry entry = new InterfaceWirelessEntry(
-                id,
-                addCmd.name,
-                addCmd.suffix,
-                addCmd.rows,
-                addCmd.rowSize,
-                addCmd.numSlots,
-                addCmd.online,
-                addCmd.p2pOutput,
-                addCmd.supportedStackTypes,
-                addCmd.priority).setLocation(addCmd.x, addCmd.y, addCmd.z, addCmd.dim, addCmd.side)
-                    .setIcons(addCmd.selfRep, addCmd.dispRep)
-                    .setItems(addCmd.items);
-            entry.terminalVisible = addCmd.terminalVisible;
-            entry.isCraftingPatternProvider = addCmd.isCraftingPatternProvider;
-            entry.hideButton.set(entry.terminalVisible ? YesNo.YES : YesNo.NO);
-            masterList.addEntry(entry);
-        } else if (cmd instanceof PacketInterfaceTerminalUpdate.PacketRemove) {
-            masterList.removeEntry(id);
-        } else if (cmd instanceof PacketInterfaceTerminalUpdate.PacketOverwrite owCmd) {
-            InterfaceWirelessEntry entry = masterList.list.get(id);
-
-            if (entry == null) {
-                return;
-            }
-
-            if (owCmd.onlineValid) {
-                entry.online = owCmd.online;
-            }
-
-            if (owCmd.sizeValid) {
-                entry.resize(owCmd.rows, owCmd.rowSize, owCmd.numSlots);
-            }
-            if (owCmd.itemsValid) {
-                if (owCmd.allItemUpdate) {
-                    entry.fullItemUpdate(owCmd.items);
-                } else {
-                    entry.partialItemUpdate(owCmd.items, owCmd.validIndices);
-                }
-            }
-            if (owCmd.priorityValid && entry.priority != owCmd.priority) {
-                entry.priority = owCmd.priority;
-                masterList.moveEntry(entry);
-            }
-            if (owCmd.terminalVisibleValid) {
-                entry.terminalVisible = owCmd.terminalVisible;
+        switch (cmd) {
+            case PacketInterfaceTerminalUpdate.PacketAdd addCmd -> {
+                InterfaceWirelessEntry entry = new InterfaceWirelessEntry(
+                    id,
+                    addCmd.name,
+                    addCmd.suffix,
+                    addCmd.rows,
+                    addCmd.rowSize,
+                    addCmd.numSlots,
+                    addCmd.online,
+                    addCmd.p2pOutput,
+                    addCmd.supportedStackTypes,
+                    addCmd.priority).setLocation(addCmd.x, addCmd.y, addCmd.z, addCmd.dim, addCmd.side)
+                                    .setIcons(addCmd.selfRep, addCmd.dispRep)
+                                    .setItems(addCmd.items);
+                entry.terminalVisible = addCmd.terminalVisible;
+                entry.isCraftingPatternProvider = addCmd.isCraftingPatternProvider;
                 entry.hideButton.set(entry.terminalVisible ? YesNo.YES : YesNo.NO);
+                masterList.addEntry(entry);
             }
-            if (owCmd.isCraftingPatternProviderValid) {
-                entry.isCraftingPatternProvider = owCmd.isCraftingPatternProvider;
-            }
-            masterList.isDirty = true;
-        } else if (cmd instanceof PacketInterfaceTerminalUpdate.PacketRename renameCmd) {
-            InterfaceWirelessEntry entry = masterList.list.get(id);
+            case PacketInterfaceTerminalUpdate.PacketRemove packetRemove -> masterList.removeEntry(id);
+            case PacketInterfaceTerminalUpdate.PacketOverwrite owCmd -> {
+                InterfaceWirelessEntry entry = masterList.list.get(id);
 
-            if (entry != null) {
-                entry.setName(renameCmd.newName, renameCmd.suffix, renameCmd.dispRep);
-                masterList.moveEntry(entry);
+                if (entry == null) {
+                    return;
+                }
+
+                if (owCmd.onlineValid) {
+                    entry.online = owCmd.online;
+                }
+
+                if (owCmd.sizeValid) {
+                    entry.resize(owCmd.rows, owCmd.rowSize, owCmd.numSlots);
+                }
+                if (owCmd.itemsValid) {
+                    if (owCmd.allItemUpdate) {
+                        entry.fullItemUpdate(owCmd.items);
+                    } else {
+                        entry.partialItemUpdate(owCmd.items, owCmd.validIndices);
+                    }
+                }
+                if (owCmd.priorityValid && entry.priority != owCmd.priority) {
+                    entry.priority = owCmd.priority;
+                    masterList.moveEntry(entry);
+                }
+                if (owCmd.terminalVisibleValid) {
+                    entry.terminalVisible = owCmd.terminalVisible;
+                    entry.hideButton.set(entry.terminalVisible ? YesNo.YES : YesNo.NO);
+                }
+                if (owCmd.isCraftingPatternProviderValid) {
+                    entry.isCraftingPatternProvider = owCmd.isCraftingPatternProvider;
+                }
+                masterList.isDirty = true;
             }
-            masterList.isDirty = true;
+            case PacketInterfaceTerminalUpdate.PacketRename renameCmd -> {
+                InterfaceWirelessEntry entry = masterList.list.get(id);
+
+                if (entry != null) {
+                    entry.setName(renameCmd.newName, renameCmd.suffix, renameCmd.dispRep);
+                    masterList.moveEntry(entry);
+                }
+                masterList.isDirty = true;
+            }
+            default -> {
+            }
         }
     }
 
@@ -1398,10 +1416,10 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
                     .toLowerCase());
         } else {
             String[] terms = searchTerm.toLowerCase()
-                .split("\s+");
+                .split(" +");
 
-            for (int i = 0; i < terms.length; i++) {
-                if (!sectionName.contains(terms[i])) {
+            for (String term : terms) {
+                if (!sectionName.contains(term)) {
                     return false;
                 }
             }
@@ -1514,10 +1532,9 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         }
 
         void changeSectionComparator(Comparator<String> comparator) {
-            if (!(this.sections instanceof TreeMap)) {
+            if (!(this.sections instanceof TreeMap<String, InterfaceWirelessSection>current)) {
                 return;
             }
-            final TreeMap<String, InterfaceWirelessSection> current = (TreeMap<String, InterfaceWirelessSection>) this.sections;
             if (Objects.equals(comparator, current.comparator())) {
                 return;
             }

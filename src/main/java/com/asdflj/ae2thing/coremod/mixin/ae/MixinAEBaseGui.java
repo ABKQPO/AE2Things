@@ -1,5 +1,6 @@
 package com.asdflj.ae2thing.coremod.mixin.ae;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
@@ -11,12 +12,15 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.asdflj.ae2thing.api.TerminalMenu;
 import com.asdflj.ae2thing.client.event.AEGuiCloseEvent;
+import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
 
 import appeng.client.gui.AEBaseGui;
+import appeng.client.gui.slots.VirtualMESlot;
 import appeng.client.gui.widgets.GuiScrollbar;
 import appeng.container.slot.SlotPlayerHotBar;
 import appeng.container.slot.SlotPlayerInv;
@@ -33,8 +37,8 @@ public abstract class MixinAEBaseGui extends GuiContainer {
     protected abstract GuiScrollbar getScrollBar();
 
     @Inject(method = "handleMouseClick", at = @At(value = "HEAD"), cancellable = true)
-    protected void handleMouseClick(Slot slot, int slotIdx, int ctrlDown, int mouseButton, CallbackInfo ci) {
-        if (ctrlDown == 1 && mouseButton == 0
+    protected void handleMouseClick(Slot slot, int slotIdx, int clickedButton, int clickType, CallbackInfo ci) {
+        if (clickedButton == 1 && clickType == 0
             && (slot instanceof SlotPlayerInv || slot instanceof SlotPlayerHotBar)
             && slot.getHasStack()) {
             ItemStack item = slot.getStack();
@@ -65,5 +69,16 @@ public abstract class MixinAEBaseGui extends GuiContainer {
                 ((AccessorGuiScrollbar) this.getScrollBar()).setIsLatestClickOnScrollbar(false);
             }
         }
+    }
+
+    @Redirect(
+        method = "drawVirtualSlots",
+        at = @At(
+            value = "INVOKE",
+            target = "Lappeng/client/gui/slots/VirtualMESlot;drawStackAndOverlay(Lnet/minecraft/client/Minecraft;II)Z"),
+        remap = false)
+    private boolean ae2thing$deferDualTerminalVirtualSlots(VirtualMESlot slot, Minecraft mc, int mouseX, int mouseY) {
+        if ((Object) this instanceof GuiWirelessDualInterfaceTerminal) return false;
+        return slot.drawStackAndOverlay(mc, mouseX, mouseY);
     }
 }

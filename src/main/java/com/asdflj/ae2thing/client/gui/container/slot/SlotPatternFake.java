@@ -26,4 +26,8 @@ public class SlotPatternFake extends OptionalSlotFake {
     public boolean isHidden() {
         return this.hidden;
     }
+
+    public int getDisplayPositionOffset() {
+        return this.hidden ? POSITION_SHIFT : 0;
+    }
 }

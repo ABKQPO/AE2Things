@@ -162,6 +162,10 @@ public class ItemPanel
         }
     }
 
+    public void drawComponentForeground() {
+        if (this.searchField != null) this.searchField.drawTextBox();
+    }
+
     @Override
     public void drawScreen(int mouseX, int mouseY, float btn) {
         if (this.needsViewUpdate) {
@@ -290,7 +294,11 @@ public class ItemPanel
 
     public void setSearchString(String memoryText, boolean updateView) {
         this.searchField.setText(memoryText);
-        this.repo.setSearchString(memoryText);
+        this.refreshSearchView(updateView);
+    }
+
+    private void refreshSearchView(boolean updateView) {
+        this.repo.setSearchString(this.searchField.getText());
         if (updateView) {
             this.repo.updateView();
             this.setScrollBar();
@@ -310,6 +318,14 @@ public class ItemPanel
     @Override
     public boolean isOverTextField(int mousex, int mousey) {
         return searchField.isMouseIn(mousex, mousey);
+    }
+
+    public boolean isSearchFocused() {
+        return this.searchField != null && this.searchField.isFocused();
+    }
+
+    public void clearSearchFocus() {
+        if (this.searchField != null) this.searchField.setFocused(false);
     }
 
     @Override
@@ -434,6 +450,9 @@ public class ItemPanel
                 final Enum<?> next = Platform.rotateEnum(cv, backwards, validOptions);
                 if (btn == this.searchBoxSettings) {
                     AEConfig.instance.settings.putSetting(iBtn.getSetting(), next);
+                    iBtn.set(next);
+                    this.reInitalize();
+                    return true;
                 } else if (btn == this.SortByBox || btn == this.SortDirBox || btn == this.ViewBox) {
                     try {
                         NetworkHandler.instance
@@ -542,7 +561,7 @@ public class ItemPanel
                     setSearchString(history, true);
                 }
                 return true;
-            } else if (key == Keyboard.KEY_DELETE) {
+            } else if (key == Keyboard.KEY_DELETE && this.searchField.isFocused()) {
                 String next = this.history.getNext(this.searchField.getText())
                     .orElse("");
                 Ae2ReflectClient.getHistoryList(this.history)
@@ -558,10 +577,7 @@ public class ItemPanel
             }
 
             if (this.searchField.textboxKeyTyped(character, key)) {
-                this.repo.setSearchString(this.searchField.getText());
-                this.repo.updateView();
-                this.setScrollBar();
-                this.updateSuggestion();
+                this.refreshSearchView(true);
                 return true;
             }
         }
@@ -670,6 +686,17 @@ public class ItemPanel
 
     public AdvItemRepo getRepo() {
         return repo;
+    }
+
+    public List<VirtualMEMonitorableSlot> getComponentSlots() {
+        return this.virtualSlots;
+    }
+
+    public boolean ownsButton(GuiButton button) {
+        return button == this.SortByBox || button == this.ViewBox
+            || button == this.SortDirBox
+            || button == this.searchBoxSettings
+            || this.typeFilter.ownsButton(button);
     }
 
     @Override
