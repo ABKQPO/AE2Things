@@ -280,12 +280,6 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal imp
         return positions;
     }
 
-    /**
-     * The stack whose NBT this inventory treats as the source of truth. {@link WirelessObject} caches the stack it was
-     * created with, but the game replaces the stack sitting in the player's inventory slot every time it syncs it, so
-     * that cached instance can end up detached from the real item (NBT written through it is silently lost). Prefer the
-     * stack currently in the slot, and only fall back to the cached one when it is gone or is a different item.
-     */
     private ItemStack nbtSource() {
         ItemStack cached = this.getItemStack();
         EntityPlayer player = this.obj.getPlayer();
