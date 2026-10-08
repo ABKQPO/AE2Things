@@ -60,14 +60,9 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
     private GuiAeButton replan = null;
     private boolean clickStart = false;
 
-    /**
-     * Set when a replan was requested. The visible plan is only dropped once the replanned data arrives, so a refused
-     * request cannot leave the player with an empty screen.
-     */
     @Unique
     private boolean ae2thing$awaitingReplan = false;
 
-    /** The crafting tree is requested once per screen (and again after a replan) when the tree view is opened. */
     @Unique
     private boolean ae2thing$treeRequested = false;
 
@@ -83,10 +78,6 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
             clickStart = false;
             start.enabled = false;
             replan.visible = false;
-            // The old plan is kept until the replanned data arrives: the request can be refused (see Util#replan) and
-            // dropping the lists here would leave the player with an empty screen. Rebuilding them on the first
-            // incoming update still avoids stale entries, whose usedPercent would otherwise be dropped by
-            // handleInput().
             this.ae2thing$awaitingReplan = true;
             this.ae2thing$treeRequested = false;
             AE2Thing.proxy.netHandler.sendToServer(new CPacketTerminalBtns("GuiCraftConfirm.replan", true));
@@ -139,9 +130,6 @@ public abstract class MixinGuiCraftConfirm extends AEBaseGui {
                 startWithFollow.visible = true;
             }
         } catch (Exception ignored) {}
-
-        // AE2 ships the crafting tree together with the plan, and only for the full (non-lite) crafting job. Ask for it
-        // when the tree view is opened so it is available even if the original packet was missed, and after a replan.
         if (!this.ae2thing$treeRequested && this.displayMode == GuiCraftConfirm.DisplayMode.TREE) {
             this.ae2thing$treeRequested = true;
             AE2Thing.proxy.netHandler.sendToServer(new CPacketTerminalBtns("GuiCraftConfirm.requestTree", true));
