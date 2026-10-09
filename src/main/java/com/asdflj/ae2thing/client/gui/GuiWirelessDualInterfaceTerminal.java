@@ -53,6 +53,7 @@ import appeng.client.gui.slots.VirtualMEMonitorableSlot;
 import appeng.client.gui.slots.VirtualMESlot;
 import appeng.client.gui.widgets.GuiTabButton;
 import appeng.client.gui.widgets.IDropToFillTextField;
+import appeng.client.gui.widgets.ITooltip;
 import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotPatternTerm;
@@ -95,6 +96,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private String deferredButtonTooltip;
     private int deferredButtonTooltipX;
     private int deferredButtonTooltipY;
+    private boolean deferredButtonTooltipFromPanel;
     private boolean renderingDeferredButtonTooltip;
     private IAEItemStack blankPatternView = IPatternTerminal.createBlankPattern()
         .setStackSize(0);
@@ -310,6 +312,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         this.lastMouseY = mouseY;
         this.deferredPanelTooltip = null;
         this.deferredButtonTooltip = null;
+        this.deferredButtonTooltipFromPanel = false;
         this.renderedVirtualSlotUnderMouse = null;
         this.orderPanelButtons();
         if (dragging) {
@@ -580,6 +583,13 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     @Override
+    protected void handleTooltip(int mouseX, int mouseY, ITooltip tooltip) {
+        if (this.findPanelButtonAt(mouseX, mouseY) != null
+            && (!(tooltip instanceof GuiButton button) || !this.isPanelButton(button))) return;
+        super.handleTooltip(mouseX, mouseY, tooltip);
+    }
+
+    @Override
     public void drawTooltip(int x, int y, String message) {
         if (this.renderingDeferredButtonTooltip) {
             super.drawTooltip(x, y, message);
@@ -602,12 +612,15 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private void deferButtonTooltip(int x, int y, String message) {
         IAEBasePanel hoveredPanel = this.componentTree.findTopPanel(this.lastMouseX, this.lastMouseY);
         IAEBasePanel buttonPanel = this.findPanelButtonAt(this.lastMouseX, this.lastMouseY);
+        boolean panelButtonTooltip = this.isPanelButtonTooltipOrigin(x, y);
+        if (this.deferredButtonTooltip != null && this.deferredButtonTooltipFromPanel && !panelButtonTooltip) return;
         if (hoveredPanel == null) hoveredPanel = buttonPanel;
         if (this.tooltipSourcePanel != null) {
             if (hoveredPanel != this.tooltipSourcePanel) return;
             this.deferredButtonTooltip = message;
             this.deferredButtonTooltipX = x;
             this.deferredButtonTooltipY = y;
+            this.deferredButtonTooltipFromPanel = panelButtonTooltip;
             return;
         }
         boolean panelOwnsTooltip = buttonPanel == hoveredPanel
@@ -617,6 +630,19 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         this.deferredButtonTooltip = message;
         this.deferredButtonTooltipX = x;
         this.deferredButtonTooltipY = y;
+        this.deferredButtonTooltipFromPanel = panelButtonTooltip;
+    }
+
+    private boolean isPanelButtonTooltipOrigin(int x, int y) {
+        for (GuiButton button : this.buttonList) {
+            if (!button.visible || !this.isPanelButton(button)) continue;
+            if (x == button.xPosition + 11 && y == Math.max(button.yPosition, 15) + 4) return true;
+        }
+        return false;
+    }
+
+    private boolean isPanelButton(GuiButton button) {
+        return this.ownsPanelButton(this.patternPanel, button) || this.ownsPanelButton(this.itemPanel, button);
     }
 
     private void drawPanelComponents(int mouseX, int mouseY) {
@@ -676,6 +702,13 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             this.zLevel = 300.0F;
             this.itemRender.zLevel = 300.0F;
 
+            if (this.deferredPanelTooltip != null) {
+                super.drawHoveringText(
+                    this.deferredPanelTooltip,
+                    this.deferredPanelTooltipX,
+                    this.deferredPanelTooltipY,
+                    this.deferredPanelTooltipFont);
+            }
             if (this.deferredButtonTooltip != null) {
                 this.renderingDeferredButtonTooltip = true;
                 try {
@@ -687,17 +720,11 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                     this.renderingDeferredButtonTooltip = false;
                 }
             }
-            if (this.deferredPanelTooltip != null) {
-                super.drawHoveringText(
-                    this.deferredPanelTooltip,
-                    this.deferredPanelTooltipX,
-                    this.deferredPanelTooltipY,
-                    this.deferredPanelTooltipFont);
-            }
         } finally {
             this.zLevel = previousGuiZ;
             this.itemRender.zLevel = previousItemZ;
             this.deferredButtonTooltip = null;
+            this.deferredButtonTooltipFromPanel = false;
             this.deferredPanelTooltip = null;
             this.deferredPanelTooltipFont = null;
             GL11.glMatrixMode(GL11.GL_MODELVIEW);
