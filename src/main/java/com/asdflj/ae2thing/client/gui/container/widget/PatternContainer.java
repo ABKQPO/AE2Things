@@ -16,12 +16,12 @@ import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.container.IPatternContainer;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPattern;
-import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.inventory.IPatternTerminal;
 import com.asdflj.ae2thing.inventory.item.WirelessTerminal;
 
 import appeng.api.AEApi;
 import appeng.api.storage.ITerminalHost;
+import appeng.api.storage.StorageName;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.IOptionalSlotHost;
@@ -30,20 +30,17 @@ import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotPatternTerm;
 import appeng.container.slot.SlotRestrictedInput;
 import appeng.tile.inventory.AppEngInternalInventory;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 
 public class PatternContainer implements IPatternContainer, IOptionalSlotHost, IWidgetSlot {
 
     protected final IInventory crafting;
-    protected final IInventory craftingEx;
-    protected final IInventory outputEx;
     protected final IInventory patternInv;
     protected final SlotPattern patternSlotIN;
     protected final SlotPattern patternSlotOUT;
     protected SlotPattern patternRefiller;
-    protected SlotPatternFake[] craftingExSlots;
-    protected SlotPatternFake[] outputExSlots;
     protected SlotFake[] craftingSlots;
     protected SlotPatternTerm craftSlot;
     private static final int CRAFTING_GRID_PAGES = 2;
@@ -61,12 +58,8 @@ public class PatternContainer implements IPatternContainer, IOptionalSlotHost, I
         this.it = (IPatternTerminal) host;
         this.host = host;
         this.crafting = this.it.getInventoryByName(Constants.CRAFTING);
-        this.craftingEx = this.it.getInventoryByName(Constants.CRAFTING_EX);
-        this.outputEx = this.it.getInventoryByName(Constants.OUTPUT_EX);
         this.patternInv = this.it.getInventoryByName(Constants.PATTERN);
         this.craftingSlots = new SlotFakeCraftingMatrix[9];
-        this.craftingExSlots = new SlotPatternFake[CRAFTING_GRID_SLOTS * CRAFTING_GRID_PAGES];
-        this.outputExSlots = new SlotPatternFake[CRAFTING_GRID_SLOTS * CRAFTING_GRID_PAGES];
         this.addMESlotToContainer(
             this.patternSlotIN = new SlotPattern(
                 SlotRestrictedInput.PlacableItemType.BLANK_PATTERN,
@@ -96,40 +89,6 @@ public class PatternContainer implements IPatternContainer, IOptionalSlotHost, I
                     110,
                     this.container.getInventoryPlayer()));
             this.slots.add(this.patternRefiller);
-        }
-        for (int page = 0; page < CRAFTING_GRID_PAGES; page++) {
-            for (int y = 0; y < CRAFTING_GRID_HEIGHT; y++) {
-                for (int x = 0; x < CRAFTING_GRID_WIDTH; x++) {
-                    this.addMESlotToContainer(
-                        this.craftingExSlots[x + y * CRAFTING_GRID_WIDTH
-                            + page * CRAFTING_GRID_SLOTS] = new SlotPatternFake(
-                                craftingEx,
-                                this,
-                                x + y * CRAFTING_GRID_WIDTH + page * CRAFTING_GRID_SLOTS,
-                                224,
-                                -59,
-                                x,
-                                y,
-                                x + 4));
-                    this.slots.add(this.craftingExSlots[x + y * CRAFTING_GRID_WIDTH + page * CRAFTING_GRID_SLOTS]);
-                }
-            }
-            for (int x = 0; x < CRAFTING_GRID_WIDTH; x++) {
-                for (int y = 0; y < CRAFTING_GRID_HEIGHT; y++) {
-                    this.addMESlotToContainer(
-                        this.outputExSlots[x * CRAFTING_GRID_HEIGHT + y
-                            + page * CRAFTING_GRID_SLOTS] = new SlotPatternFake(
-                                outputEx,
-                                this,
-                                x * CRAFTING_GRID_HEIGHT + y + page * CRAFTING_GRID_SLOTS,
-                                224 + 97,
-                                -59,
-                                -x,
-                                y,
-                                x));
-                    this.slots.add(this.outputExSlots[x * CRAFTING_GRID_HEIGHT + y + page * CRAFTING_GRID_SLOTS]);
-                }
-            }
         }
         this.addMESlotToContainer(
             this.craftSlot = new SlotPatternTerm(
@@ -184,36 +143,10 @@ public class PatternContainer implements IPatternContainer, IOptionalSlotHost, I
             for (SlotFake slot : this.craftingSlots) {
                 slot.xDisplayPosition = slot.getX();
             }
-            for (SlotPatternFake slot : this.outputExSlots) {
-                slot.setHidden(true);
-            }
-            for (SlotPatternFake slot : this.craftingExSlots) {
-                slot.setHidden(true);
-            }
         } else {
             this.craftSlot.xDisplayPosition = -9000;
             for (SlotFake slot : this.craftingSlots) {
                 slot.xDisplayPosition = -9000;
-            }
-            for (SlotPatternFake slot : this.outputExSlots) {
-                slot.setHidden(false);
-            }
-            for (SlotPatternFake slot : this.craftingExSlots) {
-                slot.setHidden(false);
-            }
-            offsetSlots();
-        }
-    }
-
-    private void offsetSlots() {
-        for (int page = 0; page < CRAFTING_GRID_PAGES; page++) {
-            for (int y = 0; y < CRAFTING_GRID_HEIGHT; y++) {
-                for (int x = 0; x < CRAFTING_GRID_WIDTH; x++) {
-                    this.craftingExSlots[x + y * CRAFTING_GRID_WIDTH + page * CRAFTING_GRID_SLOTS]
-                        .setHidden(page != container.activePage || x > 0 && container.inverted);
-                    this.outputExSlots[x * CRAFTING_GRID_HEIGHT + y + page * CRAFTING_GRID_SLOTS]
-                        .setHidden(page != container.activePage || x > 0 && !container.inverted);
-                }
             }
         }
     }
@@ -270,13 +203,23 @@ public class PatternContainer implements IPatternContainer, IOptionalSlotHost, I
         return this.it;
     }
 
+    private appeng.api.parts.IPatternTerminal aeTerminal() {
+        return (appeng.api.parts.IPatternTerminal) this.it;
+    }
+
     @Override
     public void clear() {
-        for (final Slot s : this.craftingExSlots) {
-            s.putStack(null);
+        final IAEStackInventory inputs = aeTerminal().getAEInventoryByName(StorageName.CRAFTING_INPUT);
+        final IAEStackInventory outputs = aeTerminal().getAEInventoryByName(StorageName.CRAFTING_OUTPUT);
+        if (inputs != null) {
+            for (int i = 0; i < inputs.getSizeInventory(); i++) {
+                inputs.putAEStackInSlot(i, null);
+            }
         }
-        for (final Slot s : this.outputExSlots) {
-            s.putStack(null);
+        if (outputs != null) {
+            for (int i = 0; i < outputs.getSizeInventory(); i++) {
+                outputs.putAEStackInSlot(i, null);
+            }
         }
         for (final Slot s : this.craftingSlots) {
             s.putStack(null);
@@ -292,9 +235,11 @@ public class PatternContainer implements IPatternContainer, IOptionalSlotHost, I
         boolean backwards = (val & 2) != 0;
         int multi = isShift ? 8 : 2;
         multi = backwards ? Math.negateExact(multi) : multi;
-        if (canDouble(this.craftingExSlots, multi) && canDouble(this.outputExSlots, multi)) {
-            doubleStacksInternal(this.craftingExSlots, multi);
-            doubleStacksInternal(this.outputExSlots, multi);
+        final IAEStackInventory inputs = aeTerminal().getAEInventoryByName(StorageName.CRAFTING_INPUT);
+        final IAEStackInventory outputs = aeTerminal().getAEInventoryByName(StorageName.CRAFTING_OUTPUT);
+        if (canDouble(inputs, multi) && canDouble(outputs, multi)) {
+            doubleStacksInternal(inputs, multi);
+            doubleStacksInternal(outputs, multi);
         }
         this.detectAndSendChanges();
     }
@@ -351,16 +296,14 @@ public class PatternContainer implements IPatternContainer, IOptionalSlotHost, I
         if (this.hasRefillerUpgrade()) {
             refillBlankPatterns(this.patternSlotIN);
         }
-        PatternEncodingBridge.encode(
-            this.it,
-            this.it.isCraftingRecipe(),
-            this.it.isSubstitution(),
-            this.it.canBeSubstitute(),
-            this.container.getMonitor(),
-            this.container.getPowerSource(),
-            this.container.getActionSource(),
-            this.container.getPlayerInv().player.getCommandSenderName(),
-            this.container.getPlayerInv().player.worldObj);
+        if (this.it instanceof appeng.api.parts.IPatternTerminal patternTerminal) {
+            patternTerminal.encode(
+                this.container.getPowerSource(),
+                this.container.getMonitor(),
+                this.container.getActionSource(),
+                this.container.getPlayerInv().player.getCommandSenderName(),
+                this.container.getPlayerInv().player.worldObj);
+        }
     }
 
     @Override

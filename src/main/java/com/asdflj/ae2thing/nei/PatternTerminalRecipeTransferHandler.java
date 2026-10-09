@@ -17,6 +17,7 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.client.gui.GuiInfusionPatternTerminal;
 import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
+import com.asdflj.ae2thing.client.gui.widget.DualPatternSlot;
 import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.nei.object.OrderStack;
 import com.asdflj.ae2thing.nei.recipes.FluidRecipe;
@@ -26,6 +27,7 @@ import com.asdflj.ae2thing.util.GTUtil;
 import com.asdflj.ae2thing.util.PHUtil;
 
 import appeng.api.AEApi;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.client.gui.AEBaseGui;
 import appeng.container.slot.SlotFake;
 import appeng.util.Platform;
@@ -64,10 +66,16 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             GuiScreen screen = Minecraft.getMinecraft().currentScreen;
             if (screen instanceof AEBaseGui g && overlayButton != null && GuiScreen.isShiftKeyDown()) {
                 GuiOverlayButton btn = ClientProxy.getOverlayButton();
-                if (btn != null && g.theSlot instanceof SlotFake slot) {
-                    ItemStack slotItem = slot.getStack();
-                    if (slotItem == null) return false;
-
+                if (btn == null) return false;
+                ItemStack slotItem = null;
+                if (g.theSlot instanceof SlotFake slot) {
+                    slotItem = slot.getStack();
+                } else if (g instanceof GuiWirelessDualInterfaceTerminal gui
+                    && gui.getVirtualMESlotUnderMouse() instanceof DualPatternSlot virtualSlot
+                    && virtualSlot.getAEStack() instanceof IAEItemStack item) {
+                        slotItem = item.getItemStack();
+                    }
+                if (slotItem != null) {
                     List<PositionedStack> list = btn.handlerRef.handler.getIngredientStacks(btn.handlerRef.recipeIndex);
                     for (PositionedStack stack : list) {
                         ItemStack result = findSameItem(

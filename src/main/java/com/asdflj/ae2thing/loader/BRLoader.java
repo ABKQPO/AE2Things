@@ -13,6 +13,7 @@ import com.asdflj.ae2thing.inventory.IPatternTerminal;
 import com.asdflj.ae2thing.nei.NEIUtils;
 import com.asdflj.ae2thing.nei.object.OrderStack;
 
+import appeng.api.storage.StorageName;
 import appeng.api.storage.data.IAEStack;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
@@ -87,20 +88,21 @@ public class BRLoader implements Runnable {
                     IPatternTerminal pt = ciw.getContainer()
                         .getPatternTerminal();
                     pt.setCraftingRecipe(false);
-                    IInventory inputSlot = pt.getInventoryByName(adapter.getCraftingInvName());
-                    IInventory outputSlot = pt.getInventoryByName(adapter.getOutputInvName());
-                    for (int i = 0; i < inputSlot.getSizeInventory(); i++) {
-                        inputSlot.setInventorySlotContents(i, null);
+                    final IAEStackInventory inputsInv = ((appeng.api.parts.IPatternTerminal) pt)
+                        .getAEInventoryByName(StorageName.CRAFTING_INPUT);
+                    final IAEStackInventory outputsInv = ((appeng.api.parts.IPatternTerminal) pt)
+                        .getAEInventoryByName(StorageName.CRAFTING_OUTPUT);
+                    if (inputsInv == null || outputsInv == null) return;
+                    for (int i = 0; i < inputsInv.getSizeInventory(); i++) {
+                        inputsInv.putAEStackInSlot(i, null);
                     }
-                    for (int i = 0; i < outputSlot.getSizeInventory(); i++) {
-                        outputSlot.setInventorySlotContents(i, null);
+                    for (int i = 0; i < outputsInv.getSizeInventory(); i++) {
+                        outputsInv.putAEStackInSlot(i, null);
                     }
                     inputs = NEIUtils.clearNull(inputs);
                     outputs = NEIUtils.clearNull(outputs);
-                    adapter.transferPack(inputs, inputSlot);
-                    adapter.transferPack(outputs, outputSlot);
-                    ciw.onCraftMatrixChanged(inputSlot);
-                    ciw.onCraftMatrixChanged(outputSlot);
+                    adapter.transferPackAE(inputs, inputsInv);
+                    adapter.transferPackAE(outputs, outputsInv);
                     ciw.saveChanges();
                 }
             });

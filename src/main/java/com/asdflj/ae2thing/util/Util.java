@@ -29,6 +29,7 @@ import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.client.gui.IGuiMonitorTerminal;
 import com.asdflj.ae2thing.common.item.ItemBackpackTerminal;
+import com.asdflj.ae2thing.common.item.ItemPatternModifier;
 import com.asdflj.ae2thing.common.item.ItemWirelessDualInterfaceTerminal;
 import com.glodblock.github.client.gui.FCGuiTextField;
 import com.glodblock.github.common.item.ItemFluidDrop;
@@ -178,6 +179,15 @@ public class Util {
             ItemStack item = player.inventory.mainInventory[x];
             if (item == null || item.getItem() == null) continue;
             if (item.getItem() instanceof ItemWirelessDualInterfaceTerminal) return x;
+        }
+        return -1;
+    }
+
+    public static int findPatternModifier(EntityPlayer player) {
+        for (int x = 0; x < player.inventory.mainInventory.length; x++) {
+            ItemStack item = player.inventory.mainInventory[x];
+            if (item == null || item.getItem() == null) continue;
+            if (item.getItem() instanceof ItemPatternModifier) return x;
         }
         return -1;
     }

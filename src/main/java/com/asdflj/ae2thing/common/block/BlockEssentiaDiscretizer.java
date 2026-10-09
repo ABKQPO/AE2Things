@@ -11,6 +11,7 @@ import com.asdflj.ae2thing.util.NameConst;
 
 import cpw.mods.fml.common.registry.GameRegistry;
 
+@Deprecated
 public class BlockEssentiaDiscretizer extends BaseTileBlock implements IRegister<BlockEssentiaDiscretizer> {
 
     public BlockEssentiaDiscretizer() {

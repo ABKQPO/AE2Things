@@ -20,6 +20,7 @@ import com.asdflj.ae2thing.client.gui.container.slot.InfusionTerminalSlotPattern
 import com.asdflj.ae2thing.client.gui.container.widget.IWidgetPatternContainer;
 import com.asdflj.ae2thing.common.item.ItemPhial;
 import com.asdflj.ae2thing.common.parts.PartInfusionPatternTerminal;
+import com.asdflj.ae2thing.inventory.AEStackItemInventory;
 import com.asdflj.ae2thing.inventory.IPatternTerminal;
 import com.glodblock.github.common.item.ItemFluidEncodedPattern;
 import com.glodblock.github.util.Util;
@@ -34,7 +35,10 @@ import appeng.api.implementations.tiles.IViewCellStorage;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.storage.ITerminalHost;
+import appeng.api.storage.StorageName;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.container.interfaces.IVirtualSlotSource;
 import appeng.container.slot.IOptionalSlotHost;
 import appeng.container.slot.OptionalSlotFake;
 import appeng.container.slot.SlotFake;
@@ -51,8 +55,9 @@ import thaumcraft.common.lib.research.ScanManager;
 import thaumicenergistics.common.items.ItemCraftingAspect;
 import thaumicenergistics.common.items.ItemEnum;
 
+@Deprecated
 public class ContainerInfusionPatternTerminal extends BasePatternContainerMonitor
-    implements IOptionalSlotHost, IWidgetPatternContainer {
+    implements IOptionalSlotHost, IWidgetPatternContainer, IVirtualSlotSource {
 
     private static final int CRAFTING_GRID_PAGES = 2;
     private static final int CRAFTING_GRID_WIDTH = 4;
@@ -66,6 +71,25 @@ public class ContainerInfusionPatternTerminal extends BasePatternContainerMonito
 
     private final PartInfusionPatternTerminal it;
     private ItemStack lastScanItem = null;
+
+    @Override
+    public void updateVirtualSlot(StorageName name, int slotId, IAEStack<?> aes) {
+        switch (name) {
+            case CRAFTING_OUTPUT -> {
+                if (slotId < 0 || slotId >= this.output.getSizeInventory()) return;
+                this.output.setInventorySlotContents(slotId, AEStackItemInventory.toItemStack(aes));
+            }
+            case CRAFTING_INPUT -> this.crafting.setInventorySlotContents(0, AEStackItemInventory.toItemStack(aes));
+            default -> {}
+        }
+    }
+
+    @Override
+    public StorageName getAEStorageName(Slot slot) {
+        if (slot instanceof InfusionTerminalSlotPatternFake) return StorageName.CRAFTING_OUTPUT;
+        if (slot instanceof SlotFakeCraftingMatrix) return StorageName.CRAFTING_INPUT;
+        return null;
+    }
 
     public ContainerInfusionPatternTerminal(InventoryPlayer ip, ITerminalHost monitorable) {
         super(ip, monitorable);

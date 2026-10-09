@@ -43,6 +43,7 @@ import thaumcraft.api.aspects.Aspect;
 import thaumicenergistics.common.storage.AEEssentiaStack;
 import thaumicenergistics.common.storage.AEEssentiaStackType;
 
+@Deprecated
 public class TileEssentiaDiscretizer extends AENetworkTile implements IPriorityHost, ICellContainer {
 
     private final BaseActionSource ownActionSource = new MachineSource(this);

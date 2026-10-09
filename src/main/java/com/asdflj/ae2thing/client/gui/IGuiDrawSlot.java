@@ -9,70 +9,124 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.FluidStack;
 
 import org.lwjgl.opengl.GL11;
 
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.client.render.ISlotRender;
 import com.asdflj.ae2thing.client.render.SlotRender;
-import com.asdflj.ae2thing.integration.Mods;
-import com.mitchej123.hodgepodge.textures.IPatchedTextureAtlasSprite;
+import com.glodblock.github.common.item.ItemFluidDrop;
+import com.glodblock.github.common.item.ItemFluidPacket;
 
+import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.client.gui.AEBaseGui;
 import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotInaccessible;
 import appeng.container.slot.SlotPlayerHotBar;
 import appeng.container.slot.SlotPlayerInv;
+import appeng.util.item.AEFluidStack;
 import appeng.util.item.AEItemStack;
+import codechicken.nei.item.ItemFluidDisplay;
+import codechicken.nei.recipe.StackInfo;
 
 public interface IGuiDrawSlot {
 
+    ThreadLocal<Boolean> DRAWING_SLOT = ThreadLocal.withInitial(() -> false);
+
+    default IAEStack<?> getAEStackView(Slot slot, ItemStack drawStack) {
+        IAEStack<?> encoded = this.getItemEncodedAEStackView(drawStack);
+        if (encoded != null) return encoded;
+        IAEItemStack view = slot instanceof SlotPatternFake slotFake ? slotFake.getAEStack()
+            : slot instanceof SlotFakeCraftingMatrix slotFake ? slotFake.getAEStack() : AEItemStack.create(drawStack);
+        return view != null && view.getItem() == null ? null : view;
+    }
+
+    default IAEStack<?> getItemEncodedAEStackView(ItemStack drawStack) {
+        if (drawStack == null || drawStack.getItem() == null) {
+            return null;
+        }
+
+        FluidStack neiFluid = StackInfo.getFluid(drawStack);
+        if (neiFluid != null) {
+            IAEFluidStack fluid = AEFluidStack.create(neiFluid);
+            if (drawStack.getItem() instanceof ItemFluidDisplay display) {
+                fluid.setStackSize(Math.max(display.getAmountLong(drawStack), 0));
+            }
+            return fluid;
+        }
+
+        if (drawStack.getItem() instanceof IAEFluidStack fStack) {
+            return fStack;
+        }
+
+        if (drawStack.getItem() instanceof ItemFluidDrop) {
+            FluidStack fluid = ItemFluidDrop.getFluidStack(drawStack);
+            return fluid == null ? null : AEFluidStack.create(fluid);
+        }
+
+        if (drawStack.getItem() instanceof ItemFluidPacket) {
+            return ItemFluidPacket.getFluidAEStack(drawStack);
+        }
+
+        return null;
+    }
+
     default boolean drawSlot(Slot slot, Runnable baseDraw) {
-        ItemStack drawStack = slot.getStack();
-        if (drawStack == null || drawStack.getItem() == null) return true;
-        IAEItemStack stack;
-        boolean display = false;
-        if (slot instanceof SlotInaccessible) {
-            stack = AEItemStack.create(drawStack);
-            drawStack.stackSize = 0;
-            ((SlotInaccessible) slot).setDisplay(true);
-            display = true;
-        } else if (slot instanceof SlotPatternFake) {
-            stack = ((SlotPatternFake) slot).getAEStack();
-        } else if (slot instanceof SlotPlayerInv || slot instanceof SlotPlayerHotBar) {
-            stack = AEItemStack.create(drawStack);
-        } else if (slot instanceof SlotFakeCraftingMatrix) {
-            stack = ((SlotFakeCraftingMatrix) slot).getAEStack();
-        } else {
-            return true;
+        if (DRAWING_SLOT.get()) {
+            baseDraw.run();
+            return false;
         }
-        if (stack == null || stack.getItem() == null) {
-            return true;
-        }
-        boolean result = true;
-        for (ISlotRender slotRender : SlotRender.instance()
-            .getRenders()) {
-            if (slotRender.get()
-                .test(slot)) {
-                if (!slotRender.drawSlot(slot, stack, this, display)) {
+        DRAWING_SLOT.set(true);
+
+        try {
+            final ItemStack drawStack = slot.getStack();
+            if (drawStack == null || drawStack.getItem() == null) return true;
+
+            final IAEStack<?> stackView = this.getAEStackView(slot, drawStack);
+            if (stackView == null) return true;
+
+            boolean display = false;
+            if (slot instanceof SlotInaccessible) {
+                drawStack.stackSize = 0;
+                ((SlotInaccessible) slot).setDisplay(true);
+                display = true;
+            } else if (!(slot instanceof SlotPatternFake || slot instanceof SlotPlayerInv
+                || slot instanceof SlotPlayerHotBar
+                || slot instanceof SlotFakeCraftingMatrix)) {
+                    return true;
+                }
+
+            boolean result = true;
+            for (ISlotRender slotRender : SlotRender.instance()
+                .getRenders()) {
+                if (!slotRender.get()
+                    .test(slot)) {
+                    continue;
+                }
+
+                if (!slotRender.drawSlot(slot, stackView, this, display)) {
                     result = false;
                     break;
                 }
             }
-        }
-        if (result) {
-            baseDraw.run();
-        }
-
-        for (ISlotRender slotRender : SlotRender.instance()
-            .getRenders()) {
-            if (slotRender.get()
-                .test(slot)) {
-                slotRender.drawCallback(slot, stack, this, display);
+            if (result) {
+                baseDraw.run();
             }
+
+            for (ISlotRender slotRender : SlotRender.instance()
+                .getRenders()) {
+                if (slotRender.get()
+                    .test(slot)) {
+                    slotRender.drawCallback(slot, stackView, this, display);
+                }
+            }
+            return false; // always is false;
+        } finally {
+            DRAWING_SLOT.set(false);
         }
-        return false; // always is false;
     }
 
     default void renderStackSize(boolean display, IAEItemStack stack, Slot slot) {
@@ -97,10 +151,6 @@ public interface IGuiDrawSlot {
         if (fluid == null) return;
         IIcon icon = fluid.getIcon();
         if (icon == null) return;
-
-        if (Mods.HODGEPODGE.isModLoaded() && icon instanceof IPatchedTextureAtlasSprite) {
-            ((IPatchedTextureAtlasSprite) icon).markNeedsAnimationUpdate();
-        }
 
         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.locationBlocksTexture);
         GL11.glTranslatef(0f, 0f, 100.0f);

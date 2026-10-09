@@ -23,6 +23,7 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.client.gui.container.ContainerMonitor;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
+import com.asdflj.ae2thing.client.gui.widget.DualPatternSlot;
 import com.asdflj.ae2thing.client.gui.widget.DualTerminalComponentTree;
 import com.asdflj.ae2thing.client.gui.widget.IAEBasePanel;
 import com.asdflj.ae2thing.client.gui.widget.IDraggable;
@@ -50,6 +51,7 @@ import appeng.api.storage.data.IAEStackType;
 import appeng.api.util.IConfigManager;
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.slots.VirtualMEMonitorableSlot;
+import appeng.client.gui.slots.VirtualMEPatternSlot;
 import appeng.client.gui.slots.VirtualMESlot;
 import appeng.client.gui.widgets.GuiTabButton;
 import appeng.client.gui.widgets.IDropToFillTextField;
@@ -62,12 +64,14 @@ import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.GuiText;
 import appeng.me.cache.ItemFlowGridCache.FlowRate;
 import appeng.util.IConfigManagerHost;
+import codechicken.nei.item.ItemFluidDisplay;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless implements IWidgetGui, IGuiDrawSlot,
     IGuiMonitorTerminal, IConfigManagerHost, IGuiSelection, IDropToFillTextField, ITypeFilterGui, IFlowRateGui {
 
     private static final int PATTERN_DRAG_REGION_HEIGHT = 93;
+    private static final int PATTERN_VIRTUAL_SLOTS = 32;
 
     public ContainerWirelessDualInterfaceTerminal container;
     private GuiTabButton craftingStatusBtn;
@@ -87,7 +91,9 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private final ItemPanel itemPanel;
     private final PatternPanel patternPanel;
     private final List<DualTerminalComponentTree.Component> itemSlotComponents = new ArrayList<>();
-    private VirtualMEMonitorableSlot renderedVirtualSlotUnderMouse;
+    private VirtualMESlot renderedVirtualSlotUnderMouse;
+    private DualPatternSlot[] patternInputSlots;
+    private DualPatternSlot[] patternOutputSlots;
     private IAEBasePanel tooltipSourcePanel;
     private List<?> deferredPanelTooltip;
     private int deferredPanelTooltipX;
@@ -167,13 +173,15 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             GL11.glPopMatrix();
         }
 
-        if (this.renderedVirtualSlotUnderMouse != null
-            && this.componentTree.findTopPanel(this.lastMouseX, this.lastMouseY) == this.itemPanel) {
-            this.tooltipSourcePanel = this.itemPanel;
-            try {
-                super.drawVirtualSlotTooltips(mouseX, mouseY);
-            } finally {
-                this.tooltipSourcePanel = null;
+        if (this.renderedVirtualSlotUnderMouse != null) {
+            final IAEBasePanel topPanel = this.componentTree.findTopPanel(this.lastMouseX, this.lastMouseY);
+            if (topPanel == this.itemPanel || topPanel == this.patternPanel) {
+                this.tooltipSourcePanel = topPanel;
+                try {
+                    super.drawVirtualSlotTooltips(mouseX, mouseY);
+                } finally {
+                    this.tooltipSourcePanel = null;
+                }
             }
         }
     }
@@ -215,6 +223,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     public boolean suppressCoveredSlotTooltip(int mouseX, int mouseY, ItemStack hoveredStack) {
         IAEBasePanel panel = this.componentTree.findTopPanel(mouseX, mouseY);
         if (panel == this.patternPanel) {
+            final DualPatternSlot virtualSlot = this.findPatternPanelSlotAt(mouseX, mouseY);
+            if (virtualSlot != null) return virtualSlot.getAEStack() == null;
             Slot slot = super.getSlot(mouseX, mouseY);
             return !this.isPatternSlot(slot);
         }
@@ -239,6 +249,24 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         return null;
     }
 
+    private DualPatternSlot findPatternPanelSlotAt(int mouseX, int mouseY) {
+        if (this.patternInputSlots == null) return null;
+        if (this.componentTree.findTopPanel(mouseX, mouseY) != this.patternPanel) return null;
+        for (int i = 0; i < this.patternInputSlots.length; i++) {
+            DualPatternSlot slot = this.findPatternSlotAt(this.patternInputSlots[i], mouseX, mouseY);
+            if (slot == null) slot = this.findPatternSlotAt(this.patternOutputSlots[i], mouseX, mouseY);
+            if (slot != null) return slot;
+        }
+        return null;
+    }
+
+    private DualPatternSlot findPatternSlotAt(DualPatternSlot slot, int mouseX, int mouseY) {
+        if (slot.isHidden()) return null;
+        int x = this.guiLeft + slot.getX();
+        int y = this.guiTop + slot.getY();
+        return mouseX >= x && mouseX < x + 18 && mouseY >= y && mouseY < y + 18 ? slot : null;
+    }
+
     public boolean isFloatingComponentAt(int mouseX, int mouseY) {
         return this.componentTree.findTopPanel(mouseX, mouseY) != null
             || this.findPanelButtonAt(mouseX, mouseY) != null;
@@ -255,6 +283,10 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     public ItemStack getVisibleStackAt(int mouseX, int mouseY) {
         IAEBasePanel panel = this.componentTree.findTopPanel(mouseX, mouseY);
         if (panel == this.patternPanel) {
+            DualPatternSlot virtualSlot = this.findPatternPanelSlotAt(mouseX, mouseY);
+            if (virtualSlot != null) {
+                return this.getItemStackForTooltip(virtualSlot.getAEStack());
+            }
             Slot slot = super.getSlot(mouseX, mouseY);
             return this.isPatternSlot(slot) ? slot.getStack() : null;
         }
@@ -268,13 +300,24 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private ItemStack getItemStackForTooltip(IAEStack<?> stack) {
         if (stack instanceof IAEItemStack itemStack) return itemStack.getItemStack();
         if (stack instanceof IAEFluidStack fluidStack && fluidStack.getFluidStack() != null) {
+            final ItemStack display = ItemFluidDisplay.createStack(
+                fluidStack.getFluidStack()
+                    .getFluid(),
+                stack.getStackSize());
+            if (display != null) return display;
             return ItemFluidDrop.newDisplayStack(fluidStack.getFluidStack());
         }
         return null;
     }
 
     public boolean isVirtualSlotVisible(VirtualMESlot slot) {
-        if (!(slot instanceof VirtualMEMonitorableSlot) || slot.isHidden()) return false;
+        if (slot.isHidden()) return false;
+        if (slot instanceof DualPatternSlot) {
+            int x = this.guiLeft + slot.getX() + 9;
+            int y = this.guiTop + slot.getY() + 9;
+            return this.componentTree.findTopPanel(x, y) == this.patternPanel;
+        }
+        if (!(slot instanceof VirtualMEMonitorableSlot)) return false;
         DualTerminalComponentTree.Component owner = this.componentTree.getSlotOwner(slot);
         int x = this.guiLeft + slot.getX() + 9;
         int y = this.guiTop + slot.getY() + 9;
@@ -358,6 +401,12 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     protected void mouseClicked(int xCoord, int yCoord, int btn) {
         this.lastMouseX = xCoord;
         this.lastMouseY = yCoord;
+        final DualPatternSlot patternVirtualSlot = this.findPatternPanelSlotAt(xCoord, yCoord);
+        if (patternVirtualSlot != null) {
+            this.pointerPanel = this.patternPanel;
+            this.bringToFront(this.patternPanel);
+            this.renderedVirtualSlotUnderMouse = patternVirtualSlot;
+        }
         this.pointerPanel = this.findInputPanelAt(xCoord, yCoord);
         if (this.pointerPanel != this.itemPanel) this.itemPanel.clearSearchFocus();
         if (this.pointerPanel != null) {
@@ -383,6 +432,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         }
         Slot slot = super.getSlot(x, y);
         if (slot != null && panel == this.patternPanel && this.isPatternSlot(slot)) return true;
+        if (panel == this.patternPanel && this.findPatternPanelSlotAt(x, y) != null) return true;
         if (panel == this.itemPanel && this.findItemPanelSlotAt(x, y) != null) return true;
         return panel == this.patternPanel && this.patternPanel.isInteractiveAt(x, y);
     }
@@ -458,8 +508,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     protected boolean handleVirtualSlotClick(VirtualMESlot slot, int mouseButton) {
         IAEBasePanel inputPanel = this.pointerPanel != null ? this.pointerPanel
             : this.findInputPanelAt(this.lastMouseX, this.lastMouseY);
-        if (inputPanel != null) {
-            inputPanel.handleVirtualSlotClick(slot, mouseButton);
+        if (inputPanel != null && inputPanel.handleVirtualSlotClick(slot, mouseButton)) {
             return true;
         }
         List<IAEBasePanel> panels = this.componentTree.getPanels();
@@ -529,7 +578,9 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         IAEBasePanel panel = this.componentTree.findTopPanel(mouseX, mouseY);
         Slot hoveredSlot = super.getSlot(mouseX, mouseY);
         if (panel == this.patternPanel) {
-            if (!this.isPatternSlot(hoveredSlot)) return new ArrayList<>();
+            if (this.findPatternPanelSlotAt(mouseX, mouseY) == null && !this.isPatternSlot(hoveredSlot)) {
+                return new ArrayList<>();
+            }
         } else if (panel == this.itemPanel) {
             VirtualMEMonitorableSlot virtualSlot = this.findItemPanelSlotAt(mouseX, mouseY);
             if (virtualSlot == null || virtualSlot.getAEStack() == null) return new ArrayList<>();
@@ -537,6 +588,15 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             return new ArrayList<>();
         }
         super.handleItemTooltip(stack, mouseX, mouseY, lines);
+        if (this.renderedVirtualSlotUnderMouse instanceof VirtualMEPatternSlot patternSlot) {
+            final IAEStack<?> stackInSlot = patternSlot.getAEStack();
+            if (stackInSlot != null) {
+                lines.add(ButtonToolTips.ChangeAmount.getLocal());
+            }
+            if (stackInSlot instanceof IAEItemStack) {
+                lines.add(ButtonToolTips.RenameItem.getLocal());
+            }
+        }
         Slot input = this.container.getContainer()
             .getPatternInputSlot();
         if (this.getSlot(mouseX, mouseY) == input && !input.getHasStack()) {
@@ -550,7 +610,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     public void renderToolTip(ItemStack stack, int mouseX, int mouseY) {
         IAEBasePanel panel = this.componentTree.findTopPanel(mouseX, mouseY);
         Slot hoveredSlot = super.getSlot(mouseX, mouseY);
-        if (panel != null && (panel != this.patternPanel || !this.isPatternSlot(hoveredSlot))) return;
+        if (panel != null && (panel != this.patternPanel
+            || this.findPatternPanelSlotAt(mouseX, mouseY) == null && !this.isPatternSlot(hoveredSlot))) return;
         super.renderToolTip(stack, mouseX, mouseY);
     }
 
@@ -563,7 +624,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         }
         IAEBasePanel topPanel = this.componentTree.findTopPanel(this.lastMouseX, this.lastMouseY);
         if (this.tooltipSourcePanel != null && topPanel != this.tooltipSourcePanel) return;
-        if (this.renderedVirtualSlotUnderMouse != null && topPanel != this.itemPanel) return;
+        if (this.renderedVirtualSlotUnderMouse != null && topPanel != this.itemPanel && topPanel != this.patternPanel)
+            return;
         IAEBasePanel pointerPanel = this.componentTree.findTopPanel(this.lastMouseX, this.lastMouseY);
         if (pointerPanel == null) pointerPanel = this.findPanelButtonAt(this.lastMouseX, this.lastMouseY);
         boolean panelTooltip = pointerPanel != null
@@ -656,7 +718,10 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                 this.preparePanelOverlay();
                 panel.drawBG(this.guiLeft, this.guiTop, mouseX, mouseY);
                 if (panel == this.itemPanel) this.itemPanel.drawComponentForeground();
-                if (panel == this.patternPanel) this.drawPatternSlots(mouseX, mouseY);
+                if (panel == this.patternPanel) {
+                    this.drawPatternSlots(mouseX, mouseY);
+                    this.drawPatternSlotsVirtual(mouseX, mouseY);
+                }
                 if (panel == this.itemPanel) this.drawItemPanelSlots(mouseX, mouseY);
 
                 this.preparePanelOverlay();
@@ -743,6 +808,65 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         GL11.glDepthFunc(GL11.GL_ALWAYS);
         GL11.glDepthMask(false);
         this.resetPanelColor();
+    }
+
+    private void initPatternSlots() {
+        if (this.container.inputsSync == null || this.container.outputsSync == null) return;
+        this.patternPanel.setSlotRebaseY(this.ySize - this.viewHeight - 78 - 4);
+        if (this.patternInputSlots != null) {
+            this.patternPanel.setVirtualSlots(this.patternInputSlots, this.patternOutputSlots);
+            return;
+        }
+        this.patternInputSlots = new DualPatternSlot[PATTERN_VIRTUAL_SLOTS];
+        this.patternOutputSlots = new DualPatternSlot[PATTERN_VIRTUAL_SLOTS];
+        for (int i = 0; i < PATTERN_VIRTUAL_SLOTS; i++) {
+            this.patternInputSlots[i] = new DualPatternSlot(0, 0, this.container.inputsSync, i, this.container);
+            this.patternOutputSlots[i] = new DualPatternSlot(0, 0, this.container.outputsSync, i, this.container);
+            this.registerVirtualSlots(this.patternInputSlots[i]);
+            this.registerVirtualSlots(this.patternOutputSlots[i]);
+        }
+        this.patternPanel.setVirtualSlots(this.patternInputSlots, this.patternOutputSlots);
+    }
+
+    private void drawPatternSlotsVirtual(int mouseX, int mouseY) {
+        if (this.patternInputSlots == null) return;
+        this.patternPanel.updateSlotPositions();
+        final boolean patternHovered = this.componentTree.findTopPanel(mouseX, mouseY) == this.patternPanel;
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glPushMatrix();
+        RenderHelper.enableGUIStandardItemLighting();
+        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glDepthFunc(GL11.GL_ALWAYS);
+        GL11.glDepthMask(false);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GL11.glTranslatef(this.guiLeft, this.guiTop, 0.0F);
+        try {
+            int localMouseX = mouseX - this.guiLeft + 1;
+            int localMouseY = mouseY - this.guiTop + 1;
+            for (DualPatternSlot slot : this.patternInputSlots) {
+                this.drawPatternVirtualSlot(slot, localMouseX, localMouseY, patternHovered);
+            }
+            for (DualPatternSlot slot : this.patternOutputSlots) {
+                this.drawPatternVirtualSlot(slot, localMouseX, localMouseY, patternHovered);
+            }
+        } finally {
+            GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            GL11.glPopMatrix();
+            GL11.glPopAttrib();
+        }
+    }
+
+    private void drawPatternVirtualSlot(DualPatternSlot slot, int localMouseX, int localMouseY,
+        boolean patternHovered) {
+        if (slot.isHidden()) return;
+        int centerX = this.guiLeft + slot.getX() + 9;
+        int centerY = this.guiTop + slot.getY() + 9;
+        if (this.componentTree.findTopPanel(centerX, centerY) != this.patternPanel) return;
+        if (slot.drawStackAndOverlay(this.mc, localMouseX, localMouseY) && patternHovered) {
+            this.renderedVirtualSlotUnderMouse = slot;
+        }
     }
 
     private void drawPatternSlots(int mouseX, int mouseY) {
@@ -852,6 +976,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             panel.initGui();
         }
         this.bindItemSlotsToComponents();
+        this.initPatternSlots();
         this.restorePanelPositions();
         this.patternDragButton = new PanelDragButton(0, 0);
         this.itemDragButton = new PanelDragButton(0, 0);

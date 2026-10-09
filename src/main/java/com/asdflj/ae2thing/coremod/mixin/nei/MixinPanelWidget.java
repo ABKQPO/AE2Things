@@ -7,6 +7,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fluids.FluidStack;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -38,6 +39,8 @@ import codechicken.nei.NEIClientUtils;
 import codechicken.nei.PanelWidget;
 import codechicken.nei.Widget;
 import codechicken.nei.guihook.IContainerTooltipHandler;
+import codechicken.nei.item.ItemFluidDisplay;
+import codechicken.nei.recipe.StackInfo;
 
 @Mixin(PanelWidget.class)
 public abstract class MixinPanelWidget extends Widget implements IContainerTooltipHandler {
@@ -56,7 +59,16 @@ public abstract class MixinPanelWidget extends Widget implements IContainerToolt
             if (is == null) return;
             GuiScreen gui = Minecraft.getMinecraft().currentScreen;
             if (gui instanceof IGuiCraftAmount g) {
-                g.setAmount(Math.max(is.stackSize, 1));
+                int amount = is.stackSize;
+                if (is.getItem() instanceof ItemFluidDisplay display) {
+                    amount = (int) Math.min(Integer.MAX_VALUE, Math.max(display.getAmountLong(is), 1));
+                } else {
+                    FluidStack fluid = StackInfo.getFluid(is);
+                    if (fluid != null) {
+                        amount = fluid.amount;
+                    }
+                }
+                g.setAmount(Math.max(amount, 1));
                 draggedStack = null;
                 cir.setReturnValue(true);
             } else if (gui instanceof AEBaseGui g) {

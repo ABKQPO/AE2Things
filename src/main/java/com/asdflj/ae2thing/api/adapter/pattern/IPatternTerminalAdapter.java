@@ -9,12 +9,16 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 
 import com.asdflj.ae2thing.api.Constants;
+import com.asdflj.ae2thing.inventory.AEStackItemInventory;
 import com.asdflj.ae2thing.nei.object.OrderStack;
 import com.asdflj.ae2thing.network.CPacketTransferRecipe;
 import com.glodblock.github.common.item.ItemFluidPacket;
 
+import appeng.api.storage.data.IAEStack;
 import appeng.core.AELog;
 import appeng.helpers.IContainerCraftingPacket;
+import appeng.tile.inventory.IAEStackInventory;
+import appeng.util.item.AEFluidStack;
 
 public interface IPatternTerminalAdapter {
 
@@ -40,6 +44,26 @@ public interface IPatternTerminalAdapter {
                     continue;
                 }
                 if (index < inv.getSizeInventory()) inv.setInventorySlotContents(index, stack1);
+            }
+        }
+    }
+
+    default void transferPackAE(List<OrderStack<?>> packs, IAEStackInventory inv) {
+        if (inv == null) return;
+        for (OrderStack<?> stack : packs) {
+            if (stack == null) continue;
+            final int index = stack.getIndex();
+            if (index < 0 || index >= inv.getSizeInventory()) continue;
+            IAEStack<?> ae = null;
+            if (stack.getStack() instanceof IAEStack<?>aes) {
+                ae = aes;
+            } else if (stack.getStack() instanceof ItemStack item) {
+                ae = AEStackItemInventory.toAEStack(item.copy());
+            } else if (supportFluid() && stack.getStack() instanceof FluidStack fluid) {
+                ae = AEFluidStack.create(fluid);
+            }
+            if (ae != null) {
+                inv.putAEStackInSlot(index, ae);
             }
         }
     }

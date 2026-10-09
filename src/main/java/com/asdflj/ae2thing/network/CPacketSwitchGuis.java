@@ -72,12 +72,11 @@ public class CPacketSwitchGuis implements IMessage {
                 InventoryHandler.openGui(player, w, new BlockPos(0, 0, 0), ForgeDirection.UNKNOWN, message.guiType);
                 return null;
             } else if (message.guiType == GuiType.PATTERN_MODIFIER) {
-                InventoryHandler.openGui(
-                    player,
-                    w,
-                    new BlockPos(player.inventory.currentItem, 0, 0),
-                    ForgeDirection.UNKNOWN,
-                    message.guiType);
+                int s = Util.findPatternModifier(player);
+                if (s == -1) {
+                    return null;
+                }
+                InventoryHandler.openGui(player, w, new BlockPos(s, 0, 0), ForgeDirection.UNKNOWN, message.guiType);
                 return null;
             }
             if (cont instanceof AEBaseContainer c) {

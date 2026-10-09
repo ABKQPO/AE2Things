@@ -11,6 +11,9 @@ import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.IPatternTerminal;
 import com.asdflj.ae2thing.nei.NEIUtils;
 
+import appeng.api.storage.StorageName;
+import appeng.tile.inventory.IAEStackInventory;
+
 public class PatternTerminalLoader implements Runnable {
 
     @Override
@@ -25,27 +28,42 @@ public class PatternTerminalLoader implements Runnable {
                     ciw.setCrafting(message.isCraft);
                     IPatternTerminal pt = ciw.getContainer()
                         .getPatternTerminal();
-                    IInventory inputSlot = pt
-                        .getInventoryByName(message.isCraft ? Constants.CRAFTING : Constants.CRAFTING_EX);
-                    IInventory outputSlot = pt.getInventoryByName(Constants.OUTPUT_EX);
-                    for (int i = 0; i < inputSlot.getSizeInventory(); i++) {
-                        inputSlot.setInventorySlotContents(i, null);
-                    }
-                    for (int i = 0; i < outputSlot.getSizeInventory(); i++) {
-                        outputSlot.setInventorySlotContents(i, null);
-                    }
                     if (!message.isCraft) {
+                        final appeng.api.parts.IPatternTerminal terminal = (appeng.api.parts.IPatternTerminal) pt;
+                        final IAEStackInventory inputsInv = terminal.getAEInventoryByName(StorageName.CRAFTING_INPUT);
+                        final IAEStackInventory outputsInv = terminal.getAEInventoryByName(StorageName.CRAFTING_OUTPUT);
+                        if (inputsInv == null || outputsInv == null) return;
+                        for (int i = 0; i < inputsInv.getSizeInventory(); i++) {
+                            inputsInv.putAEStackInSlot(i, null);
+                        }
+                        for (int i = 0; i < outputsInv.getSizeInventory(); i++) {
+                            outputsInv.putAEStackInSlot(i, null);
+                        }
                         if (combine) {
                             inputs = NEIUtils.compress(inputs);
                             outputs = NEIUtils.compress(outputs);
                         }
                         inputs = NEIUtils.clearNull(inputs);
                         outputs = NEIUtils.clearNull(outputs);
+                        adapter.transferPackAE(inputs, inputsInv);
+                        adapter.transferPackAE(outputs, outputsInv);
+                        ciw.saveChanges();
+                        return;
+                    }
+                    IInventory inputSlot = pt.getInventoryByName(Constants.CRAFTING);
+                    if (inputSlot == null) return;
+                    final IAEStackInventory outputsInv = ((appeng.api.parts.IPatternTerminal) pt)
+                        .getAEInventoryByName(StorageName.CRAFTING_OUTPUT);
+                    for (int i = 0; i < inputSlot.getSizeInventory(); i++) {
+                        inputSlot.setInventorySlotContents(i, null);
+                    }
+                    if (outputsInv != null) {
+                        for (int i = 0; i < outputsInv.getSizeInventory(); i++) {
+                            outputsInv.putAEStackInSlot(i, null);
+                        }
                     }
                     adapter.transferPack(inputs, inputSlot);
-                    adapter.transferPack(outputs, outputSlot);
                     ciw.onCraftMatrixChanged(inputSlot);
-                    ciw.onCraftMatrixChanged(outputSlot);
                     ciw.saveChanges();
                 }
             });

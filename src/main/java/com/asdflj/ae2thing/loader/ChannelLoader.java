@@ -13,8 +13,6 @@ import com.asdflj.ae2thing.network.CPacketInventoryActionExtend;
 import com.asdflj.ae2thing.network.CPacketNEIRecipe;
 import com.asdflj.ae2thing.network.CPacketNetworkCraftingItems;
 import com.asdflj.ae2thing.network.CPacketOpenTerminal;
-import com.asdflj.ae2thing.network.CPacketPatternNameSet;
-import com.asdflj.ae2thing.network.CPacketPatternValueSet;
 import com.asdflj.ae2thing.network.CPacketRenamer;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
@@ -28,8 +26,6 @@ import com.asdflj.ae2thing.network.SPacketFlowRates;
 import com.asdflj.ae2thing.network.SPacketMEFluidInvUpdate;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 import com.asdflj.ae2thing.network.SPacketNBTDataUpdate;
-import com.asdflj.ae2thing.network.SPacketSetItemAmount;
-import com.asdflj.ae2thing.network.SPacketSetItemName;
 import com.asdflj.ae2thing.network.SPacketStringUpdate;
 import com.asdflj.ae2thing.network.SPacketSwitchBack;
 import com.asdflj.ae2thing.network.SPacketTypeFilter;
@@ -44,13 +40,11 @@ public class ChannelLoader implements Runnable {
     public static final ChannelLoader INSTANCE = new ChannelLoader();
     private static final Class<?>[] MESSAGE_TYPES = { CPacketCraftRequest.class, CPacketFindCellItem.class,
         CPacketFluidUpdate.class, CPacketInventoryAction.class, CPacketInventoryActionExtend.class,
-        CPacketNEIRecipe.class, CPacketNetworkCraftingItems.class, CPacketOpenTerminal.class,
-        CPacketPatternNameSet.class, CPacketPatternValueSet.class, CPacketRenamer.class, CPacketSwitchGuis.class,
-        CPacketTerminalBtns.class, CPacketTransferRecipe.class, CPacketTypeFilter.class, CPacketValueConfig.class,
-        SPacketCraftingDebugCardUpdate.class, SPacketCraftingStateUpdate.class, SPacketFindCellItem.class,
-        SPacketFlowRates.class, SPacketMEFluidInvUpdate.class, SPacketMEItemInvUpdate.class, SPacketNBTDataUpdate.class,
-        SPacketSetItemAmount.class, SPacketSetItemName.class, SPacketStringUpdate.class, SPacketSwitchBack.class,
-        SPacketTypeFilter.class };
+        CPacketNEIRecipe.class, CPacketNetworkCraftingItems.class, CPacketOpenTerminal.class, CPacketRenamer.class,
+        CPacketSwitchGuis.class, CPacketTerminalBtns.class, CPacketTransferRecipe.class, CPacketTypeFilter.class,
+        CPacketValueConfig.class, SPacketCraftingDebugCardUpdate.class, SPacketCraftingStateUpdate.class,
+        SPacketFindCellItem.class, SPacketFlowRates.class, SPacketMEFluidInvUpdate.class, SPacketMEItemInvUpdate.class,
+        SPacketNBTDataUpdate.class, SPacketStringUpdate.class, SPacketSwitchBack.class, SPacketTypeFilter.class };
 
     @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })

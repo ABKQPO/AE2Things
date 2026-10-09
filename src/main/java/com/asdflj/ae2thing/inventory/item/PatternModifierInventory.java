@@ -5,28 +5,36 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
 import com.asdflj.ae2thing.api.Constants;
+import com.asdflj.ae2thing.inventory.AEStackItemInventory;
 import com.asdflj.ae2thing.inventory.ItemBiggerAppEngInventory;
 
 import appeng.api.AEApi;
 import appeng.api.implementations.guiobjects.IGuiItemObject;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.ITerminalHost;
+import appeng.api.storage.StorageName;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IInterfaceViewable;
 import appeng.container.interfaces.IInventorySlotAware;
+import appeng.tile.inventory.IAEStackInventory;
+import appeng.tile.inventory.IIAEStackInventory;
 import appeng.util.IterationCounter;
 import appeng.util.Platform;
 
-public class PatternModifierInventory implements ITerminalHost, IInventorySlotAware, IGuiItemObject {
+public class PatternModifierInventory
+    implements ITerminalHost, IInventorySlotAware, IGuiItemObject, IIAEStackInventory {
 
     private final int slot;
     private final ItemStack item;
     private final EntityPlayer player;
     protected final ItemBiggerAppEngInventory pattern;
     protected final ItemBiggerAppEngInventory replace;
+    protected final AEStackItemInventory replaceSource;
+    protected final AEStackItemInventory replaceTarget;
 
     public PatternModifierInventory(ItemStack item, int slot, EntityPlayer player) {
         this.slot = slot;
@@ -34,6 +42,49 @@ public class PatternModifierInventory implements ITerminalHost, IInventorySlotAw
         this.player = player;
         this.pattern = new ItemBiggerAppEngInventory(this.item, Constants.PATTERN, 9 * 4, this.player, slot, null, 1);
         this.replace = new ItemBiggerAppEngInventory(this.item, Constants.REPLACE, 2, this.player, slot);
+        this.replaceSource = new AEStackItemInventory(
+            this.item,
+            Constants.REPLACE + "Source",
+            1,
+            this.player,
+            slot,
+            StorageName.CRAFTING_INPUT);
+        this.replaceTarget = new AEStackItemInventory(
+            this.item,
+            Constants.REPLACE + "Target",
+            1,
+            this.player,
+            slot,
+            StorageName.CRAFTING_OUTPUT);
+        this.migrateReplace();
+    }
+
+    private void migrateReplace() {
+        if (this.replaceSource.getAEStackInSlot(0) != null || this.replaceTarget.getAEStackInSlot(0) != null) return;
+        for (int i = 0; i < this.replace.getSizeInventory(); i++) {
+            final IAEStack<?> stack = AEStackItemInventory.toAEStack(this.replace.getStackInSlot(i));
+            if (stack == null) continue;
+            if (i == 0) {
+                this.replaceSource.putAEStackInSlot(0, stack);
+            } else {
+                this.replaceTarget.putAEStackInSlot(0, stack);
+            }
+        }
+    }
+
+    @Override
+    public void saveAEStackInv() {
+        this.replaceSource.saveAEStackInv();
+        this.replaceTarget.saveAEStackInv();
+    }
+
+    @Override
+    public IAEStackInventory getAEInventoryByName(StorageName name) {
+        return switch (name) {
+            case CRAFTING_INPUT -> this.replaceSource.getAEInventory();
+            case CRAFTING_OUTPUT -> this.replaceTarget.getAEInventory();
+            default -> null;
+        };
     }
 
     public PatternModifierInventory(ItemStack item, EntityPlayer player) {

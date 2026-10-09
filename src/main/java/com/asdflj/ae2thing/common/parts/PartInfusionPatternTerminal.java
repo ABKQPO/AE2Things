@@ -25,6 +25,7 @@ import appeng.tile.inventory.IAEAppEngInventory;
 import appeng.tile.inventory.InvOperation;
 import appeng.util.Platform;
 
+@Deprecated
 public class PartInfusionPatternTerminal extends THPart implements IPatternTerminal {
 
     public static class RefillerInventory extends AppEngInternalInventory {
