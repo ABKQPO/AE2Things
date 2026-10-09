@@ -14,9 +14,9 @@ import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.Util;
 import com.glodblock.github.common.item.ItemFluidDrop;
-import com.glodblock.github.common.item.ItemFluidPacket;
 
 import appeng.api.AEApi;
+import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IDisplayRepo;
@@ -40,19 +40,20 @@ public class RenderPatternSlotFake implements ISlotRender {
     }
 
     @Override
-    public boolean drawSlot(Slot slot, IAEItemStack stack, IGuiDrawSlot draw, boolean display) {
+    public boolean drawSlot(Slot slot, IAEStack<?> stack, IGuiDrawSlot draw, boolean display) {
         return true;
     }
 
     @Override
-    public void drawCallback(Slot slot, IAEItemStack stack, IGuiDrawSlot draw, boolean display) {
+    public void drawCallback(Slot slot, IAEStack<?> stack, IGuiDrawSlot draw, boolean display) {
         if ((slot instanceof SlotPatternFake fake && !fake.isHidden()) || (slot instanceof SlotFakeCraftingMatrix)) {
             IDisplayRepo iDisplayRepo = Util.getDisplayRepo(draw.getAEBaseGui());
             if (iDisplayRepo instanceof ItemRepo repo) {
                 IItemList<IAEStack<?>> list = Ae2ReflectClient.getList(repo);
-                IAEItemStack what = (stack.getItem() instanceof ItemFluidPacket)
-                    ? AEItemStack.create(ItemFluidDrop.newDisplayStack(ItemFluidPacket.getFluidStack(stack)))
-                    : stack;
+                IAEItemStack what = stack instanceof IAEFluidStack fluid && fluid.getFluidStack() != null
+                    ? AEItemStack.create(ItemFluidDrop.newDisplayStack(fluid.getFluidStack()))
+                    : stack instanceof IAEItemStack item ? item : null;
+                if (what == null) return;
                 IAEStack<?> storedItem = list.findPrecise(what);
                 if (storedItem != null && storedItem.isCraftable()) {
                     GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_LIGHTING_BIT);

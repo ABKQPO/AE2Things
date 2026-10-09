@@ -11,8 +11,7 @@ public class SlotRender {
     private static final SlotRender API = new SlotRender();
 
     private SlotRender() {
-        registerSlotRenderHandler(RenderFluidDrop.class, new RenderFluidDrop());
-        registerSlotRenderHandler(RenderFluidPacketPatternSlot.class, new RenderFluidPacketPatternSlot());
+        registerSlotRenderHandler(RenderFluidStack.class, new RenderFluidStack());
         registerSlotRenderHandler(RenderEncodedPattern.class, new RenderEncodedPattern());
         registerSlotRenderHandler(RenderPatternSlotFake.class, new RenderPatternSlotFake());
         if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {

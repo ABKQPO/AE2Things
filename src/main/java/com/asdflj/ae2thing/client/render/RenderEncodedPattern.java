@@ -15,6 +15,7 @@ import com.asdflj.ae2thing.client.gui.IGuiDrawSlot;
 
 import appeng.api.AEApi;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.container.slot.SlotPlayerHotBar;
 import appeng.container.slot.SlotPlayerInv;
 import appeng.items.misc.ItemEncodedPattern;
@@ -35,11 +36,10 @@ public class RenderEncodedPattern implements ISlotRender {
     }
 
     @Override
-    public boolean drawSlot(Slot slot, IAEItemStack stack, IGuiDrawSlot draw, boolean display) {
-        if (draw.getAEBaseGui() instanceof GuiBaseInterfaceWireless && stack != null
-            && stack.getItem() != null
-            && stack.getItem() instanceof ItemEncodedPattern pattern) {
-            final ItemStack output = pattern.getOutput(stack.getItemStack());
+    public boolean drawSlot(Slot slot, IAEStack<?> stack, IGuiDrawSlot draw, boolean display) {
+        if (draw.getAEBaseGui() instanceof GuiBaseInterfaceWireless && stack instanceof IAEItemStack item
+            && item.getItem() instanceof ItemEncodedPattern pattern) {
+            final ItemStack output = pattern.getOutput(item.getItemStack());
             final Minecraft mc = Minecraft.getMinecraft();
             GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_LIGHTING_BIT);
             GL11.glPushMatrix();
@@ -50,8 +50,8 @@ public class RenderEncodedPattern implements ISlotRender {
                 slot.xDisplayPosition,
                 slot.yDisplayPosition);
             GL11.glDisable(GL11.GL_LIGHTING);
-            if (stack.getStackSize() > 1) {
-                String s1 = String.valueOf(stack.getStackSize());
+            if (item.getStackSize() > 1) {
+                String s1 = String.valueOf(item.getStackSize());
                 GL11.glTranslatef(0, 0, 200f);
                 GL11.glDisable(GL11.GL_BLEND);
                 draw.getFontRender()

@@ -20,6 +20,7 @@ import thaumcraft.api.aspects.IAspectSource;
 import thaumcraft.api.aspects.IEssentiaTransport;
 import thaumcraft.common.Thaumcraft;
 
+@Deprecated
 public class TileInfusionInterface extends TileFluidInterface
     implements IAspectSource, IEssentiaContainer, IEssentiaTransport {
 

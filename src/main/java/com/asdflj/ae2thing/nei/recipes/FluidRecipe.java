@@ -17,6 +17,7 @@ import com.asdflj.ae2thing.nei.object.OrderStack;
 
 import codechicken.nei.PositionedStack;
 import codechicken.nei.recipe.IRecipeHandler;
+import codechicken.nei.recipe.StackInfo;
 import codechicken.nei.recipe.TemplateRecipeHandler;
 
 public final class FluidRecipe {
@@ -58,6 +59,14 @@ public final class FluidRecipe {
         return out;
     }
 
+    private static OrderStack<?> unpackFluid(ItemStack stack, int index, ItemStack[] items) {
+        FluidStack fluid = stack == null ? null : StackInfo.getFluid(stack);
+        if (fluid != null) {
+            return new OrderStack<>(fluid, index);
+        }
+        return items == null ? new OrderStack<>(stack, index) : new OrderStack<>(stack, index, items);
+    }
+
     private static List<OrderStack<?>> getDefaultPackageInputs(TemplateRecipeHandler tRecipe, int index) {
         try {
             List<OrderStack<?>> tmp = new LinkedList<>();
@@ -66,7 +75,7 @@ public final class FluidRecipe {
                 .stream()
                 .filter(Objects::nonNull)
                 .filter(ps -> ps.item != null)
-                .forEach(ps -> tmp.add(new OrderStack<>(ps.item, i.getAndIncrement(), ps.items)));
+                .forEach(ps -> tmp.add(unpackFluid(ps.item, i.getAndIncrement(), ps.items)));
             return tmp;
         } catch (Exception e) {
             return Collections.emptyList();
@@ -78,13 +87,13 @@ public final class FluidRecipe {
             List<OrderStack<?>> tmp = new LinkedList<>();
             AtomicInteger i = new AtomicInteger(0);
             if (tRecipe.getResultStack(index) != null) {
-                tmp.add(new OrderStack<>(tRecipe.getResultStack(index).item, i.getAndIncrement()));
+                tmp.add(unpackFluid(tRecipe.getResultStack(index).item, i.getAndIncrement(), null));
             }
             tRecipe.getOtherStacks(index)
                 .stream()
                 .filter(Objects::nonNull)
                 .filter(ps -> ps.item != null)
-                .forEach(ps -> tmp.add(new OrderStack<>(ps.item, i.getAndIncrement())));
+                .forEach(ps -> tmp.add(unpackFluid(ps.item, i.getAndIncrement(), null)));
             return tmp;
         } catch (Exception e) {
             return Collections.emptyList();

@@ -9,6 +9,7 @@ import com.glodblock.github.common.block.BlockFluidInterface;
 import appeng.block.AEBaseItemBlock;
 import cpw.mods.fml.common.registry.GameRegistry;
 
+@Deprecated
 public class BlockInfusionInterface extends BlockFluidInterface {
 
     public BlockInfusionInterface() {

@@ -6,7 +6,9 @@ import net.minecraft.item.ItemStack;
 import com.asdflj.ae2thing.inventory.IPatternTerminal;
 import com.glodblock.github.common.item.ItemFluidPacket;
 
+import appeng.api.storage.data.IAEStack;
 import appeng.container.slot.SlotFake;
+import appeng.tile.inventory.IAEStackInventory;
 
 public interface IPatternContainer {
 
@@ -17,12 +19,6 @@ public interface IPatternContainer {
     void refillBlankPatterns(Slot slot);
 
     void encode();
-
-    default ItemStack encodeAndGetPattern() {
-        encode();
-        Slot output = getPatternOutputSlot();
-        return output == null ? null : output.getStack();
-    }
 
     void encodeAndMoveToInventory();
 
@@ -42,20 +38,19 @@ public interface IPatternContainer {
         }
     }
 
+    default long getAEStackSize(Slot slot) {
+        ItemStack stack = slot.getStack();
+        return stack == null ? 0 : getStackSize(stack);
+    }
+
     default boolean canDouble(SlotFake[] slots, int mult) {
         if (mult == 0) return false;
         for (Slot s : slots) {
-            ItemStack st = s.getStack();
-            if (st != null) {
-                long result;
-                if (mult < 0) {
-                    result = (long) getStackSize(st) / Math.abs(mult);
-                } else {
-                    result = (long) getStackSize(st) * mult;
-                }
-                if (result > Integer.MAX_VALUE || result <= 0) {
-                    return false;
-                }
+            long size = getAEStackSize(s);
+            if (size <= 0) continue;
+            double result = mult < 0 ? (double) size / Math.abs(mult) : (double) size * mult;
+            if (result > Long.MAX_VALUE || result <= 0) {
+                return false;
             }
         }
         return true;
@@ -65,26 +60,50 @@ public interface IPatternContainer {
         if (mult == 0) return;
         for (final SlotFake s : slots) {
             if (!s.isEnabled()) continue;
+            long size = getAEStackSize(s);
+            if (size <= 0) continue;
+            long result = mult < 0 ? size / Math.abs(mult) : size * mult;
+
             ItemStack st = s.getStack();
-            if (st != null) {
-                if (mult < 0) {
-                    if (st.getItem() instanceof ItemFluidPacket) {
-                        ItemFluidPacket.setFluidAmount(st, ItemFluidPacket.getFluidAmount(st) / Math.abs(mult));
-                    } else {
-                        st.stackSize /= Math.abs(mult);
-                    }
-                } else {
-                    if (st.getItem() instanceof ItemFluidPacket) {
-                        ItemFluidPacket.setFluidAmount(st, ItemFluidPacket.getFluidAmount(st) * mult);
-                    } else {
-                        st.stackSize *= mult;
-                    }
-                }
+            if (st == null) continue;
+            if (st.getItem() instanceof ItemFluidPacket) {
+                ItemFluidPacket.setFluidAmount(st, result);
+            } else {
+                st.stackSize = (int) result;
             }
         }
     }
 
     Slot getPatternOutputSlot();
+
+    default boolean canDouble(IAEStackInventory inv, int mult) {
+        if (mult == 0 || inv == null) return false;
+        for (int i = 0; i < inv.getSizeInventory(); i++) {
+            final IAEStack<?> stack = inv.getAEStackInSlot(i);
+            if (stack == null) continue;
+            final long size = stack.getStackSize();
+            if (size <= 0) continue;
+            final double result = mult < 0 ? (double) size / Math.abs(mult) : (double) size * mult;
+            if (result > Long.MAX_VALUE || result <= 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    default void doubleStacksInternal(IAEStackInventory inv, int mult) {
+        if (mult == 0 || inv == null) return;
+        for (int i = 0; i < inv.getSizeInventory(); i++) {
+            final IAEStack<?> stack = inv.getAEStackInSlot(i);
+            if (stack == null) continue;
+            final long size = stack.getStackSize();
+            if (size <= 0) continue;
+            final long result = mult < 0 ? size / Math.abs(mult) : size * mult;
+            final IAEStack<?> copy = stack.copy();
+            copy.setStackSize(result);
+            inv.putAEStackInSlot(i, copy);
+        }
+    }
 
     default Slot getPatternInputSlot() {
         return null;

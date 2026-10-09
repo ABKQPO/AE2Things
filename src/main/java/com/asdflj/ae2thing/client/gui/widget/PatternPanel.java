@@ -19,17 +19,14 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import com.asdflj.ae2thing.AE2Thing;
-import com.asdflj.ae2thing.api.InventoryActionExtend;
 import com.asdflj.ae2thing.client.event.EncodeEvent;
 import com.asdflj.ae2thing.client.gui.IWidgetGui;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPattern;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
-import com.asdflj.ae2thing.network.CPacketInventoryActionExtend;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
-import com.asdflj.ae2thing.util.Util;
 import com.glodblock.github.client.gui.GuiFCImgButton;
 
 import appeng.api.config.ActionItems;
@@ -37,7 +34,6 @@ import appeng.api.config.ItemSubstitution;
 import appeng.api.config.PatternBeSubstitution;
 import appeng.api.config.PatternSlotConfig;
 import appeng.api.config.Settings;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.widgets.GuiImgButton;
 import appeng.client.gui.widgets.GuiScrollbar;
@@ -52,7 +48,6 @@ import appeng.core.localization.GuiText;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketInventoryAction;
 import appeng.helpers.InventoryAction;
-import appeng.util.item.AEItemStack;
 import codechicken.nei.NEIClientUtils;
 
 public class PatternPanel implements IAEBasePanel {
@@ -81,6 +76,15 @@ public class PatternPanel implements IAEBasePanel {
     private static final int PANEL_Y = 0;
     private static final int PANEL_WIDTH = 133;
     private static final int PANEL_HEIGHT = 202;
+    private static final int GRID_WIDTH = 4;
+    private static final int GRID_HEIGHT = 4;
+    private static final int GRID_SLOTS = GRID_WIDTH * GRID_HEIGHT;
+    private static final int INPUT_X = 224;
+    private static final int INPUT_Y = -59;
+    private static final int OUTPUT_X = 224 + 97;
+    private int slotRebaseY;
+    private DualPatternSlot[] virtualInputSlots;
+    private DualPatternSlot[] virtualOutputSlots;
     private static final int MODE_TAB_X = 39;
     private static final int MODE_TAB_Y = 93;
     private static final int MODE_TAB_SIZE = 22;
@@ -422,26 +426,6 @@ public class PatternPanel implements IAEBasePanel {
             || (slot instanceof SlotPatternTerm))) {
             return false;
         }
-        if (mouseButton == 3 && !this.container.isCraftingMode()) {
-            if (slot.getHasStack()) {
-                IAEItemStack stack = AEItemStack.create(slot.getStack());
-                this.inventorySlots.setTargetStack(stack);
-                for (int i = 0; i < this.inventorySlots.inventorySlots.size(); i++) {
-                    if (slot.equals(this.inventorySlots.inventorySlots.get(i))) {
-                        if (isCtrlKeyDown() && !Util.isFluidPacket(stack.getItemStack())) {
-                            InventoryActionExtend action = InventoryActionExtend.SET_PATTERN_NAME;
-                            AE2Thing.proxy.netHandler
-                                .sendToServer(new CPacketInventoryActionExtend(action, i, 0, stack));
-                        } else {
-                            InventoryActionExtend action = InventoryActionExtend.SET_PATTERN_VALUE;
-                            AE2Thing.proxy.netHandler
-                                .sendToServer(new CPacketInventoryActionExtend(action, i, 0, stack));
-                        }
-                    }
-                }
-                return true;
-            }
-        }
 
         InventoryAction action = ctrlDown == 1 ? InventoryAction.SPLIT_OR_PLACE_SINGLE
             : InventoryAction.PICKUP_OR_SET_DOWN;
@@ -595,6 +579,46 @@ public class PatternPanel implements IAEBasePanel {
             int hiddenOffset = slot instanceof SlotPatternFake fake ? fake.getDisplayPositionOffset() : 0;
             slot.xDisplayPosition = panelX + layout.x + hiddenOffset;
         }
+        this.updateVirtualSlotPositions(panelX, panelY);
+    }
+
+    public void setVirtualSlots(DualPatternSlot[] inputs, DualPatternSlot[] outputs) {
+        this.virtualInputSlots = inputs;
+        this.virtualOutputSlots = outputs;
+        this.updateVirtualSlotPositions(this.absX - this.parent.getGuiLeft(), this.absY - this.parent.getGuiTop());
+    }
+
+    private void updateVirtualSlotPositions(int panelX, int panelY) {
+        if (this.virtualInputSlots == null || this.virtualOutputSlots == null) return;
+        final int originX = panelX - PANEL_X;
+        final int originY = panelY + this.slotRebaseY - PANEL_Y;
+        final boolean crafting = this.container.isCraftingMode();
+        final boolean inverted = this.container.inverted;
+        final int page = this.container.activePage;
+        for (int index = 0; index < this.virtualInputSlots.length; index++) {
+            final int slotPage = index / GRID_SLOTS;
+            final int local = index % GRID_SLOTS;
+            final int x = local % GRID_WIDTH;
+            final int y = local / GRID_WIDTH;
+            final DualPatternSlot slot = this.virtualInputSlots[index];
+            slot.setX(originX + INPUT_X + x * 18);
+            slot.setY(originY + INPUT_Y + y * 18);
+            slot.setHidden(crafting || slotPage != page || inverted && x > 0);
+        }
+        for (int index = 0; index < this.virtualOutputSlots.length; index++) {
+            final int slotPage = index / GRID_SLOTS;
+            final int local = index % GRID_SLOTS;
+            final int x = local / GRID_HEIGHT;
+            final int y = local % GRID_HEIGHT;
+            final DualPatternSlot slot = this.virtualOutputSlots[index];
+            slot.setX(originX + OUTPUT_X - x * 18);
+            slot.setY(originY + INPUT_Y + y * 18);
+            slot.setHidden(crafting || slotPage != page || !inverted && x > 0);
+        }
+    }
+
+    public void setSlotRebaseY(int rebaseY) {
+        this.slotRebaseY = rebaseY;
     }
 
     private void captureSlotLayout() {

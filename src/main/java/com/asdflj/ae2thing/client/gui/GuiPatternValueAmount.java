@@ -3,57 +3,33 @@ package com.asdflj.ae2thing.client.gui;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.entity.player.InventoryPlayer;
 
-import com.asdflj.ae2thing.AE2Thing;
+import com.asdflj.ae2thing.api.adapter.terminal.IGuiCraftAmount;
 import com.asdflj.ae2thing.client.gui.container.ContainerPatternValueAmount;
-import com.asdflj.ae2thing.common.parts.PartInfusionPatternTerminal;
-import com.asdflj.ae2thing.inventory.gui.GuiType;
-import com.asdflj.ae2thing.inventory.item.PatternModifierInventory;
-import com.asdflj.ae2thing.inventory.item.WirelessDualInterfaceTerminalInventory;
-import com.asdflj.ae2thing.loader.ItemAndBlockHolder;
-import com.asdflj.ae2thing.network.CPacketPatternValueSet;
 
 import appeng.api.storage.ITerminalHost;
+import appeng.api.storage.data.IAEStack;
+import appeng.client.gui.slots.VirtualMESlotSingle;
 import appeng.core.localization.GuiText;
+import appeng.core.sync.network.NetworkHandler;
+import appeng.core.sync.packets.PacketPatternValueSet;
 
-public class GuiPatternValueAmount extends GuiAmount {
+public class GuiPatternValueAmount extends appeng.client.gui.implementations.GuiAmount implements IGuiCraftAmount {
 
-    public GuiPatternValueAmount(InventoryPlayer inventoryPlayer, ITerminalHost te) {
+    private final ContainerPatternValueAmount container;
+    private final VirtualMESlotSingle slot;
+
+    public GuiPatternValueAmount(final InventoryPlayer inventoryPlayer, final ITerminalHost te) {
         super(new ContainerPatternValueAmount(inventoryPlayer, te));
-    }
-
-    @Override
-    protected void actionPerformed(final GuiButton btn) {
-        super.actionPerformed(btn);
-        try {
-            if (btn == this.submit && btn.enabled) {
-                AE2Thing.proxy.netHandler.sendToServer(
-                    new CPacketPatternValueSet(
-                        originalGui.ordinal(),
-                        getAmount(),
-                        ((ContainerPatternValueAmount) this.inventorySlots).getValueIndex()));
-            }
-        } catch (final NumberFormatException e) {
-            this.amountBox.setText("1");
-        }
-    }
-
-    protected void setOriginGUI(Object target) {
-        if (target instanceof PartInfusionPatternTerminal) {
-            this.myIcon = ItemAndBlockHolder.INFUSION_PATTERN_TERMINAL.stack();
-            this.originalGui = GuiType.INFUSION_PATTERN_TERMINAL;
-        } else if (target instanceof WirelessDualInterfaceTerminalInventory) {
-            this.myIcon = ItemAndBlockHolder.ITEM_WIRELESS_DUAL_INTERFACE_TERMINAL.stack();
-            this.originalGui = GuiType.WIRELESS_DUAL_INTERFACE_TERMINAL;
-        } else if (target instanceof PatternModifierInventory) {
-            this.myIcon = ItemAndBlockHolder.ITEM_PATTERN_MODIFIER.stack();
-            this.originalGui = GuiType.PATTERN_MODIFIER;
-        }
+        this.container = (ContainerPatternValueAmount) this.inventorySlots;
+        this.slot = new VirtualMESlotSingle(34, 53, 0, null);
     }
 
     @Override
     public void initGui() {
         super.initGui();
-        this.submit.displayString = GuiText.Set.getLocal();
+        this.amountTextField.setMaxStringLength(20);
+        this.registerVirtualSlots(this.slot);
+        this.update();
     }
 
     @Override
@@ -64,23 +40,71 @@ public class GuiPatternValueAmount extends GuiAmount {
     @Override
     public void drawBG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
         super.drawBG(offsetX, offsetY, mouseX, mouseY);
+        this.nextBtn.displayString = GuiText.Set.getLocal();
         try {
-            int result = getAmount();
-            this.submit.enabled = result > 0;
+            this.nextBtn.enabled = this.getAmountLong() > 0;
         } catch (final NumberFormatException e) {
-            this.submit.enabled = false;
+            this.nextBtn.enabled = false;
         }
-        this.amountBox.drawTextBox();
+        this.amountTextField.drawTextBox();
     }
 
+    @Override
+    protected void actionPerformed(final GuiButton btn) {
+        if (btn == this.nextBtn && btn.enabled
+            && this.container.getAEStack() != null
+            && this.container.getInvName() != null) {
+            final IAEStack<?> aes = this.container.getAEStack()
+                .copy();
+            aes.setStackSize(this.getAmountLong());
+            NetworkHandler.instance.sendToServer(
+                new PacketPatternValueSet(aes, this.container.getInvName(), this.container.getSlotIndex()));
+            return;
+        }
+        super.actionPerformed(btn);
+    }
+
+    @Override
     protected String getBackground() {
         return "guis/craftAmt.png";
     }
 
+    public void update() {
+        final IAEStack<?> aes = this.container.getAEStack();
+        this.slot.setAEStack(aes);
+        if (aes != null) {
+            this.setAmount(aes.getStackSize());
+        }
+    }
+
+    @Override
+    public int getAmount() {
+        try {
+            return (int) Math.min(Integer.MAX_VALUE, this.getAmountLong());
+        } catch (final NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    @Override
+    public long getAmountLong() {
+        final String text = this.amountTextField.getText()
+            .trim();
+        try {
+            return Long.parseLong(text);
+        } catch (final NumberFormatException e) {
+            return super.getAmountLong();
+        }
+    }
+
     @Override
     public void setAmount(int amount) {
-        this.amountBox.setText(String.valueOf(amount));
-        this.amountBox.setCursorPositionEnd();
-        this.amountBox.setSelectionPos(0);
+        this.setAmount((long) amount);
+    }
+
+    public void setAmount(long amount) {
+        this.amountTextField.setText(Long.toString(amount));
+        this.amountTextField.setCursorPositionEnd();
+        this.amountTextField.setSelectionPos(0);
     }
 }

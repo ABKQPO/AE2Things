@@ -38,6 +38,7 @@ public class GuiCraftAmount extends appeng.client.gui.implementations.GuiCraftAm
     @Override
     public void initGui() {
         super.initGui();
+        this.amountTextField.setMaxStringLength(20);
         // GuiSub adds its own tab as soon as the container exposes a primary GUI icon, but that tab asks the server to
         // open its stored PrimaryGui and AE2Things' containers never store one, so clicking it throws inside
         // PacketSwitchGuis. AE2Things builds the tab itself below and switches through its own GuiType instead.

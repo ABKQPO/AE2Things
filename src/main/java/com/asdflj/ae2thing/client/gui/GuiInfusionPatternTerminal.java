@@ -29,7 +29,6 @@ import appeng.api.config.ActionItems;
 import appeng.api.config.Settings;
 import appeng.api.implementations.tiles.IViewCellStorage;
 import appeng.api.storage.ITerminalHost;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.client.gui.widgets.GuiImgButton;
 import appeng.client.gui.widgets.GuiScrollbar;
@@ -43,6 +42,7 @@ import appeng.core.localization.GuiText;
 import appeng.util.item.AEItemStack;
 import thaumcraft.common.config.ConfigBlocks;
 
+@Deprecated
 public class GuiInfusionPatternTerminal extends GuiMonitor implements IGuiMonitorTerminal {
 
     private final ContainerInfusionPatternTerminal container;
@@ -88,12 +88,12 @@ public class GuiInfusionPatternTerminal extends GuiMonitor implements IGuiMonito
             if (slot instanceof OptionalSlotFake || slot instanceof SlotFakeCraftingMatrix) {
                 if (slot.getHasStack()) {
                     InventoryActionExtend action = InventoryActionExtend.SET_PATTERN_VALUE;
-                    IAEItemStack stack = AEItemStack.create(slot.getStack());
+                    IAEStack<?> stack = AEItemStack.create(slot.getStack());
                     ((AEBaseContainer) this.inventorySlots).setTargetStack(stack);
                     for (int i = 0; i < this.inventorySlots.inventorySlots.size(); i++) {
                         if (slot.equals(this.inventorySlots.inventorySlots.get(i))) {
                             AE2Thing.proxy.netHandler
-                                .sendToServer(new CPacketInventoryActionExtend(action, i, 0, stack));
+                                .sendToServer(new CPacketInventoryActionExtend(action, i, -1, stack));
                         }
                     }
                     return;

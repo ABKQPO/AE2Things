@@ -11,11 +11,18 @@ import com.asdflj.ae2thing.api.adapter.pattern.THDualInterfacePatternTerminal;
 import com.asdflj.ae2thing.client.gui.container.ContainerInfusionPatternTerminal;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.integration.Mods;
+import com.asdflj.ae2thing.inventory.AEStackItemInventory;
+import com.asdflj.ae2thing.inventory.IPatternTerminal;
 
+import appeng.api.storage.StorageName;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.tile.inventory.IAEAppEngInventory;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.Platform;
+import appeng.util.item.AEItemStack;
 
 public class PatternTerminalMouseWheelLoader implements Runnable {
 
@@ -49,17 +56,32 @@ public class PatternTerminalMouseWheelLoader implements Runnable {
                             .getStack();
                         ItemStack out = (ItemStack) outputs.get(0)
                             .getStack();
-                        IInventory inv = adapter.getInventoryByName(
-                            container,
-                            c.getContainer()
-                                .getPatternTerminal()
-                                .isCraftingRecipe() ? Constants.CRAFTING : Constants.CRAFTING_EX);
-                        for (int i = 0; i < inv.getSizeInventory(); i++) {
-                            if (Platform.isSameItemPrecise(inv.getStackInSlot(i), in)) {
-                                inv.setInventorySlotContents(i, out);
+                        final IPatternTerminal pt = c.getContainer()
+                            .getPatternTerminal();
+                        if (pt.isCraftingRecipe()) {
+                            final IInventory inv = pt.getInventoryByName(Constants.CRAFTING);
+                            if (inv != null) {
+                                for (int i = 0; i < inv.getSizeInventory(); i++) {
+                                    if (Platform.isSameItemPrecise(inv.getStackInSlot(i), in)) {
+                                        inv.setInventorySlotContents(i, out);
+                                    }
+                                }
+                                container.onCraftMatrixChanged(inv);
+                            }
+                        } else {
+                            final IAEStackInventory inv = ((appeng.api.parts.IPatternTerminal) pt)
+                                .getAEInventoryByName(StorageName.CRAFTING_INPUT);
+                            final IAEItemStack target = AEItemStack.create(in);
+                            if (inv != null && target != null) {
+                                final IAEStack<?> replacement = AEStackItemInventory.toAEStack(out);
+                                for (int i = 0; i < inv.getSizeInventory(); i++) {
+                                    final IAEStack<?> current = inv.getAEStackInSlot(i);
+                                    if (current instanceof IAEItemStack item && target.isSameType(item)) {
+                                        inv.putAEStackInSlot(i, replacement);
+                                    }
+                                }
                             }
                         }
-                        container.onCraftMatrixChanged(inv);
                         c.saveChanges();
                     }
                 });

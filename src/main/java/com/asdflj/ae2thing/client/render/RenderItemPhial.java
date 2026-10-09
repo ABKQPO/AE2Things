@@ -17,6 +17,7 @@ import com.asdflj.ae2thing.client.gui.container.slot.InfusionTerminalSlotPattern
 import com.asdflj.ae2thing.common.item.ItemPhial;
 
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.common.Thaumcraft;
@@ -30,9 +31,9 @@ public class RenderItemPhial implements ISlotRender {
     }
 
     @Override
-    public boolean drawSlot(Slot slot, IAEItemStack stack, IGuiDrawSlot draw, boolean display) {
-        if (slot instanceof InfusionTerminalSlotPatternFake) {
-            Aspect aspect = ItemPhial.getAspect(stack);
+    public boolean drawSlot(Slot slot, IAEStack<?> stack, IGuiDrawSlot draw, boolean display) {
+        if (slot instanceof InfusionTerminalSlotPatternFake && stack instanceof IAEItemStack item) {
+            Aspect aspect = ItemPhial.getAspect(item);
             if (aspect == null) return true;
             boolean isKnown = false;
             EntityPlayer player = Minecraft.getMinecraft().thePlayer;
@@ -64,8 +65,8 @@ public class RenderItemPhial implements ISlotRender {
                 GL11.glEnable(GL11.GL_LIGHTING);
                 GL11.glDisable(GL11.GL_BLEND);
             }
-            aeRenderItem.setAeStack(stack);
-            draw.renderStackSize(display, stack, slot);
+            aeRenderItem.setAeStack(item);
+            draw.renderStackSize(display, item, slot);
             return false;
 
         }

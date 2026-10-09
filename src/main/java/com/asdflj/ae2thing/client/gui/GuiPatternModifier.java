@@ -17,6 +17,7 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.InventoryActionExtend;
 import com.asdflj.ae2thing.client.gui.container.ContainerPatternModifier;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotEncodedPatternInput;
+import com.asdflj.ae2thing.client.gui.widget.PatternValueSlot;
 import com.asdflj.ae2thing.network.CPacketInventoryActionExtend;
 import com.asdflj.ae2thing.util.NameConst;
 
@@ -27,8 +28,6 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.client.gui.AEBaseGui;
 import appeng.core.localization.ColorUtils;
 import appeng.core.localization.GuiText;
-import appeng.core.sync.network.NetworkHandler;
-import appeng.core.sync.packets.PacketClickOrDragFakeSlot;
 import appeng.util.Platform;
 import codechicken.nei.VisiblityData;
 import codechicken.nei.api.INEIGuiHandler;
@@ -41,6 +40,8 @@ public class GuiPatternModifier extends AEBaseGui implements INEIGuiHandler {
     protected GuiButton replace;
     protected GuiButton clear;
     protected ContainerPatternModifier container;
+    private PatternValueSlot replaceSourceSlot;
+    private PatternValueSlot replaceTargetSlot;
 
     public GuiPatternModifier(InventoryPlayer inventory, ITerminalHost inv) {
         super(new ContainerPatternModifier(inventory, inv));
@@ -64,6 +65,7 @@ public class GuiPatternModifier extends AEBaseGui implements INEIGuiHandler {
     @Override
     public void initGui() {
         super.initGui();
+        this.initReplaceSlots();
         this.buttonList.add(
             this.replace = new GuiButton(
                 0,
@@ -80,6 +82,29 @@ public class GuiPatternModifier extends AEBaseGui implements INEIGuiHandler {
                 50,
                 20,
                 I18n.format(NameConst.GUI_PATTERN_MODIFIER_CLEAR)));
+    }
+
+    private void initReplaceSlots() {
+        if (this.replaceSourceSlot != null) return;
+        if (this.container.replaceSourceSync == null || this.container.replaceTargetSync == null) return;
+        this.replaceSourceSlot = new PatternValueSlot(
+            8,
+            93,
+            this.container.replaceSourceSync,
+            0,
+            (slot, type, button) -> true,
+            true);
+        this.replaceTargetSlot = new PatternValueSlot(
+            50,
+            93,
+            this.container.replaceTargetSync,
+            0,
+            (slot, type, button) -> true,
+            true);
+        this.replaceSourceSlot.setShowAmount(false);
+        this.replaceTargetSlot.setShowAmount(false);
+        this.registerVirtualSlots(this.replaceSourceSlot);
+        this.registerVirtualSlots(this.replaceTargetSlot);
     }
 
     @Override
@@ -116,8 +141,8 @@ public class GuiPatternModifier extends AEBaseGui implements INEIGuiHandler {
                 .getItem() != null
             && p.getStack()
                 .getItem() instanceof ICraftingPatternItem cr
-            && this.container.getSource() != null) {
-            ItemStack item = this.container.getSource();
+            && this.container.getReplaceSource() != null) {
+            ItemStack item = this.container.getReplaceSource();
             ICraftingPatternDetails details = cr
                 .getPatternForItem(s.getStack(), this.container.getInventoryPlayer().player.worldObj);
             if (details != null) {
@@ -174,22 +199,9 @@ public class GuiPatternModifier extends AEBaseGui implements INEIGuiHandler {
         if (slotAtPosition == null) {
             return false;
         }
-        Slot target;
-        if (this.container.getSourceSlot()
-            .equals(slotAtPosition)) {
-            target = this.container.getSourceSlot();
-        } else if (this.container.getTargetSlot()
-            .equals(slotAtPosition)) {
-                target = this.container.getTargetSlot();
-            } else {
-                target = null;
-            }
-        if (target != null) {
-            target.putStack(draggedStack.copy());
-            NetworkHandler.instance.sendToServer(new PacketClickOrDragFakeSlot(draggedStack, target.slotNumber, false));
-            return true;
+        if (this.getVirtualMESlotUnderMouse() != null) {
+            return super.handleDragNDrop(gui, mouseX, mouseY, draggedStack, button);
         }
-
         return false;
     }
 

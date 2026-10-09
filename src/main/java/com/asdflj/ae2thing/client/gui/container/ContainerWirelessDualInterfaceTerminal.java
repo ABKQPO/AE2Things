@@ -42,6 +42,7 @@ import com.asdflj.ae2thing.util.Ae2Reflect;
 import com.asdflj.ae2thing.util.GTUtil;
 import com.glodblock.github.common.item.ItemFluidPacket;
 import com.glodblock.github.util.Util;
+import com.google.common.base.Optional;
 
 import appeng.api.AEApi;
 import appeng.api.config.Settings;
@@ -55,16 +56,20 @@ import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.parts.IInterfaceTerminal;
 import appeng.api.storage.ITerminalHost;
+import appeng.api.storage.StorageName;
 import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.util.IConfigurableObject;
 import appeng.api.util.IInterfaceViewable;
 import appeng.container.implementations.ContainerInterfaceTerminal;
+import appeng.container.interfaces.IVirtualSlotSource;
 import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotPatternOutputs;
 import appeng.container.slot.SlotPatternTerm;
 import appeng.container.sync.SyncRegistrar;
+import appeng.container.sync.handlers.AEStackInventorySyncHandler;
 import appeng.container.sync.handlers.BooleanSyncHandler;
 import appeng.container.sync.handlers.IntSyncHandler;
 import appeng.core.AELog;
@@ -75,6 +80,7 @@ import appeng.helpers.IInterfaceHost;
 import appeng.helpers.InventoryAction;
 import appeng.me.cache.CraftingGridCache;
 import appeng.me.helpers.ChannelPowerSrc;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.tile.inventory.InvOperation;
 import appeng.tile.networking.TileCableBus;
 import appeng.util.InventoryAdaptor;
@@ -87,10 +93,44 @@ import appeng.util.item.AEItemStackType;
 import codechicken.nei.recipe.StackInfo;
 
 public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
-    implements IContainerCraftingPacket, IWidgetPatternContainer, IConfigurableObject {
+    implements IContainerCraftingPacket, IWidgetPatternContainer, IConfigurableObject, IVirtualSlotSource {
+
+    @Override
+    public void updateVirtualSlot(StorageName name, int slotId, IAEStack<?> aes) {
+        if (!(this.host instanceof WirelessDualInterfaceTerminalInventory inv)) return;
+        switch (name) {
+            case CRAFTING_INPUT -> {
+                final IAEStackInventory inputs = inv.getCraftingExInventory();
+                if (slotId < 0 || slotId >= inputs.getSizeInventory()) return;
+                if (this.craftingMode && aes != null) {
+                    aes.setStackSize(1);
+                }
+                inputs.putAEStackInSlot(slotId, aes);
+                if (this.inputsSync != null) {
+                    this.inputsSync.markDirty();
+                }
+            }
+            case CRAFTING_OUTPUT -> {
+                final IAEStackInventory outputs = inv.getOutputExInventory();
+                if (slotId < 0 || slotId >= outputs.getSizeInventory()) return;
+                outputs.putAEStackInSlot(slotId, aes);
+                if (this.outputsSync != null) {
+                    this.outputsSync.markDirty();
+                }
+            }
+            default -> {}
+        }
+    }
+
+    @Override
+    public StorageName getAEStorageName(Slot slot) {
+        return null;
+    }
 
     public final ContainerInterfaceTerminal delegateContainer;
     private final PatternContainer patternPanel;
+    public final AEStackInventorySyncHandler inputsSync;
+    public final AEStackInventorySyncHandler outputsSync;
 
     public boolean craftingMode = true;
 
@@ -119,6 +159,13 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     public ContainerWirelessDualInterfaceTerminal(InventoryPlayer ip, ITerminalHost monitorable) {
         super(ip, monitorable);
         final SyncRegistrar sync = this.syncRegistrar();
+        if (this.host instanceof WirelessDualInterfaceTerminalInventory inv) {
+            this.inputsSync = sync.aeStackInventory("ae2thing/inputs", inv.getCraftingExInventory());
+            this.outputsSync = sync.aeStackInventory("ae2thing/outputs", inv.getOutputExInventory());
+        } else {
+            this.inputsSync = null;
+            this.outputsSync = null;
+        }
         this.craftingModeSync = sync.booleanS2C("craftingMode")
             .onClientChange((o, n) -> {
                 this.craftingMode = n;
@@ -452,16 +499,16 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
 
     public void toggleVisibility(NBTTagCompound tag) {
         ImmutablePair<World, IInterfaceViewable> result = getWorldAndHost(tag);
-        if (result == null || !(result.right instanceof IInterfaceHost host)) {
+        if (result == null || !(result.right instanceof IInterfaceHost ihost)) {
             return;
         }
-        final YesNo current = (YesNo) host.getInterfaceDuality()
+        final YesNo current = (YesNo) ihost.getInterfaceDuality()
             .getConfigManager()
             .getSetting(Settings.INTERFACE_TERMINAL);
-        host.getInterfaceDuality()
+        ihost.getInterfaceDuality()
             .getConfigManager()
             .putSetting(Settings.INTERFACE_TERMINAL, current == YesNo.YES ? YesNo.NO : YesNo.YES);
-        host.saveChanges();
+        ihost.saveChanges();
         this.scheduleInterfaceRefresh();
     }
 
@@ -490,7 +537,7 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
 
     private void sendToClient(IInterfaceViewable host) {
         PacketInterfaceTerminalUpdate update = new PacketInterfaceTerminalUpdate();
-        Map map = Ae2Reflect.getTracked(this.delegateContainer);
+        Map<?, ?> map = Ae2Reflect.getTracked(this.delegateContainer);
         Object o = map.get(host);
         if (o == null) return;
         try {
@@ -568,15 +615,15 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     }
 
     public NBTTagCompound getPanelPositions() {
-        if (this.host instanceof WirelessDualInterfaceTerminalInventory terminal) {
-            return terminal.getPanelPositions();
+        if (this.host instanceof WirelessDualInterfaceTerminalInventory inv) {
+            return inv.getPanelPositions();
         }
         return new NBTTagCompound();
     }
 
     public void setPanelPositions(NBTTagCompound positions) {
-        if (Platform.isServer() && this.host instanceof WirelessDualInterfaceTerminalInventory terminal) {
-            terminal.setPanelPositions(positions);
+        if (Platform.isServer() && this.host instanceof WirelessDualInterfaceTerminalInventory inv) {
+            inv.setPanelPositions(positions);
         }
     }
 
@@ -596,16 +643,16 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
             && player.inventory.getItemStack() == null
             && (mode == 0 && (clickedButton == 0 || clickedButton == 1))) {
             if (this.getMonitor() == null) return super.slotClick(slotId, clickedButton, mode, player);
+            Optional<ItemStack> blankPattern = AEApi.instance()
+                .definitions()
+                .materials()
+                .blankPattern()
+                .maybeStack(1);
+            if (!blankPattern.isPresent()) {
+                return null;
+            }
             IAEItemStack blank = this.getMonitor()
-                .getAvailableItem(
-                    AEItemStack.create(
-                        AEApi.instance()
-                            .definitions()
-                            .materials()
-                            .blankPattern()
-                            .maybeStack(1)
-                            .get()),
-                    fetchNewId());
+                .getAvailableItem(AEItemStack.create(blankPattern.get()), fetchNewId());
             if (blank != null && blank.getStackSize() > 0 && this.getPowerSource() != null) {
                 long amount = clickedButton == 0 ? blank.getItemStack()
                     .getMaxStackSize() : 1;
