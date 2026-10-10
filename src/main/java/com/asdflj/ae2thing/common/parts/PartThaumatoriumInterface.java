@@ -21,6 +21,7 @@ import thaumcraft.api.aspects.AspectList;
 import thaumicenergistics.api.tiles.IEssentiaTransportWithSimulate;
 import thaumicenergistics.common.storage.AEEssentiaStack;
 
+@Deprecated
 public class PartThaumatoriumInterface extends PartFluidInterface
     implements IEssentiaTransportWithSimulate, IEssentiaContainer {
 
