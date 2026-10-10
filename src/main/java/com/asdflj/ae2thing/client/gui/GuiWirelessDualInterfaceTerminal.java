@@ -1124,7 +1124,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         int patternDefaultX = this.guiLeft + 209;
         int patternDefaultY = this.guiTop;
         int itemDefaultX = this.guiLeft - itemRectangle.width();
-        int itemDefaultY = this.guiTop + this.ySize - itemRectangle.height() + 45;
+        int itemDefaultY = this.guiTop + this.ySize - itemRectangle.height();
         this.patternPanel.setRectangle(
             this.clampPanelX(this.getPanelPosition(positions, "patternX", patternDefaultX), patternRectangle.width()),
             this.clampPanelY(
