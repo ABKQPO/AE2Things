@@ -7,6 +7,7 @@ import com.asdflj.ae2thing.common.item.ItemPhial;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 
+@Deprecated
 public interface IEssentiaContainer {
 
     AspectList getAspects();
