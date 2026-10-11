@@ -144,4 +144,18 @@ public enum Mods implements IMod, ITargetMod {
             return false;
         }
     }
+
+    private static Boolean gtNonConsumedDisplay;
+
+    public static boolean hasGTNonConsumedDisplay() {
+        if (gtNonConsumedDisplay == null) {
+            try {
+                Class.forName("gregtech.api.interfaces.INonConsumedItemDisplay");
+                gtNonConsumedDisplay = true;
+            } catch (ClassNotFoundException e) {
+                gtNonConsumedDisplay = false;
+            }
+        }
+        return gtNonConsumedDisplay;
+    }
 }

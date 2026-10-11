@@ -88,6 +88,10 @@ public class ClientProxy extends CommonProxy {
         return entryWrapper;
     }
 
+    public static boolean isAutoUploadHighlighted() {
+        return entryWrapper != null && entryWrapper.autoUpload;
+    }
+
     @Override
     public void onLoadComplete(FMLLoadCompleteEvent event) {
         super.onLoadComplete(event);
@@ -202,21 +206,26 @@ public class ClientProxy extends CommonProxy {
 
     private void placePattern() {
         GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
-        if (EncodeEvent.encode && getInterfaceHighlightEntry() != null
-            && currentScreen instanceof GuiBaseInterfaceWireless interfaceWireless) {
-            ContainerWirelessDualInterfaceTerminal container = (ContainerWirelessDualInterfaceTerminal) interfaceWireless.inventorySlots;
-            if (container.getContainer()
-                .getPatternOutputSlot()
-                .getHasStack()) {
-                AE2Thing.proxy.netHandler.sendToServer(
-                    new CPacketTerminalBtns(
-                        "InterfaceTerminal.PlacePattern",
-                        getInterfaceHighlightEntry().slot,
-                        getInterfaceHighlightEntry().getDimensionalCoordSide()));
-                EncodeEvent.encode = false;
-                setInterfaceHighlightEntry(null);
-            }
+        GuiBaseInterfaceWireless.InterfaceWirelessEntryWrapper wrapper = getInterfaceHighlightEntry();
+        if (wrapper == null || !(currentScreen instanceof GuiWirelessDualInterfaceTerminal interfaceWireless)) return;
+        if (!EncodeEvent.encode && !wrapper.autoUpload) return;
+
+        if (!interfaceWireless.isHighlightSlotWritable() && !interfaceWireless.advanceHighlight()) {
+            EncodeEvent.encode = false;
+            wrapper.autoUpload = false;
+            return;
         }
+
+        ContainerWirelessDualInterfaceTerminal container = (ContainerWirelessDualInterfaceTerminal) interfaceWireless.inventorySlots;
+        if (!container.getContainer()
+            .getPatternOutputSlot()
+            .getHasStack()) return;
+
+        GuiBaseInterfaceWireless.InterfaceWirelessEntryWrapper target = getInterfaceHighlightEntry();
+        AE2Thing.proxy.netHandler.sendToServer(
+            new CPacketTerminalBtns("InterfaceTerminal.PlacePattern", target.slot, target.getDimensionalCoordSide()));
+        EncodeEvent.encode = false;
+        target.autoUpload = false;
     }
 
     @SubscribeEvent

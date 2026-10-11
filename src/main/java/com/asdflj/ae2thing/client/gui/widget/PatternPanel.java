@@ -10,10 +10,12 @@ import java.util.List;
 import java.util.Set;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.StatCollector;
 import net.minecraftforge.common.MinecraftForge;
 
 import org.lwjgl.input.Keyboard;
@@ -25,6 +27,7 @@ import com.asdflj.ae2thing.client.gui.IWidgetGui;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
+import com.asdflj.ae2thing.proxy.ClientProxy;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.glodblock.github.client.gui.GuiFCImgButton;
@@ -250,12 +253,7 @@ public class PatternPanel implements IAEBasePanel {
         }
         this.captureSlotLayout();
         this.gui.getButtonList()
-            .add(
-                this.encodeBtn = new GuiImgButton(
-                    this.absX + 11,
-                    this.absY + 118,
-                    Settings.ACTIONS,
-                    ActionItems.ENCODE));
+            .add(this.encodeBtn = new EncodeButton(this.absX + 11, this.absY + 118));
         this.gui.getButtonList()
             .add(
                 this.tabProcessButton = new GuiTabButton(
@@ -390,6 +388,10 @@ public class PatternPanel implements IAEBasePanel {
             || button == this.tabCraftButton;
     }
 
+    public boolean isMouseOverEncodeButton() {
+        return this.encodeBtn.getMouseIn();
+    }
+
     @Override
     public boolean hideItemPanelSlot(int tx, int ty, int tw, int th) {
         if (tw <= 0 || th <= 0) {
@@ -457,7 +459,7 @@ public class PatternPanel implements IAEBasePanel {
         } else if (this.encodeBtn == btn) {
             int value = (isCtrlKeyDown() ? 1 : 0) << 1 | (isShiftKeyDown() ? 1 : 0);
             AE2Thing.proxy.netHandler.sendToServer(new CPacketTerminalBtns("PatternTerminal.Encode", value));
-            if (value == 0 && NEIClientUtils.altKey()) {
+            if (value == 0 && NEIClientUtils.altKey() && !ClientProxy.isAutoUploadHighlighted()) {
                 MinecraftForge.EVENT_BUS.post(new EncodeEvent(true));
             }
             return true;
@@ -668,5 +670,30 @@ public class PatternPanel implements IAEBasePanel {
 
     private record SlotLayout(AppEngSlot slot, int x, int y) {
 
+    }
+
+    private static class EncodeButton extends GuiImgButton {
+
+        EncodeButton(int x, int y) {
+            super(x, y, Settings.ACTIONS, ActionItems.ENCODE);
+        }
+
+        @Override
+        public String getMessage() {
+            String base = super.getMessage();
+            FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+            List<String> lines = fontRenderer.listFormattedStringToWidth(
+                StatCollector.translateToLocal("ae2thing.tooltip.encode_auto_upload") + "\n"
+                    + StatCollector.translateToLocal("ae2thing.tooltip.encode_auto_upload.desc")
+                    + "\n"
+                    + StatCollector.translateToLocal("ae2thing.tooltip.encode_auto_upload.desc_sum")
+                    + "\n"
+                    + StatCollector.translateToLocal("ae2thing.tooltip.encode_auto_upload.desc_click")
+                    + "\n"
+                    + StatCollector.translateToLocal("ae2thing.tooltip.encode_auto_upload.desc_scroll"),
+                250);
+            String extra = String.join("\n", lines);
+            return base == null || base.isEmpty() ? extra : base + "\n" + extra;
+        }
     }
 }

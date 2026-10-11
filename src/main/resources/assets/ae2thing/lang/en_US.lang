@@ -149,9 +149,23 @@ nei.options.ae2thing.dual_interface_terminal_fill_circuit=Dual interface termina
 nei.options.ae2thing.dual_interface_terminal_fill_circuit.true=Yes
 nei.options.ae2thing.dual_interface_terminal_fill_circuit.false=No
 
-nei.options.ae2thing.dual_interface_terminal_append_circuit_damage=Dual interface terminal append NC items (molds, circuit boards, etc.) to recipe name
+nei.options.ae2thing.dual_interface_terminal_append_circuit_damage=Dual interface terminal append NC circuit boards to recipe name
 nei.options.ae2thing.dual_interface_terminal_append_circuit_damage.true=Yes
 nei.options.ae2thing.dual_interface_terminal_append_circuit_damage.false=No
+
+nei.options.ae2thing.dual_interface_terminal_append_non_consumed_items=Dual interface terminal append NC items (molds, etc.) to recipe name
+nei.options.ae2thing.dual_interface_terminal_append_non_consumed_items.true=Yes
+nei.options.ae2thing.dual_interface_terminal_append_non_consumed_items.false=No
+
+nei.options.ae2thing.dual_interface_terminal_auto_upload=Dual interface terminal auto upload pattern
+nei.options.ae2thing.dual_interface_terminal_auto_upload.true=Yes
+nei.options.ae2thing.dual_interface_terminal_auto_upload.false=No
+
+ae2thing.tooltip.encode_auto_upload=§7[AE2Things]§r Auto upload pattern
+ae2thing.tooltip.encode_auto_upload.desc=§7"Auto upload pattern" on: a unique matching interface is picked automatically.
+ae2thing.tooltip.encode_auto_upload.desc_sum=§7The encoded pattern goes straight into the highlighted slot.
+ae2thing.tooltip.encode_auto_upload.desc_click=§7Alt + click to place the pattern into the highlighted slot manually.
+ae2thing.tooltip.encode_auto_upload.desc_scroll=§7Alt + scroll over this button to switch the highlighted interface.
 
 nei.options.ae2thing.nei_craft_item=Middle click NEI panel to quick order item from ae terminal 
 nei.options.ae2thing.nei_craft_item.true=Yes

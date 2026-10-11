@@ -4,7 +4,6 @@ import static com.asdflj.ae2thing.api.Constants.MessageType.UPDATE_PLAYER_ITEM;
 import static com.asdflj.ae2thing.nei.NEI_TH_Config.getConfigValue;
 
 import java.util.List;
-import java.util.Optional;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
@@ -24,8 +23,6 @@ import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 import appeng.api.util.IInterfaceViewable;
 import appeng.util.item.AEItemStack;
 import codechicken.nei.recipe.IRecipeHandler;
-import cpw.mods.fml.common.Loader;
-import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import gregtech.api.enums.ItemList;
@@ -35,8 +32,6 @@ import gregtech.common.blocks.ItemMachines;
 import gregtech.nei.GTNEIDefaultHandler;
 
 public class GTUtil {
-
-    public static String CoreModVersion = getCoreModVersion();
 
     public static IInterfaceViewable getIInterfaceViewable(TileEntity tile) {
         if (tile instanceof BaseMetaTileEntity bmte && bmte.getMetaTileEntity() instanceof IInterfaceViewable iv) {
@@ -56,17 +51,35 @@ public class GTUtil {
         if (recipe instanceof GTNEIDefaultHandler) {
             if (Mods.PROGRAMMABLE_HATCHES.isModLoaded()
                 && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT)) {
-                return recipe.getRecipeName();
+                return recipe.getRecipeTabName();
             }
+
+            boolean hasZeroSizeInput = false;
             for (OrderStack<?> stack : in) {
                 if (stack.getStack() instanceof ItemStack is && is.stackSize == 0) {
-                    return getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_CIRCUIT_DAMAGE)
-                        ? String.format("%s %s", recipe.getRecipeName(), is.getItemDamage())
-                        : recipe.getRecipeName();
+                    hasZeroSizeInput = true;
+                    break;
                 }
             }
+
+            if (hasZeroSizeInput) {
+                StringBuilder suggestion = new StringBuilder(recipe.getRecipeTabName());
+                if (Mods.hasGTNonConsumedDisplay()) {
+                    boolean appendCircuit = getConfigValue(
+                        ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_CIRCUIT_DAMAGE);
+                    boolean appendNonConsumedItems = getConfigValue(
+                        ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_NON_CONSUMED_ITEMS);
+                    for (String token : GTNonConsumedHelper
+                        .collectTokens(recipe, in, appendCircuit, appendNonConsumedItems)) {
+                        suggestion.append(" ")
+                            .append(token);
+                    }
+                }
+
+                return suggestion.toString();
+            }
         }
-        return recipe.getRecipeName();
+        return recipe.getRecipeTabName();
     }
 
     public static void setDataStick(int x, int y, int z, EntityPlayer player, World w) {
@@ -90,21 +103,6 @@ public class GTUtil {
         }
     }
 
-    private static String getCoreModVersion() {
-        Optional<ModContainer> mod = Loader.instance()
-            .getActiveModList()
-            .stream()
-            .filter(
-                x -> x.getModId()
-                    .equals("dreamcraft"))
-            .findFirst();
-        if (mod.isPresent()) {
-            return mod.get()
-                .getVersion();
-        }
-        return "";
-    }
-
     public static boolean isHatchItem(ItemStack item) {
         if (item != null && item.getItem() instanceof ItemMachines) {
             return ItemMachines.getMetaTileEntity(item) instanceof MTEHatch;
@@ -112,41 +110,4 @@ public class GTUtil {
         return false;
     }
 
-    /*
-     * @param v1
-     * @param v2
-     * @return 0 equals，1 left，-1 right
-     */
-    public static int compareVersion(String v1) {
-        String v2 = "2.3.54"; // 2.6.1
-        if (v1.equals(v2)) {
-            return 0;
-        }
-        String[] version1Array = v1.split("[._]");
-        String[] version2Array = v2.split("[._]");
-        int index = 0;
-        int minLen = Math.min(version1Array.length, version2Array.length);
-        long diff = 0;
-
-        while (index < minLen
-            && (diff = Long.parseLong(version1Array[index]) - Long.parseLong(version2Array[index])) == 0) {
-            index++;
-        }
-        if (diff == 0) {
-            for (int i = index; i < version1Array.length; i++) {
-                if (Long.parseLong(version1Array[i]) > 0) {
-                    return 1;
-                }
-            }
-
-            for (int i = index; i < version2Array.length; i++) {
-                if (Long.parseLong(version2Array[i]) > 0) {
-                    return -1;
-                }
-            }
-            return 0;
-        } else {
-            return diff > 0 ? 1 : -1;
-        }
-    }
 }

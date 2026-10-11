@@ -37,6 +37,10 @@ Support encode pattern
 **Rename In Pattern**</br>
 `Ctrl + middle click` to edit item name
 ![pattern_rename.gif](blob/pattern_rename.gif)
+**Auto Upload Pattern**</br>
+![dual_interface_terminal_auto_upload.gif](blob/dual_interface_terminal_auto_upload.gif)
+`Alt + left click` to upload manually</br>
+`Alt + scroll` to select interface</br>
 **Infusion Pattern Terminal**</br>
 Support infusion recipe and distillation recipe,Can order fluid and essentia
 ![infusion_pattern_terminal.gif](blob/infusion_pattern_terminal.gif)
