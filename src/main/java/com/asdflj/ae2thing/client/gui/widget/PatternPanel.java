@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.Slot;
@@ -22,7 +23,6 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.client.event.EncodeEvent;
 import com.asdflj.ae2thing.client.gui.IWidgetGui;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
-import com.asdflj.ae2thing.client.gui.container.slot.SlotPattern;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
@@ -34,11 +34,12 @@ import appeng.api.config.ItemSubstitution;
 import appeng.api.config.PatternBeSubstitution;
 import appeng.api.config.PatternSlotConfig;
 import appeng.api.config.Settings;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.client.gui.AEBaseGui;
+import appeng.client.gui.slots.VirtualMESlot;
 import appeng.client.gui.widgets.GuiImgButton;
 import appeng.client.gui.widgets.GuiScrollbar;
 import appeng.client.gui.widgets.GuiTabButton;
-import appeng.container.AEBaseContainer;
 import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.SlotFake;
 import appeng.container.slot.SlotFakeCraftingMatrix;
@@ -47,7 +48,9 @@ import appeng.container.slot.SlotRestrictedInput;
 import appeng.core.localization.GuiText;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketInventoryAction;
+import appeng.core.sync.packets.PacketMonitorableAction;
 import appeng.helpers.InventoryAction;
+import appeng.helpers.MonitorableAction;
 import codechicken.nei.NEIClientUtils;
 
 public class PatternPanel implements IAEBasePanel {
@@ -70,7 +73,6 @@ public class PatternPanel implements IAEBasePanel {
     protected GuiTabButton tabProcessButton;
     protected GuiTabButton tabCraftButton;
     protected final GuiScrollbar processingScrollBar = new GuiScrollbar();
-    private final AEBaseContainer inventorySlots;
     protected final Set<Slot> drag_click;
     private static final int PANEL_X = 209;
     private static final int PANEL_Y = 0;
@@ -98,7 +100,6 @@ public class PatternPanel implements IAEBasePanel {
         this.gui = gui;
         this.container = container;
         this.parent = gui.getGui();
-        this.inventorySlots = this.container;
         this.drag_click = Ae2ReflectClient.getDragClick(this.parent);
         this.sections.add(new PanelSection(0, 0, 133, 93, 0, 0));
         this.sections.add(new PanelSection(0, 93, 40, 77, 133, 0));
@@ -533,7 +534,26 @@ public class PatternPanel implements IAEBasePanel {
                 return true;
             }
         }
-        return false;
+
+        VirtualMESlot slot = this.parent.getVirtualMESlotUnderMouse();
+        if (!isShiftKeyDown() || !(slot instanceof DualPatternSlot)) return false;
+
+        final MonitorableAction direction = wheel > 0 ? MonitorableAction.ROLL_DOWN : MonitorableAction.ROLL_UP;
+        if (direction == MonitorableAction.ROLL_DOWN
+            && Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
+            return false;
+        }
+        if (direction == MonitorableAction.ROLL_UP && !(slot.getAEStack() instanceof IAEItemStack)) {
+            return false;
+        }
+        this.container.setTargetStack(slot.getAEStack());
+        final int times = Math.abs(wheel);
+        for (int i = 0; i < times; i++) {
+            final PacketMonitorableAction p = new PacketMonitorableAction(direction, -1);
+            NetworkHandler.instance.sendToServer(p);
+        }
+
+        return true;
     }
 
     @Override
@@ -632,8 +652,7 @@ public class PatternPanel implements IAEBasePanel {
     }
 
     private boolean ownsSlot(Slot slot) {
-        return slot instanceof SlotPattern || slot instanceof SlotPatternFake
-            || slot instanceof SlotFakeCraftingMatrix
+        return slot instanceof SlotPatternFake || slot instanceof SlotFakeCraftingMatrix
             || slot instanceof SlotPatternTerm
             || slot instanceof SlotRestrictedInput;
     }

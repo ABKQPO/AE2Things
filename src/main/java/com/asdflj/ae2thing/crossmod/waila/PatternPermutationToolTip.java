@@ -6,6 +6,7 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.item.ItemStack;
 
 import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
+import com.asdflj.ae2thing.client.gui.widget.DualPatternSlot;
 import com.asdflj.ae2thing.proxy.ClientProxy;
 
 import appeng.container.slot.SlotFake;
@@ -22,32 +23,41 @@ public class PatternPermutationToolTip extends mcp.mobius.waila.handlers.nei.Too
     @Override
     public List<String> handleItemTooltip(GuiContainer gui, ItemStack itemstack, int x, int y,
         List<String> currenttip) {
-        if (NEIClientConfig.showCycledIngredientsTooltip() && gui instanceof GuiWirelessDualInterfaceTerminal
-            && gui.theSlot instanceof SlotFake slot
-            && slot.getHasStack()
-            && ClientProxy.getOverlayButton() != null) {
-            RecipeHandlerRef ref = ClientProxy.getOverlayButton().handlerRef;
-            List<PositionedStack> currentIngredients = ref.handler.getIngredientStacks(ref.recipeIndex);
-            for (PositionedStack positionedStack : currentIngredients) {
-                if (positionedStack.items.length > 1 && positionedStack.containsWithNBT(slot.getStack())) {
-                    if (this.acceptsFollowingTooltipLineHandler == null
-                        || this.acceptsFollowingTooltipLineHandler.tooltipGUID != positionedStack) {
-                        this.acceptsFollowingTooltipLineHandler = AcceptsFollowingTooltipLineHandler
-                            .of(positionedStack, positionedStack.getFilteredPermutations(), positionedStack.item);
-                    }
-
-                    if (this.acceptsFollowingTooltipLineHandler != null) {
-                        this.acceptsFollowingTooltipLineHandler.setActiveStack(slot.getStack());
-                        currenttip.add(
-                            GuiDraw.TOOLTIP_HANDLER + GuiDraw.getTipLineId(this.acceptsFollowingTooltipLineHandler));
-                        break;
-                    }
-                }
-            }
-
+        if (!NEIClientConfig.showCycledIngredientsTooltip() || ClientProxy.getOverlayButton() == null) {
             return currenttip;
-
         }
+
+        ItemStack slotItem = null;
+        if (gui instanceof GuiWirelessDualInterfaceTerminal terminal
+            && terminal.getVirtualMESlotUnderMouse() instanceof DualPatternSlot slot
+            && slot.getAEStack() != null) {
+            slotItem = slot.getAEStack()
+                .getItemStackForNEI();
+        } else if (gui.theSlot instanceof SlotFake slot && slot.getHasStack()) {
+            slotItem = slot.getStack();
+        }
+        if (slotItem == null) {
+            return currenttip;
+        }
+
+        RecipeHandlerRef ref = ClientProxy.getOverlayButton().handlerRef;
+        for (PositionedStack positionedStack : ref.handler.getIngredientStacks(ref.recipeIndex)) {
+            if (positionedStack.items.length > 1 && positionedStack.containsWithNBT(slotItem)) {
+                if (this.acceptsFollowingTooltipLineHandler == null
+                    || this.acceptsFollowingTooltipLineHandler.tooltipGUID != positionedStack) {
+                    this.acceptsFollowingTooltipLineHandler = AcceptsFollowingTooltipLineHandler
+                        .of(positionedStack, positionedStack.getFilteredPermutations(), positionedStack.item);
+                }
+
+                if (this.acceptsFollowingTooltipLineHandler != null) {
+                    this.acceptsFollowingTooltipLineHandler.setActiveStack(slotItem);
+                    currenttip
+                        .add(GuiDraw.TOOLTIP_HANDLER + GuiDraw.getTipLineId(this.acceptsFollowingTooltipLineHandler));
+                }
+                break;
+            }
+        }
+
         return currenttip;
     }
 

@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.fluids.FluidStack;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.Constants;
@@ -27,7 +28,6 @@ import com.asdflj.ae2thing.util.GTUtil;
 import com.asdflj.ae2thing.util.PHUtil;
 
 import appeng.api.AEApi;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.client.gui.AEBaseGui;
 import appeng.container.slot.SlotFake;
 import appeng.util.Platform;
@@ -35,6 +35,7 @@ import codechicken.nei.PositionedStack;
 import codechicken.nei.api.IOverlayHandler;
 import codechicken.nei.recipe.GuiOverlayButton;
 import codechicken.nei.recipe.IRecipeHandler;
+import codechicken.nei.recipe.StackInfo;
 import codechicken.nei.recipe.TemplateRecipeHandler;
 
 public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
@@ -51,11 +52,17 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
         craftSet.add("crafting2x2");
     }
 
-    private static ItemStack findSameItem(ItemStack[] items, ItemStack item, Constants.MouseWheel wheel) {
+    private static Object findSameIngredient(ItemStack[] items, ItemStack item, FluidStack fluid,
+        Constants.MouseWheel wheel) {
         for (int i = 0; i < items.length; i++) {
-            if (Platform.isSameItemPrecise(item, items[i])) {
-                int index = i + wheel.direction;
-                return items[index < 0 ? items.length - 1 : index % items.length];
+            int index = i + wheel.direction;
+            ItemStack picked = items[index < 0 ? items.length - 1 : index % items.length];
+            if (fluid != null) {
+                FluidStack fluidInfo = StackInfo.getFluid(items[i]);
+                if (fluidInfo == null || !fluid.isFluidEqual(fluidInfo)) continue;
+                return StackInfo.getFluid(picked);
+            } else if (Platform.isSameItemPrecise(item, items[i])) {
+                return picked;
             }
         }
         return null;
@@ -72,21 +79,29 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
                     slotItem = slot.getStack();
                 } else if (g instanceof GuiWirelessDualInterfaceTerminal gui
                     && gui.getVirtualMESlotUnderMouse() instanceof DualPatternSlot virtualSlot
-                    && virtualSlot.getAEStack() instanceof IAEItemStack item) {
-                        slotItem = item.getItemStack();
+                    && virtualSlot.getAEStack() != null) {
+                        slotItem = virtualSlot.getAEStack()
+                            .getItemStackForNEI();
                     }
                 if (slotItem != null) {
+                    final FluidStack slotFluid = StackInfo.getFluid(slotItem);
                     List<PositionedStack> list = btn.handlerRef.handler.getIngredientStacks(btn.handlerRef.recipeIndex);
                     for (PositionedStack stack : list) {
-                        ItemStack result = findSameItem(
+                        Object result = findSameIngredient(
                             stack.items,
                             slotItem,
+                            slotFluid,
                             event.scrollAmount == -1 ? Constants.MouseWheel.NEXT : Constants.MouseWheel.PREVIEW);
                         if (result != null) {
                             List<OrderStack<?>> in = new ArrayList<>();
                             List<OrderStack<?>> out = new ArrayList<>();
-                            in.add(new OrderStack<>(slotItem, 0));
-                            out.add(new OrderStack<>(result, 0));
+                            if (result instanceof FluidStack fluidOut) {
+                                in.add(new OrderStack<>(slotFluid, 0));
+                                out.add(new OrderStack<>(fluidOut, 0));
+                            } else if (result instanceof ItemStack itemOut) {
+                                in.add(new OrderStack<>(slotItem, 0));
+                                out.add(new OrderStack<>(itemOut, 0));
+                            }
                             AE2Thing.proxy.netHandler.sendToServer(
                                 new CPacketTransferRecipe(
                                     in,

@@ -152,9 +152,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
     private static final float SLOT_Z = 0.5f;
     private static final float ITEM_STACK_OVERLAY_Z = 200.0f;
     private static final float SLOT_HOVER_Z = 310.0f;
-    private static final float TOOLTIP_Z = 410.0f;
     private static final float STEP_Z = 10.0f;
-    private static final float MAGIC_RENDER_ITEM_Z = 50.0f;
 
     protected int offsetY;
     private GuiTabButton originalGuiBtn;
@@ -590,11 +588,11 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
 
         final float guiScaleX = (float) mc.displayWidth / width;
         final float guiScaleY = (float) mc.displayHeight / height;
-        GL11.glScissor(
-            (int) ((guiLeft + VIEW_LEFT) * guiScaleX),
-            (int) ((height - (guiTop + HEADER_HEIGHT + viewHeight)) * guiScaleY),
-            (int) (VIEW_WIDTH * guiScaleX),
-            (int) (this.viewHeight * guiScaleY));
+        final int scissorX = (int) Math.floor((guiLeft + VIEW_LEFT) * guiScaleX);
+        final int scissorY = (int) Math.floor((height - (guiTop + HEADER_HEIGHT + viewHeight)) * guiScaleY);
+        final int scissorWidth = (int) Math.ceil(VIEW_WIDTH * guiScaleX) + 1;
+        final int scissorHeight = (int) Math.ceil(this.viewHeight * guiScaleY) + 1;
+        GL11.glScissor(scissorX, scissorY, scissorWidth, scissorHeight);
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
 
         pendingSectionTooltip = null;
@@ -606,7 +604,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         while (viewY < this.viewHeight && entryIdx < visibleSections.size()) {
             InterfaceWirelessSection section = visibleSections.get(entryIdx);
             int titleHeight = getWrappedTitleHeight(section.name, VIEW_WIDTH - 4);
-            int sectionHeight = titleHeight + section.getHeight();
+            int sectionHeight = titleHeight + section.getEntriesHeight();
 
             /* Is it viewable/in the viewport at all? */
             if (viewY + sectionHeight < 0) {
@@ -653,7 +651,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             String word = text.substring(start, end);
 
             if (fontRendererObj.getStringWidth(word) > maxWidth) {
-                if (currentLine.length() > 0) {
+                if (!currentLine.isEmpty()) {
                     lines.add(currentLine.toString());
                     currentLine = new StringBuilder(toControlCodes(getControlCodes(currentLine.toString())));
                 }
@@ -671,7 +669,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             }
 
             String linePreview = currentLine + word;
-            if (fontRendererObj.getStringWidth(linePreview) > maxWidth && currentLine.length() > 0) {
+            if (fontRendererObj.getStringWidth(linePreview) > maxWidth && !currentLine.isEmpty()) {
                 lines.add(currentLine.toString());
                 String codes = toControlCodes(getControlCodes(currentLine.toString()));
                 currentLine = new StringBuilder(codes + word);
@@ -680,7 +678,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             }
         }
 
-        if (currentLine.length() > 0) {
+        if (!currentLine.isEmpty()) {
             lines.add(currentLine.toString());
         }
 
@@ -774,9 +772,6 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             } else {
                 entry.dispY = -9999;
                 entry.optionsButton.yPosition = -1;
-                if (entry.doubleButton != null) {
-                    entry.doubleButton.yPosition = -1;
-                }
                 renderY += entryHeight;
             }
         }
@@ -828,7 +823,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
                 List<String> tooltip = new ArrayList<>();
                 tooltip.add(sectionIcon.getDisplayName());
 
-                int priority = section.entries.get(0).priority;
+                int priority = section.entries.getFirst().priority;
                 tooltip.add(
                     EnumChatFormatting.GRAY + StatCollector.translateToLocal("gui.appliedenergistics2.Priority")
                         + ": "
@@ -961,11 +956,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
                     final IAEStack<?> displayStack;
                     if (stack.getItem() instanceof final ItemEncodedPattern iep) {
                         IAEStack<?> outputAE = iep.getOutputAE(stack);
-                        if (outputAE != null) {
-                            displayStack = outputAE;
-                        } else {
-                            displayStack = AEItemStack.create(stack);
-                        }
+                        displayStack = Objects.requireNonNullElseGet(outputAE, () -> AEItemStack.create(stack));
                     } else {
                         displayStack = AEItemStack.create(stack);
                     }
@@ -1292,7 +1283,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
                 entry.hideButton.set(entry.terminalVisible ? YesNo.YES : YesNo.NO);
                 masterList.addEntry(entry);
             }
-            case PacketInterfaceTerminalUpdate.PacketRemove packetRemove -> masterList.removeEntry(id);
+            case PacketInterfaceTerminalUpdate.PacketRemove _ -> masterList.removeEntry(id);
             case PacketInterfaceTerminalUpdate.PacketOverwrite owCmd -> {
                 InterfaceWirelessEntry entry = masterList.list.get(id);
 
@@ -1702,6 +1693,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
 
         public static final int TITLE_HEIGHT = 12;
 
+        String key;
         String name;
         List<InterfaceWirelessEntry> entries = new ArrayList<>();
         Set<InterfaceWirelessEntry> visibleEntries = new TreeSet<>(Comparator.comparing(e -> {
@@ -1715,7 +1707,6 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         private boolean isDirty = true;
         boolean visible = false;
         int titleY = -9999;
-        String key;
 
         InterfaceWirelessSection(String key, String name) {
             this.key = key;
@@ -1729,19 +1720,26 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             if (isDirty) {
                 update();
             }
-            return height;
+            // Dynamically calculate title height and add entries height
+            return getWrappedTitleHeight(this.name, VIEW_WIDTH - 4) + getEntriesHeight();
+        }
+
+        /**
+         * Gets total height of all visible entries only.
+         */
+        public int getEntriesHeight() {
+            if (isDirty) {
+                update();
+            }
+            int entriesHeight = 0;
+            for (InterfaceWirelessEntry entry : visibleEntries) {
+                entriesHeight += entry.guiHeight;
+            }
+            return entriesHeight;
         }
 
         private void update() {
             refreshVisible();
-            if (visibleEntries.isEmpty()) {
-                height = 0;
-            } else {
-                height = TITLE_HEIGHT;
-                for (InterfaceWirelessEntry entry : visibleEntries) {
-                    height += entry.guiHeight;
-                }
-            }
             isDirty = false;
         }
 
