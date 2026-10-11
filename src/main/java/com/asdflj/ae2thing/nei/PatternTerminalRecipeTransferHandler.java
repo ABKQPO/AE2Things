@@ -26,6 +26,7 @@ import com.asdflj.ae2thing.network.CPacketTransferRecipe;
 import com.asdflj.ae2thing.proxy.ClientProxy;
 import com.asdflj.ae2thing.util.GTUtil;
 import com.asdflj.ae2thing.util.PHUtil;
+import com.google.common.base.Optional;
 
 import appeng.api.AEApi;
 import appeng.client.gui.AEBaseGui;
@@ -142,7 +143,7 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
         List<OrderStack<?>> in) {
         String suggestion;
         if (craft) {
-            com.google.common.base.Optional<ItemStack> molecular = AEApi.instance()
+            Optional<ItemStack> molecular = AEApi.instance()
                 .definitions()
                 .blocks()
                 .molecularAssembler()
@@ -162,6 +163,13 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             gui.setHighlightSlot();
         } else {
             gui.setSearchFieldSuggestion(suggestion);
+        }
+
+        if (getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_AUTO_UPLOAD)) {
+            gui.setSearchFieldText(suggestion);
+            if (!gui.upload(recipe, craft)) {
+                gui.setHighlightSlot();
+            }
         }
     }
 

@@ -12,5 +12,7 @@ public interface ButtonConstants {
     String DUAL_INTERFACE_TERMINAL = "ae2thing.dual_interface_terminal_fill_search_names";
     String DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT = "ae2thing.dual_interface_terminal_fill_circuit";
     String DUAL_INTERFACE_TERMINAL_APPEND_CIRCUIT_DAMAGE = "ae2thing.dual_interface_terminal_append_circuit_damage";
+    String DUAL_INTERFACE_TERMINAL_APPEND_NON_CONSUMED_ITEMS = "ae2thing.dual_interface_terminal_append_non_consumed_items";
+    String DUAL_INTERFACE_TERMINAL_AUTO_UPLOAD = "ae2thing.dual_interface_terminal_auto_upload";
     String NEI_CRAFT_ITEM = "ae2thing.nei_craft_item";
 }

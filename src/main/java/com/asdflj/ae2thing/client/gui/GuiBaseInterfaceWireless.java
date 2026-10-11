@@ -1,7 +1,6 @@
 package com.asdflj.ae2thing.client.gui;
 
 import static appeng.util.item.AEFluidStackType.FLUID_STACK_TYPE;
-import static com.asdflj.ae2thing.client.render.RenderHelper.updateColorAndDrawItemBorder;
 
 import java.text.BreakIterator;
 import java.util.ArrayList;
@@ -51,7 +50,6 @@ import com.asdflj.ae2thing.common.item.ItemPatternModifier;
 import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.network.CPacketRenamer;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
-import com.asdflj.ae2thing.proxy.ClientProxy;
 import com.asdflj.ae2thing.util.GTUtil;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.asdflj.ae2thing.util.NeCharUtil;
@@ -112,7 +110,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         AppEng.MOD_ID,
         "textures/guis/newinterfaceterminal.png");
 
-    private final InterfaceWirelessList masterList = new InterfaceWirelessList(
+    final InterfaceWirelessList masterList = new InterfaceWirelessList(
         ((StringOrder) AEConfig.instance.settings.getSetting(Settings.INTERFACE_TERMINAL_SECTION_ORDER)).comparator);
     private final MEGuiTextField searchFieldOutputs;
     private final MEGuiTextField searchFieldInputs;
@@ -578,7 +576,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
     /**
      * Draws the viewport area
      */
-    private void drawViewport(int relMouseX, int relMouseY) {
+    protected void drawViewport(int relMouseX, int relMouseY) {
         /* Viewport Magic */
         final int scroll = this.getScrollBar()
             .getCurrentScroll();
@@ -1014,12 +1012,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         return relY + 1;
     }
 
-    private boolean drawFirstHighlightSlotBG(InterfaceWirelessEntry entry, int x, int y, int slot) {
-        if (ClientProxy.getInterfaceHighlightEntry() != null && entry == ClientProxy.getInterfaceHighlightEntry().entry
-            && slot == ClientProxy.getInterfaceHighlightEntry().slot) {
-            updateColorAndDrawItemBorder(x, y);
-            return true;
-        }
+    protected boolean drawFirstHighlightSlotBG(InterfaceWirelessEntry entry, int x, int y, int slot) {
         return false;
     }
 
@@ -1037,9 +1030,8 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
     /**
      * A copy of super method, but modified to allow for depth testing.
      */
-    @SuppressWarnings("unchecked")
     @Override
-    public void drawHoveringText(List textLines, int x, int y, FontRenderer font) {
+    public void drawHoveringText(List<String> textLines, int x, int y, FontRenderer font) {
         if (!textLines.isEmpty()) {
             GL11.glDisable(GL12.GL_RESCALE_NORMAL);
             GL11.glDisable(GL11.GL_DEPTH_TEST);
@@ -1047,7 +1039,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             int maxStrWidth = 0;
 
             // is this more efficient than doing 1 pass, then doing a translate before drawing the text?
-            for (String s : (List<String>) textLines) {
+            for (String s : textLines) {
                 int width = font.getStringWidth(s);
 
                 if (width > maxStrWidth) {
@@ -1119,7 +1111,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
                 color2);
 
             for (int i = 0; i < textLines.size(); ++i) {
-                String line = (String) textLines.get(i);
+                String line = textLines.get(i);
                 font.drawStringWithShadow(line, curX, curY, -1);
 
                 if (i == 0) {
@@ -1472,24 +1464,11 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         }
     }
 
-    public void setHighlightSlot() {
-        for (InterfaceWirelessSection section : this.masterList.getVisibleSections()) {
-            for (InterfaceWirelessEntry entry : section.entries) {
-                for (int i = 0; i < entry.numSlots; i++) {
-                    ItemStack item = entry.inv.getStackInSlot(i);
-                    if (item == null) {
-                        ClientProxy.setInterfaceHighlightEntry(new InterfaceWirelessEntryWrapper(entry, i));
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
     public static class InterfaceWirelessEntryWrapper {
 
         public InterfaceWirelessEntry entry;
         public int slot;
+        public boolean autoUpload;
 
         public InterfaceWirelessEntryWrapper(InterfaceWirelessEntry entry, int slot) {
             this.entry = entry;
@@ -1504,7 +1483,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
     /**
      * Tracks the list of entries.
      */
-    private class InterfaceWirelessList {
+    class InterfaceWirelessList {
 
         private final Map<Long, InterfaceWirelessEntry> list = new HashMap<>();
         private Map<String, InterfaceWirelessSection> sections;
@@ -1689,7 +1668,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
     /**
      * A section holds all the interface entries with the same name.
      */
-    private class InterfaceWirelessSection {
+    class InterfaceWirelessSection {
 
         public static final int TITLE_HEIGHT = 12;
 
@@ -2091,9 +2070,11 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             if (!section.visible || btn < 0 || btn > 2) {
                 return false;
             }
+
+            // Validate options/hide button click (Alt switches to hide mode)
             final boolean altHeld = Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
-            if (mouseX >= optionsButton.xPosition && mouseX < 2 + optionsButton.width
-                && mouseY > Math.max(optionsButton.yPosition, InterfaceWirelessSection.TITLE_HEIGHT)
+            if (mouseX >= optionsButton.xPosition && mouseX < optionsButton.xPosition + optionsButton.width
+                && mouseY > optionsButton.yPosition
                 && mouseY <= Math.min(optionsButton.yPosition + optionsButton.height, viewHeight)) {
                 if (altHeld) {
                     hideButton.func_146113_a(mc.getSoundHandler());
@@ -2138,7 +2119,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             int offsetY = mouseY - dispY - 1;
             int offsetX = mouseX - (VIEW_WIDTH - rowSize * 18) - 1;
             if (offsetX >= 0 && offsetX < (rowSize * 18)
-                && mouseY > Math.max(dispY, InterfaceWirelessSection.TITLE_HEIGHT)
+                && mouseY > dispY
                 && offsetY < Math.min(viewHeight - dispY, guiHeight - 1)) {
                 final int col = offsetX / 18;
                 final int row = offsetY / 18;

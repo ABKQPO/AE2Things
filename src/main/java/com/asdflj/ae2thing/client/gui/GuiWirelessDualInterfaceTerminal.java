@@ -1,7 +1,10 @@
 package com.asdflj.ae2thing.client.gui;
 
+import static com.asdflj.ae2thing.client.render.RenderHelper.updateColorAndDrawItemBorder;
+
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +23,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 
 import com.asdflj.ae2thing.AE2Thing;
+import com.asdflj.ae2thing.client.event.EncodeEvent;
 import com.asdflj.ae2thing.client.gui.container.ContainerMonitor;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
@@ -39,6 +43,7 @@ import com.asdflj.ae2thing.client.me.AdvItemRepo;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
+import com.asdflj.ae2thing.proxy.ClientProxy;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.config.Settings;
@@ -65,6 +70,8 @@ import appeng.core.localization.GuiText;
 import appeng.me.cache.ItemFlowGridCache.FlowRate;
 import appeng.util.IConfigManagerHost;
 import codechicken.nei.item.ItemFluidDisplay;
+import codechicken.nei.recipe.IRecipeHandler;
+import codechicken.nei.recipe.RecipeCatalysts;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless implements IWidgetGui, IGuiDrawSlot,
@@ -90,12 +97,15 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private boolean panelPositionsInitialized;
     private final ItemPanel itemPanel;
     private final PatternPanel patternPanel;
+    private IRecipeHandler uploadRecipe;
+    private boolean uploadCraft;
+    private boolean highlightSlotRendered;
     private final List<DualTerminalComponentTree.Component> itemSlotComponents = new ArrayList<>();
     private VirtualMESlot renderedVirtualSlotUnderMouse;
     private DualPatternSlot[] patternInputSlots;
     private DualPatternSlot[] patternOutputSlots;
     private IAEBasePanel tooltipSourcePanel;
-    private List<?> deferredPanelTooltip;
+    private List<String> deferredPanelTooltip;
     private int deferredPanelTooltipX;
     private int deferredPanelTooltipY;
     private FontRenderer deferredPanelTooltipFont;
@@ -220,6 +230,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         return panel != null ? panel : this.findPanelButtonAt(mouseX, mouseY);
     }
 
+    @SuppressWarnings("unused")
     public boolean suppressCoveredSlotTooltip(int mouseX, int mouseY, ItemStack hoveredStack) {
         IAEBasePanel panel = this.componentTree.findTopPanel(mouseX, mouseY);
         if (panel == this.patternPanel) {
@@ -321,7 +332,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         DualTerminalComponentTree.Component owner = this.componentTree.getSlotOwner(slot);
         int x = this.guiLeft + slot.getX() + 9;
         int y = this.guiTop + slot.getY() + 9;
-        return owner != null && this.componentTree.isTopComponent(owner, x, y);
+        return this.componentTree.isTopComponent(owner, x, y);
     }
 
     private boolean isNativeSlotVisibleAt(Slot slot, int mouseX, int mouseY) {
@@ -421,22 +432,6 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         super.mouseClicked(xCoord, yCoord, btn);
     }
 
-    private boolean isInteractiveAt(IAEBasePanel panel, int x, int y) {
-        if (panel == this.itemPanel && this.itemPanel.isOverTextField(x, y)) return true;
-        for (GuiButton button : this.buttonList) {
-            if (this.ownsPanelButton(panel, button) && button.visible
-                && x >= button.xPosition
-                && x < button.xPosition + button.width
-                && y >= button.yPosition
-                && y < button.yPosition + button.height) return true;
-        }
-        Slot slot = super.getSlot(x, y);
-        if (slot != null && panel == this.patternPanel && this.isPatternSlot(slot)) return true;
-        if (panel == this.patternPanel && this.findPatternPanelSlotAt(x, y) != null) return true;
-        if (panel == this.itemPanel && this.findItemPanelSlotAt(x, y) != null) return true;
-        return panel == this.patternPanel && this.patternPanel.isInteractiveAt(x, y);
-    }
-
     @Override
     protected void mouseClickMove(final int x, final int y, final int c, final long d) {
         this.lastMouseX = x;
@@ -522,6 +517,11 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     protected boolean mouseWheelEvent(int mouseX, int mouseY, int wheel) {
+        if (wheel != 0 && this.patternPanel.isMouseOverEncodeButton(mouseX, mouseY)
+            && (Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU))) {
+            this.cycleHighlight(wheel > 0 ? -1 : 1);
+            return true;
+        }
         IAEBasePanel topPanel = this.componentTree.findTopPanel(mouseX, mouseY);
         if (topPanel != null) {
             this.bringToFront(topPanel);
@@ -616,8 +616,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
-    public void drawHoveringText(List textLines, int x, int y, FontRenderer font) {
+    public void drawHoveringText(List<String> textLines, int x, int y, FontRenderer font) {
         if (this.renderingDeferredButtonTooltip) {
             super.drawHoveringText(textLines, x, y, font);
             return;
@@ -647,7 +646,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     @Override
     protected void handleTooltip(int mouseX, int mouseY, ITooltip tooltip) {
         if (this.findPanelButtonAt(mouseX, mouseY) != null
-            && (!(tooltip instanceof GuiButton button) || !this.isPanelButton(button))) return;
+            && (!(tooltip instanceof GuiButton button) || this.isNotPanelButton(button))) return;
         super.handleTooltip(mouseX, mouseY, tooltip);
     }
 
@@ -697,14 +696,14 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     private boolean isPanelButtonTooltipOrigin(int x, int y) {
         for (GuiButton button : this.buttonList) {
-            if (!button.visible || !this.isPanelButton(button)) continue;
+            if (!button.visible || this.isNotPanelButton(button)) continue;
             if (x == button.xPosition + 11 && y == Math.max(button.yPosition, 15) + 4) return true;
         }
         return false;
     }
 
-    private boolean isPanelButton(GuiButton button) {
-        return this.ownsPanelButton(this.patternPanel, button) || this.ownsPanelButton(this.itemPanel, button);
+    private boolean isNotPanelButton(GuiButton button) {
+        return !this.ownsPanelButton(this.patternPanel, button) && !this.ownsPanelButton(this.itemPanel, button);
     }
 
     private void drawPanelComponents(int mouseX, int mouseY) {
@@ -754,7 +753,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         GL11.glPushMatrix();
         float previousGuiZ = this.zLevel;
-        float previousItemZ = this.itemRender.zLevel;
+        float previousItemZ = itemRender.zLevel;
         try {
             GL11.glMatrixMode(GL11.GL_MODELVIEW);
             GL11.glDisable(GL11.GL_DEPTH_TEST);
@@ -765,7 +764,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
             this.zLevel = 300.0F;
-            this.itemRender.zLevel = 300.0F;
+            itemRender.zLevel = 300.0F;
 
             if (this.deferredPanelTooltip != null) {
                 super.drawHoveringText(
@@ -787,7 +786,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             }
         } finally {
             this.zLevel = previousGuiZ;
-            this.itemRender.zLevel = previousItemZ;
+            itemRender.zLevel = previousItemZ;
             this.deferredButtonTooltip = null;
             this.deferredButtonTooltipFromPanel = false;
             this.deferredPanelTooltip = null;
@@ -1002,6 +1001,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     public void onGuiClosed() {
         this.sendPanelPositions();
         super.onGuiClosed();
+        ClientProxy.setInterfaceHighlightEntry(null);
+        EncodeEvent.encode = false;
         for (IAEBasePanel panel : this.componentTree.getPanels()) {
             panel.onGuiClosed();
         }
@@ -1170,8 +1171,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     private void updatePanelSlots() {
         for (IAEBasePanel panel : this.componentTree.getPanels()) {
-            if (panel instanceof PatternPanel patternPanel) {
-                patternPanel.updateSlotPositions();
+            if (panel instanceof PatternPanel pattern) {
+                pattern.updateSlotPositions();
             }
         }
     }
@@ -1249,10 +1250,6 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                 slot.yDisplayPosition = this.ySize + slot.getY() - 78 - 4;
             }
         }
-    }
-
-    protected boolean isPowered() {
-        return ((ContainerWirelessDualInterfaceTerminal) this.inventorySlots).hasPower;
     }
 
     @Override
@@ -1346,6 +1343,159 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         super.handleKeyboardInput();
         if (this.itemPanel != null) {
             this.itemPanel.handleKeyboardInput();
+        }
+    }
+
+    public void setHighlightSlot() {
+        for (InterfaceWirelessSection section : this.masterList.getVisibleSections()) {
+            for (InterfaceWirelessEntry entry : section.visibleEntries) {
+                for (int i = 0; i < entry.numSlots; i++) {
+                    ItemStack item = entry.inv.getStackInSlot(i);
+                    if (item == null) {
+                        ClientProxy.setInterfaceHighlightEntry(new InterfaceWirelessEntryWrapper(entry, i));
+                        scrollHighlightIntoView();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    private List<InterfaceWirelessEntryWrapper> collectUploadCandidates(IRecipeHandler recipe, boolean craft) {
+        boolean catalystGate = !craft && recipe != null
+            && !RecipeCatalysts.getRecipeCatalysts(recipe)
+                .isEmpty();
+        List<InterfaceWirelessEntryWrapper> candidates = new ArrayList<>();
+        for (InterfaceWirelessSection section : this.masterList.getVisibleSections()) {
+            for (InterfaceWirelessEntry entry : section.visibleEntries) {
+                if (craft) {
+                    if (!entry.isCraftingPatternProvider) continue;
+                } else if (catalystGate
+                    && (entry.dispRep == null || !RecipeCatalysts.containsCatalyst(recipe, entry.dispRep))) {
+                        continue;
+                    }
+                int slot = -1;
+                for (int i = 0; i < entry.numSlots; i++) {
+                    if (entry.inv.getStackInSlot(i) == null) {
+                        slot = i;
+                        break;
+                    }
+                }
+                if (slot < 0) continue;
+                candidates.add(new InterfaceWirelessEntryWrapper(entry, slot));
+            }
+        }
+        return candidates;
+    }
+
+    public InterfaceWirelessEntryWrapper findAutoUploadTarget(IRecipeHandler recipe, boolean craft) {
+        List<InterfaceWirelessEntryWrapper> candidates = collectUploadCandidates(recipe, craft);
+        return candidates.size() == 1 ? candidates.getFirst() : null;
+    }
+
+    public boolean upload(IRecipeHandler recipe, boolean craft) {
+        this.uploadRecipe = recipe;
+        this.uploadCraft = craft;
+        InterfaceWirelessEntryWrapper target = findAutoUploadTarget(recipe, craft);
+        if (target == null) return false;
+        target.autoUpload = true;
+        ClientProxy.setInterfaceHighlightEntry(target);
+        scrollHighlightIntoView();
+        return true;
+    }
+
+    public void cycleHighlight(int direction) {
+        List<InterfaceWirelessEntryWrapper> candidates = collectUploadCandidates(this.uploadRecipe, this.uploadCraft);
+        if (candidates.isEmpty()) return;
+        InterfaceWirelessEntryWrapper current = ClientProxy.getInterfaceHighlightEntry();
+        int index = -1;
+        if (current != null) {
+            for (int i = 0; i < candidates.size(); i++) {
+                if (candidates.get(i).entry == current.entry) {
+                    index = i;
+                    break;
+                }
+            }
+        }
+        int next = index < 0 ? 0 : Math.floorMod(index + direction, candidates.size());
+        ClientProxy.setInterfaceHighlightEntry(candidates.get(next));
+        scrollHighlightIntoView();
+    }
+
+    private void scrollHighlightIntoView() {
+        InterfaceWirelessEntryWrapper current = ClientProxy.getInterfaceHighlightEntry();
+        if (current == null || current.entry == null) return;
+        int y = 0;
+        for (InterfaceWirelessSection section : this.masterList.getVisibleSections()) {
+            y += getWrappedTitleHeight(section.name, VIEW_WIDTH - 4);
+            Iterator<InterfaceWirelessEntry> visible = section.getVisible();
+            while (visible.hasNext()) {
+                InterfaceWirelessEntry entry = visible.next();
+                if (entry == current.entry) {
+                    int rowHeight = entry.rowSize > 0 ? Math.max(current.slot, 0) / entry.rowSize * 18 : 0;
+                    int slotTop = y + rowHeight;
+                    int scroll = getScrollBar().getCurrentScroll();
+                    if (slotTop < scroll) {
+                        getScrollBar().setCurrentScroll(slotTop);
+                    } else if (slotTop + 18 > scroll + this.viewHeight) {
+                        getScrollBar().setCurrentScroll(slotTop + 18 - this.viewHeight);
+                    }
+                    return;
+                }
+                y += entry.rows * 18 + 1;
+            }
+        }
+    }
+
+    public boolean isHighlightSlotWritable() {
+        InterfaceWirelessEntryWrapper current = ClientProxy.getInterfaceHighlightEntry();
+        if (current == null || current.entry == null) return false;
+        for (InterfaceWirelessSection section : this.masterList.getVisibleSections()) {
+            for (InterfaceWirelessEntry entry : section.visibleEntries) {
+                if (entry == current.entry) {
+                    return current.slot >= 0 && current.slot < entry.numSlots
+                        && entry.inv.getStackInSlot(current.slot) == null;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean advanceHighlight() {
+        List<InterfaceWirelessEntryWrapper> candidates = collectUploadCandidates(this.uploadRecipe, this.uploadCraft);
+        if (candidates.isEmpty()) return false;
+        InterfaceWirelessEntryWrapper current = ClientProxy.getInterfaceHighlightEntry();
+        if (current != null) {
+            for (InterfaceWirelessEntryWrapper candidate : candidates) {
+                if (candidate.entry == current.entry) {
+                    ClientProxy.setInterfaceHighlightEntry(candidate);
+                    scrollHighlightIntoView();
+                    return true;
+                }
+            }
+        }
+        ClientProxy.setInterfaceHighlightEntry(candidates.getFirst());
+        scrollHighlightIntoView();
+        return true;
+    }
+
+    @Override
+    protected boolean drawFirstHighlightSlotBG(InterfaceWirelessEntry entry, int x, int y, int slot) {
+        if (ClientProxy.getInterfaceHighlightEntry() != null && entry == ClientProxy.getInterfaceHighlightEntry().entry
+            && slot == ClientProxy.getInterfaceHighlightEntry().slot) {
+            this.highlightSlotRendered = true;
+            updateColorAndDrawItemBorder(x, y);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void drawViewport(int relMouseX, int relMouseY) {
+        this.highlightSlotRendered = false;
+        super.drawViewport(relMouseX, relMouseY);
+        if (!this.highlightSlotRendered && ClientProxy.getInterfaceHighlightEntry() != null) {
+            ClientProxy.setInterfaceHighlightEntry(null);
         }
     }
 }
