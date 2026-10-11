@@ -10,6 +10,7 @@ import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTe
 import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.IPatternTerminal;
 import com.asdflj.ae2thing.nei.NEIUtils;
+import com.asdflj.ae2thing.network.CPacketTransferRecipe;
 
 import appeng.api.storage.StorageName;
 import appeng.tile.inventory.IAEStackInventory;
@@ -21,7 +22,7 @@ public class PatternTerminalLoader implements Runnable {
         AE2ThingAPI.instance()
             .terminal()
             .registerPatternTerminal(new THDualInterfacePatternTerminal())
-            .registerIdentifier(Constants.NEI_DEFAULT, (container, inputs, outputs, identifier, adapter, message) -> {
+            .registerIdentifier(Constants.NEI_DEFAULT, (container, inputs, outputs, _, adapter, message) -> {
                 if (container instanceof ContainerWirelessDualInterfaceTerminal ciw) {
                     boolean combine = ciw.combine;
                     ciw.setCraftingMode(message.isCraft);
@@ -48,6 +49,7 @@ public class PatternTerminalLoader implements Runnable {
                         adapter.transferPackAE(inputs, inputsInv);
                         adapter.transferPackAE(outputs, outputsInv);
                         ciw.saveChanges();
+                        handleAutoUpload(message, ciw);
                         return;
                     }
                     IInventory inputSlot = pt.getInventoryByName(Constants.CRAFTING);
@@ -65,42 +67,60 @@ public class PatternTerminalLoader implements Runnable {
                     adapter.transferPack(inputs, inputSlot);
                     ciw.onCraftMatrixChanged(inputSlot);
                     ciw.saveChanges();
+                    handleAutoUpload(message, ciw);
                 }
             });
         if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             AE2ThingAPI.instance()
                 .terminal()
                 .registerPatternTerminal(() -> ContainerInfusionPatternTerminal.class)
-                .registerIdentifier(
-                    Constants.NEI_DEFAULT,
-                    (container, inputs, outputs, identifier, adapter, message) -> {
-                        if (container instanceof ContainerInfusionPatternTerminal ct) {
-                            // pattern terminal only
-                            boolean combine = ct.combine;
-                            ct.getPatternTerminal()
-                                .setCraftingRecipe(true);
-                            ct.setCrafting(true);
-                            IInventory inputSlot = ct.getInventoryByName(Constants.CRAFTING);
-                            IInventory outputSlot = ct.getInventoryByName(Constants.OUTPUT);
-                            for (int i = 0; i < inputSlot.getSizeInventory(); i++) {
-                                inputSlot.setInventorySlotContents(i, null);
-                            }
-                            for (int i = 0; i < outputSlot.getSizeInventory(); i++) {
-                                outputSlot.setInventorySlotContents(i, null);
-                            }
-                            if (combine) {
-                                inputs = NEIUtils.compress(inputs);
-                                outputs = NEIUtils.compress(outputs);
-                            }
-                            inputs = NEIUtils.clearNull(inputs);
-                            outputs = NEIUtils.clearNull(outputs);
-                            adapter.transferPack(inputs, inputSlot);
-                            adapter.transferPack(outputs, outputSlot);
-                            ct.onCraftMatrixChanged(inputSlot);
-                            ct.onCraftMatrixChanged(outputSlot);
-                            ct.saveChanges();
+                .registerIdentifier(Constants.NEI_DEFAULT, (container, inputs, outputs, _, adapter, _) -> {
+                    if (container instanceof ContainerInfusionPatternTerminal ct) {
+                        // pattern terminal only
+                        boolean combine = ct.combine;
+                        ct.getPatternTerminal()
+                            .setCraftingRecipe(true);
+                        ct.setCrafting(true);
+                        IInventory inputSlot = ct.getInventoryByName(Constants.CRAFTING);
+                        IInventory outputSlot = ct.getInventoryByName(Constants.OUTPUT);
+                        for (int i = 0; i < inputSlot.getSizeInventory(); i++) {
+                            inputSlot.setInventorySlotContents(i, null);
                         }
-                    });
+                        for (int i = 0; i < outputSlot.getSizeInventory(); i++) {
+                            outputSlot.setInventorySlotContents(i, null);
+                        }
+                        if (combine) {
+                            inputs = NEIUtils.compress(inputs);
+                            outputs = NEIUtils.compress(outputs);
+                        }
+                        inputs = NEIUtils.clearNull(inputs);
+                        outputs = NEIUtils.clearNull(outputs);
+                        adapter.transferPack(inputs, inputSlot);
+                        adapter.transferPack(outputs, outputSlot);
+                        ct.onCraftMatrixChanged(inputSlot);
+                        ct.onCraftMatrixChanged(outputSlot);
+                        ct.saveChanges();
+                    }
+                });
+        }
+    }
+
+    private static void handleAutoUpload(CPacketTransferRecipe message, ContainerWirelessDualInterfaceTerminal ciw) {
+        if (!message.autoEncode) return;
+        ciw.getContainer()
+            .encode();
+        if (message.target != null) {
+            ContainerWirelessDualInterfaceTerminal.PlaceResult result = ciw
+                .tryPlacePattern(message.targetSlot, message.target);
+            if (result != ContainerWirelessDualInterfaceTerminal.PlaceResult.OK) {
+                ciw.notifyAutoUploadFailure(result);
+            }
+            return;
+        }
+        if (!ciw.getContainer()
+            .getPatternOutputSlot()
+            .getHasStack()) {
+            ciw.notifyAutoUploadFailure(ContainerWirelessDualInterfaceTerminal.PlaceResult.NO_PATTERN);
         }
     }
 }

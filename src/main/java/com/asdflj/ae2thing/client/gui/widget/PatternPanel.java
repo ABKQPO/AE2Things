@@ -27,7 +27,6 @@ import com.asdflj.ae2thing.client.gui.IWidgetGui;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
-import com.asdflj.ae2thing.proxy.ClientProxy;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.glodblock.github.client.gui.GuiFCImgButton;
@@ -459,7 +458,7 @@ public class PatternPanel implements IAEBasePanel {
         } else if (this.encodeBtn == btn) {
             int value = (isCtrlKeyDown() ? 1 : 0) << 1 | (isShiftKeyDown() ? 1 : 0);
             AE2Thing.proxy.netHandler.sendToServer(new CPacketTerminalBtns("PatternTerminal.Encode", value));
-            if (value == 0 && NEIClientUtils.altKey() && !ClientProxy.isAutoUploadHighlighted()) {
+            if (value == 0 && NEIClientUtils.altKey()) {
                 MinecraftForge.EVENT_BUS.post(new EncodeEvent(true));
             }
             return true;
@@ -684,13 +683,7 @@ public class PatternPanel implements IAEBasePanel {
             FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
             List<String> lines = fontRenderer.listFormattedStringToWidth(
                 StatCollector.translateToLocal("ae2thing.tooltip.encode_auto_upload") + "\n"
-                    + StatCollector.translateToLocal("ae2thing.tooltip.encode_auto_upload.desc")
-                    + "\n"
-                    + StatCollector.translateToLocal("ae2thing.tooltip.encode_auto_upload.desc_sum")
-                    + "\n"
-                    + StatCollector.translateToLocal("ae2thing.tooltip.encode_auto_upload.desc_click")
-                    + "\n"
-                    + StatCollector.translateToLocal("ae2thing.tooltip.encode_auto_upload.desc_scroll"),
+                    + StatCollector.translateToLocal("ae2thing.tooltip.encode_auto_upload.desc_short"),
                 250);
             String extra = String.join("\n", lines);
             return base == null || base.isEmpty() ? extra : base + "\n" + extra;

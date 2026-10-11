@@ -22,6 +22,7 @@ import thaumcraft.api.aspects.Aspect;
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.common.Thaumcraft;
 
+@Deprecated
 public class RenderItemPhial implements ISlotRender {
 
     @Override

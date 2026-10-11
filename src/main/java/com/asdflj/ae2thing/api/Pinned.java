@@ -26,6 +26,7 @@ import appeng.api.storage.data.IAEItemStack;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
+@Deprecated
 @SideOnly(Side.CLIENT)
 public class Pinned {
 

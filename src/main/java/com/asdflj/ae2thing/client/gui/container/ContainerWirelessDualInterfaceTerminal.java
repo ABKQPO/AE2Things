@@ -4,6 +4,7 @@ import static appeng.util.IterationCounter.fetchNewId;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ChatComponentTranslation;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.util.ForgeDirection;
@@ -26,6 +29,7 @@ import net.minecraftforge.fluids.IFluidContainerItem;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
+import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.adapter.pattern.DualInterfacePatternTarget;
 import com.asdflj.ae2thing.api.adapter.pattern.DualInterfacePatternValidators;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
@@ -38,6 +42,7 @@ import com.asdflj.ae2thing.inventory.item.INetworkTerminal;
 import com.asdflj.ae2thing.inventory.item.PatternModifierInventory;
 import com.asdflj.ae2thing.inventory.item.WirelessDualInterfaceTerminalInventory;
 import com.asdflj.ae2thing.inventory.item.WirelessTerminal;
+import com.asdflj.ae2thing.network.SPacketInterfaceSuffixUpdate;
 import com.asdflj.ae2thing.util.Ae2Reflect;
 import com.asdflj.ae2thing.util.GTUtil;
 import com.glodblock.github.common.item.ItemFluidPacket;
@@ -48,6 +53,7 @@ import appeng.api.AEApi;
 import appeng.api.config.Settings;
 import appeng.api.config.YesNo;
 import appeng.api.implementations.ICraftingPatternItem;
+import appeng.api.interfaces.IInterfaceNameProvider;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
@@ -76,6 +82,7 @@ import appeng.core.AELog;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketInterfaceTerminalUpdate;
 import appeng.helpers.IContainerCraftingPacket;
+import appeng.helpers.ICustomNameObject;
 import appeng.helpers.IInterfaceHost;
 import appeng.helpers.InventoryAction;
 import appeng.me.cache.CraftingGridCache;
@@ -94,38 +101,6 @@ import codechicken.nei.recipe.StackInfo;
 
 public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     implements IContainerCraftingPacket, IWidgetPatternContainer, IConfigurableObject, IVirtualSlotSource {
-
-    @Override
-    public void updateVirtualSlot(StorageName name, int slotId, IAEStack<?> aes) {
-        if (!(this.host instanceof WirelessDualInterfaceTerminalInventory inv)) return;
-        switch (name) {
-            case CRAFTING_INPUT -> {
-                final IAEStackInventory inputs = inv.getCraftingExInventory();
-                if (slotId < 0 || slotId >= inputs.getSizeInventory()) return;
-                if (this.craftingMode && aes != null) {
-                    aes.setStackSize(1);
-                }
-                inputs.putAEStackInSlot(slotId, aes);
-                if (this.inputsSync != null) {
-                    this.inputsSync.markDirty();
-                }
-            }
-            case CRAFTING_OUTPUT -> {
-                final IAEStackInventory outputs = inv.getOutputExInventory();
-                if (slotId < 0 || slotId >= outputs.getSizeInventory()) return;
-                outputs.putAEStackInSlot(slotId, aes);
-                if (this.outputsSync != null) {
-                    this.outputsSync.markDirty();
-                }
-            }
-            default -> {}
-        }
-    }
-
-    @Override
-    public StorageName getAEStorageName(Slot slot) {
-        return null;
-    }
 
     public final ContainerInterfaceTerminal delegateContainer;
     private final PatternContainer patternPanel;
@@ -155,6 +130,11 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     private final BooleanSyncHandler prioritizeSync;
 
     private final IPatternTerminal it;
+
+    private static Class<?> trackerClass;
+    private static Field trackerIdField;
+    private final Map<Long, String> sentSuffixes = new HashMap<>();
+    private int suffixScanTicks;
 
     public ContainerWirelessDualInterfaceTerminal(InventoryPlayer ip, ITerminalHost monitorable) {
         super(ip, monitorable);
@@ -261,6 +241,10 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     public void detectAndSendChanges() {
         if (Platform.isClient()) {
             return;
+        }
+        if (++this.suffixScanTicks >= 20) {
+            this.suffixScanTicks = 0;
+            syncInterfaceSuffixs();
         }
         this.patternPanel.detectAndSendChanges();
         this.syncPatternState();
@@ -420,10 +404,6 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
 
     @Override
     public IPatternContainer getContainer() {
-        return this.patternPanel;
-    }
-
-    public IPatternContainer getPatternContainer() {
         return this.patternPanel;
     }
 
@@ -730,23 +710,36 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
 
     }
 
+    public enum PlaceResult {
+        OK,
+        NO_PATTERN,
+        INVALID_SLOT,
+        SLOT_OCCUPIED,
+        DUPLICATE,
+        NO_INTERFACE
+    }
+
     public void PlacePattern(int slot, NBTTagCompound tag) {
+        tryPlacePattern(slot, tag);
+    }
+
+    public PlaceResult tryPlacePattern(int slot, NBTTagCompound tag) {
         ImmutablePair<World, IInterfaceViewable> result = getWorldAndHost(tag);
-        if (result == null) return;
+        if (result == null) return PlaceResult.NO_INTERFACE;
         IInventory patterns = result.right.getPatterns();
-        if (slot < 0 || slot >= patterns.getSizeInventory()) return;
+        if (slot < 0 || slot >= patterns.getSizeInventory()) return PlaceResult.INVALID_SLOT;
         ItemStack item = patterns.getStackInSlot(slot);
-        if (item != null) return;
+        if (item != null) return PlaceResult.SLOT_OCCUPIED;
         if (!this.getContainer()
             .getPatternOutputSlot()
-            .getHasStack()) return;
+            .getHasStack()) return PlaceResult.NO_PATTERN;
         ItemStack pattern = this.getContainer()
             .getPatternOutputSlot()
             .getStack();
         for (int i = 0; i < patterns.getSizeInventory(); i++) {
             ItemStack slotStack = patterns.getStackInSlot(i);
             if (StackInfo.equalItemAndNBT(slotStack, pattern, true)) {
-                return;
+                return PlaceResult.DUPLICATE;
             }
         }
         patterns.setInventorySlotContents(slot, pattern);
@@ -754,5 +747,110 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
             .getPatternOutputSlot()
             .putStack(null);
         this.sendToClient(result.right);
+        return PlaceResult.OK;
+    }
+
+    public void notifyAutoUploadFailure(PlaceResult result) {
+        if (this.player == null) return;
+        String key = switch (result) {
+            case NO_PATTERN -> "ae2thing.chat.auto_upload.no_blank_pattern";
+            case SLOT_OCCUPIED -> "ae2thing.chat.auto_upload.slot_occupied";
+            case DUPLICATE -> "ae2thing.chat.auto_upload.duplicate";
+            default -> "ae2thing.chat.auto_upload.failed";
+        };
+        this.player.addChatMessage(new ChatComponentTranslation(key));
+    }
+
+    @Override
+    public void updateVirtualSlot(StorageName name, int slotId, IAEStack<?> aes) {
+        if (!(this.host instanceof WirelessDualInterfaceTerminalInventory inv)) return;
+        switch (name) {
+            case CRAFTING_INPUT -> {
+                final IAEStackInventory inputs = inv.getCraftingExInventory();
+                if (slotId < 0 || slotId >= inputs.getSizeInventory()) return;
+                if (this.craftingMode && aes != null) {
+                    aes.setStackSize(1);
+                }
+                inputs.putAEStackInSlot(slotId, aes);
+                if (this.inputsSync != null) {
+                    this.inputsSync.markDirty();
+                }
+            }
+            case CRAFTING_OUTPUT -> {
+                final IAEStackInventory outputs = inv.getOutputExInventory();
+                if (slotId < 0 || slotId >= outputs.getSizeInventory()) return;
+                outputs.putAEStackInSlot(slotId, aes);
+                if (this.outputsSync != null) {
+                    this.outputsSync.markDirty();
+                }
+            }
+            default -> {}
+        }
+    }
+
+    @Override
+    public StorageName getAEStorageName(Slot slot) {
+        return null;
+    }
+
+    private static long trackerId(Object tracker) {
+        try {
+            if (trackerIdField == null || trackerClass != tracker.getClass()) {
+                Field field = tracker.getClass()
+                    .getDeclaredField("id");
+                field.setAccessible(true);
+                trackerIdField = field;
+                trackerClass = tracker.getClass();
+            }
+            return trackerIdField.getLong(tracker);
+        } catch (ReflectiveOperationException e) {
+            return -1L;
+        }
+    }
+
+    private static IChatComponent computeAdjacentSuffix(IInterfaceViewable host) {
+        if (!(host instanceof IInterfaceHost iHost)) return null;
+        TileEntity hostTile = iHost.getTileEntity();
+        if (hostTile == null || hostTile.getWorldObj() == null) return null;
+        IGridNode self = iHost.getGridNode(ForgeDirection.UNKNOWN);
+        IGrid grid = self == null ? null : self.getGrid();
+        for (ForgeDirection direction : iHost.getTargets()) {
+            TileEntity te = hostTile.getWorldObj()
+                .getTileEntity(
+                    hostTile.xCoord + direction.offsetX,
+                    hostTile.yCoord + direction.offsetY,
+                    hostTile.zCoord + direction.offsetZ);
+            if (te == null) continue;
+            if (te instanceof IInterfaceHost other) {
+                IGridNode otherNode = other.getGridNode(ForgeDirection.UNKNOWN);
+                if (otherNode != null && otherNode.getGrid() == grid) continue;
+            }
+            if (te instanceof IInterfaceNameProvider provider) {
+                IChatComponent suffix = provider.getInterfaceNameSuffix();
+                if (suffix != null) return suffix;
+            }
+        }
+        return null;
+    }
+
+    private void syncInterfaceSuffixs() {
+        Map<?, ?> tracked = Ae2Reflect.getTracked(this.delegateContainer);
+        if (tracked.isEmpty()) return;
+        Map<Long, String> changed = new HashMap<>();
+        for (Map.Entry<?, ?> entry : tracked.entrySet()) {
+            if (!(entry.getKey() instanceof IInterfaceViewable iHost)) continue;
+            if (!(iHost instanceof ICustomNameObject custom) || !custom.hasCustomName()) continue;
+            long id = trackerId(entry.getValue());
+            if (id < 0) continue;
+            IChatComponent suffix = computeAdjacentSuffix(iHost);
+            String serialized = suffix == null ? "" : IChatComponent.Serializer.func_150696_a(suffix);
+            if (!serialized.equals(this.sentSuffixes.get(id))) {
+                this.sentSuffixes.put(id, serialized);
+                changed.put(id, serialized);
+            }
+        }
+        if (changed.isEmpty()) return;
+        AE2Thing.proxy.netHandler
+            .sendTo(new SPacketInterfaceSuffixUpdate(changed), (EntityPlayerMP) this.getPlayerInv().player);
     }
 }

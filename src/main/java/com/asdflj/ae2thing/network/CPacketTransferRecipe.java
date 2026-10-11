@@ -27,9 +27,15 @@ public class CPacketTransferRecipe implements IMessage {
     public boolean isCraft;
     private static final int MAX_INDEX = 32;
     public boolean shift;
+    public boolean autoEncode;
+    @Nullable
+    public NBTTagCompound target;
+    public int targetSlot = -1;
 
+    @SuppressWarnings("unused")
     public CPacketTransferRecipe() {}
 
+    @SuppressWarnings("unused")
     public CPacketTransferRecipe(List<OrderStack<?>> IN, List<OrderStack<?>> OUT, boolean craft) {
         this(IN, OUT, craft, false);
     }
@@ -40,11 +46,19 @@ public class CPacketTransferRecipe implements IMessage {
 
     public CPacketTransferRecipe(List<OrderStack<?>> IN, List<OrderStack<?>> OUT, boolean craft, boolean shift,
         String identifier) {
+        this(IN, OUT, craft, shift, identifier, false, null, -1);
+    }
+
+    public CPacketTransferRecipe(List<OrderStack<?>> IN, List<OrderStack<?>> OUT, boolean craft, boolean shift,
+        String identifier, boolean autoEncode, @Nullable NBTTagCompound target, int targetSlot) {
         this.inputs = IN;
         this.outputs = OUT;
         this.isCraft = craft;
         this.shift = shift;
         this.identifier = identifier;
+        this.autoEncode = autoEncode;
+        this.target = target;
+        this.targetSlot = targetSlot;
     }
 
     // TODO: this should use GZIP to compress the message
@@ -66,6 +80,12 @@ public class CPacketTransferRecipe implements IMessage {
         nbt_m.setTag("o", nbt_o);
         ByteBufUtils.writeTag(buf, nbt_m);
         ByteBufUtils.writeUTF8String(buf, this.identifier);
+        buf.writeBoolean(this.autoEncode);
+        buf.writeBoolean(this.target != null);
+        if (this.target != null) {
+            ByteBufUtils.writeTag(buf, this.target);
+            buf.writeInt(this.targetSlot);
+        }
     }
 
     @Override
@@ -86,6 +106,11 @@ public class CPacketTransferRecipe implements IMessage {
             if (tmp != null) outputs.add(tmp);
         }
         identifier = ByteBufUtils.readUTF8String(buf);
+        autoEncode = buf.readBoolean();
+        if (buf.readBoolean()) {
+            target = ByteBufUtils.readTag(buf);
+            targetSlot = buf.readInt();
+        }
     }
 
     public static class Handler implements IMessageHandler<CPacketTransferRecipe, IMessage> {

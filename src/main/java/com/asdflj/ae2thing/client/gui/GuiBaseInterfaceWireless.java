@@ -992,9 +992,10 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
                     GL11.glTranslatef(colLeft, viewY + rowYTop + 1, ITEM_STACK_OVERLAY_Z);
                     drawRect(0, 0, 16, 16, ColorUtils.itemSlotOverlayUnpowered.getColor());
                     GL11.glPopMatrix();
-                } else if (drawHighlightSlot) {
-                    // draw first slot bg
-                    drawHighlightSlot = !this.drawFirstHighlightSlotBG(entry, colLeft, viewY + 1 + rowYTop, slotIdx);
+                }
+                if (drawHighlightSlot
+                    && this.drawFirstHighlightSlotBG(entry, colLeft, viewY + 1 + rowYTop, slotIdx)) {
+                    drawHighlightSlot = false;
                 }
                 if (tooltip) {
                     // overlay highlight
@@ -1228,8 +1229,6 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             if (StatCollector.canTranslate(fallback)) {
                 translatedName = StatCollector.translateToLocal(fallback);
             } else {
-                // Machines that build their name instead of reading one key per instance, GregTech hatches among
-                // them, have no key to translate. Their icon knows the name, so ask it rather than print the key.
                 translatedName = dispRep != null ? dispRep.getDisplayName()
                     : StatCollector.translateToFallback(rawName);
             }
@@ -1240,11 +1239,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         return translatedName;
     }
 
-    /**
-     * Turns the serialized {@link IChatComponent} suffix back into text, so that it is localized with the client's
-     * language rather than the server's. A suffix that fails to deserialize is shown as raw text.
-     */
-    private static String resolveSuffix(String suffix) {
+    public static String resolveSuffix(String suffix) {
         try {
             final IChatComponent component = IChatComponent.Serializer.func_150699_a(suffix);
             return component != null ? component.getUnformattedText() : suffix;
@@ -1410,6 +1405,14 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         }
     }
 
+    protected boolean isEnhancedSearchActive(String query) {
+        return false;
+    }
+
+    protected boolean entryMatchesEnhancedSearch(InterfaceWirelessEntry entry) {
+        return true;
+    }
+
     private boolean recipeIsBroken(final ItemStack itemStack) {
         if (itemStack == null) {
             return false;
@@ -1464,11 +1467,14 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         }
     }
 
+    public InterfaceWirelessEntry getInterfaceEntry(long id) {
+        return this.masterList.list.get(id);
+    }
+
     public static class InterfaceWirelessEntryWrapper {
 
         public InterfaceWirelessEntry entry;
         public int slot;
-        public boolean autoUpload;
 
         public InterfaceWirelessEntryWrapper(InterfaceWirelessEntry entry, int slot) {
             this.entry = entry;
@@ -1519,7 +1525,8 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
 
             for (InterfaceWirelessSection section : sections.values()) {
                 String query = GuiBaseInterfaceWireless.this.searchFieldNames.getText();
-                if (!interfaceSectionMatchesSearchTerm(section, query)) {
+                if (!GuiBaseInterfaceWireless.this.isEnhancedSearchActive(query)
+                    && !interfaceSectionMatchesSearchTerm(section, query)) {
                     continue;
                 }
 
@@ -1751,6 +1758,9 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
                 if (onlySubstitute && !entry.hasUseSubstitute()) {
                     continue;
                 }
+                if (!GuiBaseInterfaceWireless.this.entryMatchesEnhancedSearch(entry)) {
+                    continue;
+                }
                 // Find search terms
                 if (!input.isEmpty() || !output.isEmpty()) {
                     AppEngInternalInventory inv = entry.inv;
@@ -1816,6 +1826,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         String dispName;
         String rawName;
         String rawSuffix;
+        String searchSuffix;
         AppEngInternalInventory inv;
         GuiImgButton optionsButton;
         GuiImgButton renameButton;

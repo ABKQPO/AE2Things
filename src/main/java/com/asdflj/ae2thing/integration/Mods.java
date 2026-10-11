@@ -9,9 +9,6 @@ import com.gtnewhorizon.gtnhlib.util.data.IMod;
 import com.gtnewhorizon.gtnhmixins.builders.ITargetMod;
 import com.gtnewhorizon.gtnhmixins.builders.TargetModBuilder;
 
-import appeng.api.config.ActionItems;
-import appeng.api.config.Settings;
-import appeng.core.localization.ButtonToolTips;
 import cpw.mods.fml.common.Loader;
 
 public enum Mods implements IMod, ITargetMod {
@@ -118,33 +115,6 @@ public enum Mods implements IMod, ITargetMod {
         }
     }
 
-    public static boolean hasCraftingStatusSetting() {
-        try {
-            Settings.class.getDeclaredField("CRAFTING_STATUS");
-            return true;
-        } catch (NoSuchFieldException ignored) {
-            return false;
-        }
-    }
-
-    public static boolean hasDoubleButton() {
-        try {
-            ActionItems.class.getDeclaredField("DOUBLE");
-            return true;
-        } catch (NoSuchFieldException ignored) {
-            return false;
-        }
-    }
-
-    public static boolean hasBeSubstitutionsButton() {
-        try {
-            ButtonToolTips.class.getDeclaredField("BeSubstitutionsDescEnabled");
-            return true;
-        } catch (NoSuchFieldException ignored) {
-            return false;
-        }
-    }
-
     private static Boolean gtNonConsumedDisplay;
 
     public static boolean hasGTNonConsumedDisplay() {
@@ -157,5 +127,20 @@ public enum Mods implements IMod, ITargetMod {
             }
         }
         return gtNonConsumedDisplay;
+    }
+
+    private static Boolean gtAvailableRecipeMaps;
+
+    public static boolean hasGTRecipeMapWorkable() {
+        if (gtAvailableRecipeMaps == null) {
+            try {
+                Class.forName("gregtech.api.interfaces.tileentity.RecipeMapWorkable")
+                    .getMethod("getAvailableRecipeMaps");
+                gtAvailableRecipeMaps = true;
+            } catch (ClassNotFoundException | NoSuchMethodException e) {
+                gtAvailableRecipeMaps = false;
+            }
+        }
+        return gtAvailableRecipeMaps;
     }
 }

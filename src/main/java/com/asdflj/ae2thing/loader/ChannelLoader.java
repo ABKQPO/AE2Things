@@ -23,6 +23,7 @@ import com.asdflj.ae2thing.network.SPacketCraftingDebugCardUpdate;
 import com.asdflj.ae2thing.network.SPacketCraftingStateUpdate;
 import com.asdflj.ae2thing.network.SPacketFindCellItem;
 import com.asdflj.ae2thing.network.SPacketFlowRates;
+import com.asdflj.ae2thing.network.SPacketInterfaceSuffixUpdate;
 import com.asdflj.ae2thing.network.SPacketMEFluidInvUpdate;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
 import com.asdflj.ae2thing.network.SPacketNBTDataUpdate;
@@ -44,14 +45,15 @@ public class ChannelLoader implements Runnable {
         CPacketSwitchGuis.class, CPacketTerminalBtns.class, CPacketTransferRecipe.class, CPacketTypeFilter.class,
         CPacketValueConfig.class, SPacketCraftingDebugCardUpdate.class, SPacketCraftingStateUpdate.class,
         SPacketFindCellItem.class, SPacketFlowRates.class, SPacketMEFluidInvUpdate.class, SPacketMEItemInvUpdate.class,
-        SPacketNBTDataUpdate.class, SPacketStringUpdate.class, SPacketSwitchBack.class, SPacketTypeFilter.class };
+        SPacketNBTDataUpdate.class, SPacketStringUpdate.class, SPacketSwitchBack.class, SPacketTypeFilter.class,
+        SPacketInterfaceSuffixUpdate.class };
 
     @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void run() {
         AE2ThingNetworkWrapper netHandler = AE2Thing.proxy.netHandler;
         for (int id = 0; id < MESSAGE_TYPES.length; id++) {
-            Class<?> messageType = MESSAGE_TYPES[id];
+            Class<? extends IMessage> messageType = MESSAGE_TYPES[id].asSubclass(IMessage.class);
             Class<?> handlerType = null;
             for (Class<?> nestedType : messageType.getDeclaredClasses()) {
                 if (nestedType.getSimpleName()
@@ -68,7 +70,7 @@ public class ChannelLoader implements Runnable {
                     .newInstance();
                 netHandler.registerMessage(
                     handler,
-                    (Class<? extends IMessage>) messageType,
+                    messageType,
                     id,
                     messageType.getSimpleName()
                         .startsWith("C") ? Side.SERVER : Side.CLIENT);

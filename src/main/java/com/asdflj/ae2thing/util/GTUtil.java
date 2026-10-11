@@ -48,38 +48,41 @@ public class GTUtil {
     }
 
     public static String getRecipeName(IRecipeHandler recipe, List<OrderStack<?>> in) {
-        if (recipe instanceof GTNEIDefaultHandler) {
-            if (Mods.PROGRAMMABLE_HATCHES.isModLoaded()
-                && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT)) {
-                return recipe.getRecipeTabName();
-            }
+        if (!(recipe instanceof GTNEIDefaultHandler)) return recipe.getRecipeTabName();
 
-            boolean hasZeroSizeInput = false;
-            for (OrderStack<?> stack : in) {
-                if (stack.getStack() instanceof ItemStack is && is.stackSize == 0) {
-                    hasZeroSizeInput = true;
-                    break;
-                }
-            }
+        StringBuilder suggestion = new StringBuilder();
+        if (getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH)) {
+            suggestion.append('@')
+                .append(recipe.getRecipeTabName())
+                .append('@');
+        } else {
+            suggestion.append(recipe.getRecipeTabName());
+        }
 
-            if (hasZeroSizeInput) {
-                StringBuilder suggestion = new StringBuilder(recipe.getRecipeTabName());
-                if (Mods.hasGTNonConsumedDisplay()) {
-                    boolean appendCircuit = getConfigValue(
-                        ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_CIRCUIT_DAMAGE);
-                    boolean appendNonConsumedItems = getConfigValue(
-                        ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_NON_CONSUMED_ITEMS);
-                    for (String token : GTNonConsumedHelper
-                        .collectTokens(recipe, in, appendCircuit, appendNonConsumedItems)) {
-                        suggestion.append(" ")
-                            .append(token);
-                    }
-                }
+        if (Mods.PROGRAMMABLE_HATCHES.isModLoaded()
+            && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT)) {
+            return suggestion.toString();
+        }
 
-                return suggestion.toString();
+        boolean hasZeroSizeInput = false;
+        for (OrderStack<?> stack : in) {
+            if (stack.getStack() instanceof ItemStack is && is.stackSize == 0) {
+                hasZeroSizeInput = true;
+                break;
             }
         }
-        return recipe.getRecipeTabName();
+
+        if (hasZeroSizeInput && Mods.hasGTNonConsumedDisplay()) {
+            boolean appendCircuit = getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_CIRCUIT_DAMAGE);
+            boolean appendNonConsumedItems = getConfigValue(
+                ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_NON_CONSUMED_ITEMS);
+            for (String token : GTNonConsumedHelper.collectTokens(recipe, in, appendCircuit, appendNonConsumedItems)) {
+                suggestion.append(" ")
+                    .append(token);
+            }
+        }
+
+        return suggestion.toString();
     }
 
     public static void setDataStick(int x, int y, int z, EntityPlayer player, World w) {
