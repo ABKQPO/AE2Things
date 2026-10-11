@@ -517,7 +517,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     @Override
     protected boolean mouseWheelEvent(int mouseX, int mouseY, int wheel) {
-        if (wheel != 0 && this.patternPanel.isMouseOverEncodeButton(mouseX, mouseY)
+        if (wheel != 0 && this.patternPanel.isMouseOverEncodeButton()
             && (Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU))) {
             this.cycleHighlight(wheel > 0 ? -1 : 1);
             return true;

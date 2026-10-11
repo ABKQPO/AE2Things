@@ -388,13 +388,8 @@ public class PatternPanel implements IAEBasePanel {
             || button == this.tabCraftButton;
     }
 
-    public boolean isMouseOverEncodeButton(int mouseX, int mouseY) {
-        GuiImgButton button = this.encodeBtn;
-        return button != null && button.visible
-            && mouseX >= button.xPosition
-            && mouseX < button.xPosition + button.width
-            && mouseY >= button.yPosition
-            && mouseY < button.yPosition + button.height;
+    public boolean isMouseOverEncodeButton() {
+        return this.encodeBtn.getMouseIn();
     }
 
     @Override
