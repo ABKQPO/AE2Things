@@ -49,6 +49,7 @@ import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.proxy.ClientProxy;
+import com.asdflj.ae2thing.util.NeCharUtil;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.config.Settings;
@@ -1421,13 +1422,13 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         if (hasCustomName(entry)) {
             if (entry.searchSuffix == null) return true;
             for (String token : this.enhancedTokens) {
-                if (!entry.searchSuffix.contains(token)) return false;
+                if (!NeCharUtil.INSTANCE.contains(token, entry.searchSuffix)) return false;
             }
             return true;
         }
         String name = entry.dispName == null ? "" : entry.dispName.toLowerCase();
         for (String token : this.enhancedTokens) {
-            if (!name.contains(token)) return false;
+            if (!NeCharUtil.INSTANCE.contains(token, name)) return false;
         }
         return true;
     }
@@ -1488,11 +1489,9 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             if (category.unlocalizedName.equalsIgnoreCase(recipeQuery) || localized.equalsIgnoreCase(recipeQuery)) {
                 exact.add(category);
             } else if (category.unlocalizedName.toLowerCase()
-                .contains(lower)
-                || localized.toLowerCase()
-                    .contains(lower)) {
-                        fuzzy.add(category);
-                    }
+                .contains(lower) || NeCharUtil.INSTANCE.contains(lower, localized.toLowerCase())) {
+                    fuzzy.add(category);
+                }
         }
         return exact.isEmpty() ? fuzzy : exact;
     }

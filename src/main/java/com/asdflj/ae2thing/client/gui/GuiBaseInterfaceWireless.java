@@ -1389,15 +1389,16 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         String sectionName = section.name.toLowerCase();
 
         if (searchTerm.length() >= 2 && searchTerm.startsWith("\"") && searchTerm.endsWith("\"")) {
-            return sectionName.contains(
+            return NeCharUtil.INSTANCE.contains(
                 searchTerm.substring(1, searchTerm.length() - 1)
-                    .toLowerCase());
+                    .toLowerCase(),
+                sectionName);
         } else {
             String[] terms = searchTerm.toLowerCase()
                 .split(" +");
 
             for (String term : terms) {
-                if (!sectionName.contains(term)) {
+                if (!NeCharUtil.INSTANCE.contains(term, sectionName)) {
                     return false;
                 }
             }
