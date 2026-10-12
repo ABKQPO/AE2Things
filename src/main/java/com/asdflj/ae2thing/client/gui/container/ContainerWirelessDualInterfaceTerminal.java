@@ -4,10 +4,11 @@ import static appeng.util.IterationCounter.fetchNewId;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -133,7 +134,7 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
 
     private static Class<?> trackerClass;
     private static Field trackerIdField;
-    private final Map<Long, String> sentSuffixes = new HashMap<>();
+    private final Long2ObjectMap<String> sentSuffixes = new Long2ObjectOpenHashMap<>();
     private int suffixScanTicks;
 
     public ContainerWirelessDualInterfaceTerminal(InventoryPlayer ip, ITerminalHost monitorable) {
@@ -836,7 +837,7 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     private void syncInterfaceSuffixs() {
         Map<?, ?> tracked = Ae2Reflect.getTracked(this.delegateContainer);
         if (tracked.isEmpty()) return;
-        Map<Long, String> changed = new HashMap<>();
+        Long2ObjectMap<String> changed = new Long2ObjectOpenHashMap<>();
         for (Map.Entry<?, ?> entry : tracked.entrySet()) {
             if (!(entry.getKey() instanceof IInterfaceViewable iHost)) continue;
             if (!(iHost instanceof ICustomNameObject custom) || !custom.hasCustomName()) continue;

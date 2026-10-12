@@ -1,8 +1,7 @@
 package com.asdflj.ae2thing.network;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 
@@ -16,19 +15,19 @@ import io.netty.buffer.ByteBuf;
 
 public class SPacketInterfaceSuffixUpdate implements IMessage {
 
-    private Map<Long, String> suffixes = new HashMap<>();
+    private Long2ObjectMap<String> suffixes = new Long2ObjectOpenHashMap<>();
 
     @SuppressWarnings("unused")
     public SPacketInterfaceSuffixUpdate() {}
 
-    public SPacketInterfaceSuffixUpdate(Map<Long, String> suffixes) {
+    public SPacketInterfaceSuffixUpdate(Long2ObjectMap<String> suffixes) {
         this.suffixes = suffixes;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         int size = buf.readInt();
-        this.suffixes = new HashMap<>(size);
+        this.suffixes = new Long2ObjectOpenHashMap<>(size);
         for (int i = 0; i < size; i++) {
             long id = buf.readLong();
             this.suffixes.put(id, ByteBufUtils.readUTF8String(buf));
@@ -38,8 +37,8 @@ public class SPacketInterfaceSuffixUpdate implements IMessage {
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeInt(this.suffixes.size());
-        for (Map.Entry<Long, String> entry : this.suffixes.entrySet()) {
-            buf.writeLong(entry.getKey());
+        for (Long2ObjectMap.Entry<String> entry : this.suffixes.long2ObjectEntrySet()) {
+            buf.writeLong(entry.getLongKey());
             ByteBufUtils.writeUTF8String(buf, entry.getValue());
         }
     }
