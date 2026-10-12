@@ -1,9 +1,11 @@
 package com.asdflj.ae2thing.client.gui;
 
 import static com.asdflj.ae2thing.client.render.RenderHelper.updateColorAndDrawItemBorder;
+import static com.asdflj.ae2thing.nei.NEI_TH_Config.getConfigValue;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +18,7 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.StatCollector;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -40,10 +43,13 @@ import com.asdflj.ae2thing.client.gui.widget.PanelDragButton;
 import com.asdflj.ae2thing.client.gui.widget.PatternPanel;
 import com.asdflj.ae2thing.client.gui.widget.THGuiTextField;
 import com.asdflj.ae2thing.client.me.AdvItemRepo;
+import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
+import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.proxy.ClientProxy;
+import com.asdflj.ae2thing.util.NeCharUtil;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.config.Settings;
@@ -72,6 +78,11 @@ import appeng.util.IConfigManagerHost;
 import codechicken.nei.item.ItemFluidDisplay;
 import codechicken.nei.recipe.IRecipeHandler;
 import codechicken.nei.recipe.RecipeCatalysts;
+import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
+import gregtech.api.interfaces.tileentity.RecipeMapWorkable;
+import gregtech.api.recipe.RecipeCategory;
+import gregtech.api.recipe.RecipeMap;
+import gregtech.common.blocks.ItemMachines;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless implements IWidgetGui, IGuiDrawSlot,
@@ -100,6 +111,11 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private IRecipeHandler uploadRecipe;
     private boolean uploadCraft;
     private boolean highlightSlotRendered;
+    private String enhancedQuerySource;
+    private boolean enhancedQueryActive;
+    private List<String> enhancedTokens = Collections.emptyList();
+    private List<RecipeCategory> enhancedCategories = Collections.emptyList();
+    private List<RecipeMap<?>> enhancedMaps = Collections.emptyList();
     private final List<DualTerminalComponentTree.Component> itemSlotComponents = new ArrayList<>();
     private VirtualMESlot renderedVirtualSlotUnderMouse;
     private DualPatternSlot[] patternInputSlots;
@@ -1361,7 +1377,12 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         }
     }
 
-    private List<InterfaceWirelessEntryWrapper> collectUploadCandidates(IRecipeHandler recipe, boolean craft) {
+    public void setUploadContext(IRecipeHandler recipe, boolean craft) {
+        this.uploadRecipe = recipe;
+        this.uploadCraft = craft;
+    }
+
+    public List<InterfaceWirelessEntryWrapper> collectUploadCandidates(IRecipeHandler recipe, boolean craft) {
         boolean catalystGate = !craft && recipe != null
             && !RecipeCatalysts.getRecipeCatalysts(recipe)
                 .isEmpty();
@@ -1388,20 +1409,108 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         return candidates;
     }
 
-    public InterfaceWirelessEntryWrapper findAutoUploadTarget(IRecipeHandler recipe, boolean craft) {
-        List<InterfaceWirelessEntryWrapper> candidates = collectUploadCandidates(recipe, craft);
-        return candidates.size() == 1 ? candidates.getFirst() : null;
+    @Override
+    protected boolean isEnhancedSearchActive(String query) {
+        parseEnhancedQuery(query);
+        return this.enhancedQueryActive;
     }
 
-    public boolean upload(IRecipeHandler recipe, boolean craft) {
-        this.uploadRecipe = recipe;
-        this.uploadCraft = craft;
-        InterfaceWirelessEntryWrapper target = findAutoUploadTarget(recipe, craft);
-        if (target == null) return false;
-        target.autoUpload = true;
-        ClientProxy.setInterfaceHighlightEntry(target);
-        scrollHighlightIntoView();
+    @Override
+    protected boolean entryMatchesEnhancedSearch(InterfaceWirelessEntry entry) {
+        if (!this.enhancedQueryActive) return true;
+        if (!entryMatchesRecipe(entry)) return false;
+        if (hasCustomName(entry)) {
+            if (entry.searchSuffix == null) return true;
+            for (String token : this.enhancedTokens) {
+                if (!NeCharUtil.INSTANCE.contains(token, entry.searchSuffix)) return false;
+            }
+            return true;
+        }
+        String name = entry.dispName == null ? "" : entry.dispName.toLowerCase();
+        for (String token : this.enhancedTokens) {
+            if (!NeCharUtil.INSTANCE.contains(token, name)) return false;
+        }
         return true;
+    }
+
+    private static boolean hasCustomName(InterfaceWirelessEntry entry) {
+        return entry.dispRep != null && entry.rawName != null
+            && !entry.rawName.equals(entry.dispRep.getUnlocalizedName());
+    }
+
+    private void parseEnhancedQuery(String text) {
+        String query = text == null ? "" : text;
+        if (query.equals(this.enhancedQuerySource)) return;
+        this.enhancedQuerySource = query;
+        this.enhancedQueryActive = false;
+        this.enhancedTokens = Collections.emptyList();
+        this.enhancedCategories = Collections.emptyList();
+        this.enhancedMaps = Collections.emptyList();
+
+        if (!getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH)) return;
+        if (!query.startsWith("@")) return;
+        int close = query.lastIndexOf('@');
+        if (close <= 0) return;
+        String recipeQuery = query.substring(1, close)
+            .trim();
+        if (recipeQuery.isEmpty()) return;
+
+        List<RecipeCategory> categories = resolveRecipeCategories(recipeQuery);
+        if (categories.isEmpty()) return;
+        List<RecipeMap<?>> maps = new ArrayList<>();
+        for (RecipeCategory category : categories) {
+            if (!maps.contains(category.recipeMap)) {
+                maps.add(category.recipeMap);
+            }
+        }
+
+        String rest = query.substring(close + 1)
+            .trim();
+        List<String> tokens = new ArrayList<>();
+        if (!rest.isEmpty()) {
+            for (String token : rest.toLowerCase()
+                .split(" +")) {
+                if (!token.isEmpty()) tokens.add(token);
+            }
+        }
+
+        this.enhancedCategories = categories;
+        this.enhancedMaps = maps;
+        this.enhancedTokens = tokens;
+        this.enhancedQueryActive = true;
+    }
+
+    private static List<RecipeCategory> resolveRecipeCategories(String recipeQuery) {
+        String lower = recipeQuery.toLowerCase();
+        List<RecipeCategory> exact = new ArrayList<>();
+        List<RecipeCategory> fuzzy = new ArrayList<>();
+        for (RecipeCategory category : RecipeCategory.ALL_RECIPE_CATEGORIES.values()) {
+            String localized = StatCollector.translateToLocal(category.unlocalizedName);
+            if (category.unlocalizedName.equalsIgnoreCase(recipeQuery) || localized.equalsIgnoreCase(recipeQuery)) {
+                exact.add(category);
+            } else if (category.unlocalizedName.toLowerCase()
+                .contains(lower) || NeCharUtil.INSTANCE.contains(lower, localized.toLowerCase())) {
+                    fuzzy.add(category);
+                }
+        }
+        return exact.isEmpty() ? fuzzy : exact;
+    }
+
+    private boolean entryMatchesRecipe(InterfaceWirelessEntry entry) {
+        ItemStack rep = entry.dispRep;
+        if (rep == null) return false;
+        if (Mods.hasGTRecipeMapWorkable()) {
+            IMetaTileEntity metaTileEntity = ItemMachines.getMetaTileEntity(rep);
+            if (metaTileEntity instanceof RecipeMapWorkable workable && workable.getAvailableRecipeMaps()
+                .stream()
+                .anyMatch(this.enhancedMaps::contains)) {
+                return true;
+            }
+        }
+        for (RecipeCategory category : this.enhancedCategories) {
+            if (RecipeCatalysts.containsCatalyst(category.unlocalizedName, rep)) return true;
+        }
+        return false;
     }
 
     public void cycleHighlight(int direction) {
@@ -1422,7 +1531,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         scrollHighlightIntoView();
     }
 
-    private void scrollHighlightIntoView() {
+    public void scrollHighlightIntoView() {
         InterfaceWirelessEntryWrapper current = ClientProxy.getInterfaceHighlightEntry();
         if (current == null || current.entry == null) return;
         int y = 0;
@@ -1497,5 +1606,17 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         if (!this.highlightSlotRendered && ClientProxy.getInterfaceHighlightEntry() != null) {
             ClientProxy.setInterfaceHighlightEntry(null);
         }
+    }
+
+    public void applySearchSuffixes(Map<Long, String> suffixes) {
+        boolean updated = false;
+        for (Map.Entry<Long, String> entry : suffixes.entrySet()) {
+            InterfaceWirelessEntry interfaceEntry = this.getInterfaceEntry(entry.getKey());
+            if (interfaceEntry == null) continue;
+            String raw = entry.getValue();
+            interfaceEntry.searchSuffix = raw.isEmpty() ? "" : resolveSuffix(raw).toLowerCase();
+            updated = true;
+        }
+        if (updated) this.masterList.markDirty();
     }
 }

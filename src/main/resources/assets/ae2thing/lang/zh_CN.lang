@@ -131,31 +131,46 @@ nei.options.ae2thing.pinned_bar_crafting_state=固定栏中预览当前物品合
 nei.options.ae2thing.pinned_bar_crafting_state.true=是
 nei.options.ae2thing.pinned_bar_crafting_state.false=否
 
-nei.options.ae2thing.dual_interface_terminal_fill_search_names=二合一接口终端自动填充合成菜单名字
-nei.options.ae2thing.dual_interface_terminal_fill_search_names.true=是
-nei.options.ae2thing.dual_interface_terminal_fill_search_names.false=否
+nei.options.ae2thing.dual_interface_terminal=二合一接口终端
 
-nei.options.ae2thing.dual_interface_terminal_fill_circuit=二合一接口终端自动填充合成菜单名字时,忽略电路编号
-nei.options.ae2thing.dual_interface_terminal_fill_circuit.true=是
-nei.options.ae2thing.dual_interface_terminal_fill_circuit.false=否
+nei.options.ae2thing.dual_interface_terminal.fill_search_names=自动填充合成菜单名字
+nei.options.ae2thing.dual_interface_terminal.fill_search_names.true=是
+nei.options.ae2thing.dual_interface_terminal.fill_search_names.false=否
 
-nei.options.ae2thing.dual_interface_terminal_append_circuit_damage=二合一接口终端将不消耗电路板追加到配方名称
-nei.options.ae2thing.dual_interface_terminal_append_circuit_damage.true=是
-nei.options.ae2thing.dual_interface_terminal_append_circuit_damage.false=否
+nei.options.ae2thing.dual_interface_terminal.fill_circuit=自动填充合成菜单名字时,忽略电路编号
+nei.options.ae2thing.dual_interface_terminal.fill_circuit.true=是
+nei.options.ae2thing.dual_interface_terminal.fill_circuit.false=否
 
-nei.options.ae2thing.dual_interface_terminal_append_non_consumed_items=二合一接口终端将不消耗物品(模头等)追加到配方名称
-nei.options.ae2thing.dual_interface_terminal_append_non_consumed_items.true=是
-nei.options.ae2thing.dual_interface_terminal_append_non_consumed_items.false=否
+nei.options.ae2thing.dual_interface_terminal.append_circuit_damage=将不消耗电路板追加到配方名称
+nei.options.ae2thing.dual_interface_terminal.append_circuit_damage.true=是
+nei.options.ae2thing.dual_interface_terminal.append_circuit_damage.false=否
 
-nei.options.ae2thing.dual_interface_terminal_auto_upload=二合一接口终端自动上传样板
-nei.options.ae2thing.dual_interface_terminal_auto_upload.true=是
-nei.options.ae2thing.dual_interface_terminal_auto_upload.false=否
+nei.options.ae2thing.dual_interface_terminal.append_non_consumed_items=将不消耗物品(模头等)追加到配方名称
+nei.options.ae2thing.dual_interface_terminal.append_non_consumed_items.true=是
+nei.options.ae2thing.dual_interface_terminal.append_non_consumed_items.false=否
+
+nei.options.ae2thing.dual_interface_terminal.auto_upload=自动上传样板
+nei.options.ae2thing.dual_interface_terminal.auto_upload.true=是
+nei.options.ae2thing.dual_interface_terminal.auto_upload.false=否
+
+nei.options.ae2thing.dual_interface_terminal.enhanced_search=增强配方搜索（@配方池名@ 后接过滤词）
+nei.options.ae2thing.dual_interface_terminal.enhanced_search.true=是
+nei.options.ae2thing.dual_interface_terminal.enhanced_search.false=否
+
+nei.options.ae2thing.dual_interface_terminal.encode_auto_upload=§7[AE2Things]§r 自动上传样板
+nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc=§7开启「自动上传样板」后，NEI 配方转移后将自动编码样板。
+nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_sum=§7若只有唯一接口能处理该配方，样板会自动放入该接口。
+nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_click=§7否则高亮第一个匹配的接口，按 Alt 点击即可放入。
+nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_scroll=§7在编码按钮上 Alt+滚轮 可切换高亮的接口。
+nei.options.ae2thing.dual_interface_terminal.enhanced_search.desc=若默认的配方填充找不到指定接口可以尝试开启增强配方搜索
 
 ae2thing.tooltip.encode_auto_upload=§7[AE2Things]§r 自动上传样板
-ae2thing.tooltip.encode_auto_upload.desc=§7开启「自动上传样板」后，会自动选中唯一匹配的接口。
-ae2thing.tooltip.encode_auto_upload.desc_sum=§7编码完成的样板将直接放入高亮槽位。
-ae2thing.tooltip.encode_auto_upload.desc_click=§7按住 Alt 点击可手动放入高亮槽位。
-ae2thing.tooltip.encode_auto_upload.desc_scroll=§7在编码按钮上 Alt+滚轮可切换高亮的接口。
+ae2thing.tooltip.encode_auto_upload.desc_short=§7详细信息请查看 nei configs - AE2 Thing - 二合一接口终端
+
+ae2thing.chat.auto_upload.no_blank_pattern=自动上传：没有空白样板
+ae2thing.chat.auto_upload.slot_occupied=自动上传：目标槽位已被占用
+ae2thing.chat.auto_upload.duplicate=自动上传：目标接口已有该样板
+ae2thing.chat.auto_upload.failed=自动上传失败
 
 nei.options.ae2thing.nei_craft_item=NEI中鼠标中键快速下单终端中的物品 
 nei.options.ae2thing.nei_craft_item.true=是

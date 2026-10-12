@@ -12,10 +12,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fluids.FluidStack;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.Constants;
+import com.asdflj.ae2thing.client.gui.GuiBaseInterfaceWireless;
 import com.asdflj.ae2thing.client.gui.GuiInfusionPatternTerminal;
 import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.widget.DualPatternSlot;
@@ -125,22 +127,50 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             List<OrderStack<?>> in = FluidRecipe.getPackageInputs(recipe, recipeIndex, false);
             List<OrderStack<?>> out = FluidRecipe.getPackageOutputs(recipe, recipeIndex, false);
             AE2Thing.proxy.netHandler.sendToServer(new CPacketTransferRecipe(out, in, true, shift));
-        } else if (firstGui instanceof GuiWirelessDualInterfaceTerminal) {
-            boolean priority = ((GuiWirelessDualInterfaceTerminal) firstGui).container.prioritize;
+        } else if (firstGui instanceof GuiWirelessDualInterfaceTerminal gui) {
+            boolean priority = gui.container.prioritize;
             boolean craft = shouldCraft(recipe);
             List<OrderStack<?>> in;
             in = FluidRecipe.getPackageInputs(recipe, recipeIndex, !craft && priority);
-            setSuggestion(craft, recipe, (GuiWirelessDualInterfaceTerminal) firstGui, in);
+            setSuggestion(craft, recipe, gui, in);
             if (Mods.PROGRAMMABLE_HATCHES.isModLoaded() && !craft) {
                 in = PHUtil.transfer(in);
             }
             List<OrderStack<?>> out = FluidRecipe.getPackageOutputs(recipe, recipeIndex, !notUseOther(recipe));
-            AE2Thing.proxy.netHandler.sendToServer(new CPacketTransferRecipe(in, out, craft, shift));
+
+            boolean autoEncode = false;
+            NBTTagCompound target = null;
+            int targetSlot = -1;
+            if (getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_AUTO_UPLOAD)) {
+                List<GuiBaseInterfaceWireless.InterfaceWirelessEntryWrapper> candidates = gui
+                    .collectUploadCandidates(recipe, craft);
+                if (!candidates.isEmpty()) {
+                    ClientProxy.setInterfaceHighlightEntry(candidates.getFirst());
+                    gui.scrollHighlightIntoView();
+                    autoEncode = true;
+                    if (candidates.size() == 1) {
+                        target = candidates.getFirst()
+                            .getDimensionalCoordSide();
+                        targetSlot = candidates.getFirst().slot;
+                    }
+                }
+            }
+            AE2Thing.proxy.netHandler.sendToServer(
+                new CPacketTransferRecipe(
+                    in,
+                    out,
+                    craft,
+                    shift,
+                    Constants.NEI_DEFAULT,
+                    autoEncode,
+                    target,
+                    targetSlot));
         }
     }
 
     private void setSuggestion(boolean craft, IRecipeHandler recipe, GuiWirelessDualInterfaceTerminal gui,
         List<OrderStack<?>> in) {
+        gui.setUploadContext(recipe, craft);
         String suggestion;
         if (craft) {
             Optional<ItemStack> molecular = AEApi.instance()
@@ -167,9 +197,6 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
 
         if (getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_AUTO_UPLOAD)) {
             gui.setSearchFieldText(suggestion);
-            if (!gui.upload(recipe, craft)) {
-                gui.setHighlightSlot();
-            }
         }
     }
 

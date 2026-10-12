@@ -141,31 +141,46 @@ nei.options.ae2thing.pinned_bar_crafting_state=Pinned bar preview current item c
 nei.options.ae2thing.pinned_bar_crafting_state.true=Yes
 nei.options.ae2thing.pinned_bar_crafting_state.false=No
 
-nei.options.ae2thing.dual_interface_terminal_fill_search_names=Dual interface terminal autofill recipe name to search field
-nei.options.ae2thing.dual_interface_terminal_fill_search_names.true=Yes
-nei.options.ae2thing.dual_interface_terminal_fill_search_names.false=No
+nei.options.ae2thing.dual_interface_terminal=Dual Interface Terminal
 
-nei.options.ae2thing.dual_interface_terminal_fill_circuit=Dual interface terminal autofill recipe name to search field,ignore circuit
-nei.options.ae2thing.dual_interface_terminal_fill_circuit.true=Yes
-nei.options.ae2thing.dual_interface_terminal_fill_circuit.false=No
+nei.options.ae2thing.dual_interface_terminal.fill_search_names=Autofill recipe name to search field
+nei.options.ae2thing.dual_interface_terminal.fill_search_names.true=Yes
+nei.options.ae2thing.dual_interface_terminal.fill_search_names.false=No
 
-nei.options.ae2thing.dual_interface_terminal_append_circuit_damage=Dual interface terminal append NC circuit boards to recipe name
-nei.options.ae2thing.dual_interface_terminal_append_circuit_damage.true=Yes
-nei.options.ae2thing.dual_interface_terminal_append_circuit_damage.false=No
+nei.options.ae2thing.dual_interface_terminal.fill_circuit=Autofill recipe name to search field,ignore circuit
+nei.options.ae2thing.dual_interface_terminal.fill_circuit.true=Yes
+nei.options.ae2thing.dual_interface_terminal.fill_circuit.false=No
 
-nei.options.ae2thing.dual_interface_terminal_append_non_consumed_items=Dual interface terminal append NC items (molds, etc.) to recipe name
-nei.options.ae2thing.dual_interface_terminal_append_non_consumed_items.true=Yes
-nei.options.ae2thing.dual_interface_terminal_append_non_consumed_items.false=No
+nei.options.ae2thing.dual_interface_terminal.append_circuit_damage=Append NC circuit boards to recipe name
+nei.options.ae2thing.dual_interface_terminal.append_circuit_damage.true=Yes
+nei.options.ae2thing.dual_interface_terminal.append_circuit_damage.false=No
 
-nei.options.ae2thing.dual_interface_terminal_auto_upload=Dual interface terminal auto upload pattern
-nei.options.ae2thing.dual_interface_terminal_auto_upload.true=Yes
-nei.options.ae2thing.dual_interface_terminal_auto_upload.false=No
+nei.options.ae2thing.dual_interface_terminal.append_non_consumed_items=Append NC items (molds, etc.) to recipe name
+nei.options.ae2thing.dual_interface_terminal.append_non_consumed_items.true=Yes
+nei.options.ae2thing.dual_interface_terminal.append_non_consumed_items.false=No
 
-ae2thing.tooltip.encode_auto_upload=§7[AE2Things]§r Auto upload pattern
-ae2thing.tooltip.encode_auto_upload.desc=§7"Auto upload pattern" on: a unique matching interface is picked automatically.
-ae2thing.tooltip.encode_auto_upload.desc_sum=§7The encoded pattern goes straight into the highlighted slot.
-ae2thing.tooltip.encode_auto_upload.desc_click=§7Alt + click to place the pattern into the highlighted slot manually.
-ae2thing.tooltip.encode_auto_upload.desc_scroll=§7Alt + scroll over this button to switch the highlighted interface.
+nei.options.ae2thing.dual_interface_terminal.auto_upload=Auto upload pattern
+nei.options.ae2thing.dual_interface_terminal.auto_upload.true=Yes
+nei.options.ae2thing.dual_interface_terminal.auto_upload.false=No
+
+nei.options.ae2thing.dual_interface_terminal.enhanced_search=Enhanced recipe search (@recipe tab name@ then filters)
+nei.options.ae2thing.dual_interface_terminal.enhanced_search.true=Yes
+nei.options.ae2thing.dual_interface_terminal.enhanced_search.false=No
+
+nei.options.ae2thing.dual_interface_terminal.encode_auto_upload=§7[AE2Things]§r Auto upload pattern(AUP)
+nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc=§7With "AUP" on, NEI recipe transfer will automatically encode the pattern.
+nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_sum=§7If only one interface can run it, the pattern is placed automatically.
+nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_click=§7Otherwise the first match is highlighted; Alt + click places there.
+nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_scroll=§7Alt + scroll over this button to switch the highlighted interface.
+nei.options.ae2thing.dual_interface_terminal.enhanced_search.desc=If the default recipe filling fails to locate the interface, try enabling enhanced search.
+
+ae2thing.tooltip.encode_auto_upload=§7[AE2Things]§r Auto upload pattern(AUP)
+ae2thing.tooltip.encode_auto_upload.desc_short=§7For more information, please check nei configs - AE2 Thing - Dual Interface Terminal
+
+ae2thing.chat.auto_upload.no_blank_pattern=Auto upload: no blank pattern available
+ae2thing.chat.auto_upload.slot_occupied=Auto upload: the target slot is already occupied
+ae2thing.chat.auto_upload.duplicate=Auto upload: the target interface already holds this pattern
+ae2thing.chat.auto_upload.failed=Auto upload failed
 
 nei.options.ae2thing.nei_craft_item=Middle click NEI panel to quick order item from ae terminal 
 nei.options.ae2thing.nei_craft_item.true=Yes
