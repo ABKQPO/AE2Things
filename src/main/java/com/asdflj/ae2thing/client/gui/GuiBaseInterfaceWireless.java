@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -1334,18 +1335,26 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         final boolean containsInvalidDisplayName = GuiText.UnknownItem.getLocal()
             .toLowerCase()
             .contains(searchTerm);
+        Predicate<ItemStack> itemFilter;
+
+        if (NEI.searchField.existsSearchField()) {
+            itemFilter = NEI.searchField.getFilter(searchTerm);
+        } else {
+            itemFilter = is -> NeCharUtil.INSTANCE.contains(
+                searchTerm,
+                Platform.getItemDisplayName(
+                    AEApi.instance()
+                        .storage()
+                        .createItemStack(is))
+                    .toLowerCase());
+        }
 
         for (int i = 0; i < tags.tagCount(); i++) {
             final NBTTagCompound tag = tags.getCompoundTagAt(i);
-            final ItemStack parsedItemStack = ItemStack.loadItemStackFromNBT(tag);
+            final IAEStack<?> aes = Platform.readStackNBT(tag, true);
 
-            if (parsedItemStack != null) {
-                final String displayName = Platform.getItemDisplayName(
-                    AEApi.instance()
-                        .storage()
-                        .createItemStack(parsedItemStack))
-                    .toLowerCase();
-                if (NeCharUtil.INSTANCE.contains(searchTerm, displayName)) {
+            if (aes != null) {
+                if (itemFilter.test(aes.getItemStackForNEI())) {
                     return true;
                 }
             } else if (containsInvalidDisplayName && !tag.hasNoTags()) {
@@ -1355,31 +1364,6 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
 
         return false;
 
-    }
-
-    private static boolean hasInvalidTypeStack(final ItemStack stack, final IAEStackType<?>[] supportedTypes) {
-        if (stack == null || stack.getTagCompound() == null) return false;
-        final NBTTagCompound nbt = stack.getTagCompound();
-        if (nbt.getBoolean("InvalidPattern")) return false;
-        return hasInvalidTypeInTagList(nbt.getTagList("in", Constants.NBT.TAG_COMPOUND), supportedTypes);
-    }
-
-    private static boolean hasInvalidTypeInTagList(final NBTTagList tagList, final IAEStackType<?>[] supportedTypes) {
-        outer: for (int i = 0; i < tagList.tagCount(); i++) {
-            final NBTTagCompound entry = tagList.getCompoundTagAt(i);
-            if (entry.hasKey("FluidName") && !Arrays.asList(supportedTypes)
-                .contains(FLUID_STACK_TYPE)) return true;
-            if (entry.hasKey("StackType")) {
-                for (IAEStackType<?> type : supportedTypes) {
-                    if (entry.getString("StackType")
-                        .equals(type.getId())) {
-                        continue outer;
-                    }
-                }
-                return true;
-            }
-        }
-        return false;
     }
 
     private static boolean interfaceSectionMatchesSearchTerm(final InterfaceWirelessSection section,
@@ -1466,6 +1450,31 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         } else if (searchFieldNames.isMouseIn(mousex, mousey)) {
             searchFieldNames.setText(displayName);
         }
+    }
+
+    private static boolean hasInvalidTypeStack(final ItemStack stack, final IAEStackType<?>[] supportedTypes) {
+        if (stack == null || stack.getTagCompound() == null) return false;
+        final NBTTagCompound nbt = stack.getTagCompound();
+        if (nbt.getBoolean("InvalidPattern")) return false;
+        return hasInvalidTypeInTagList(nbt.getTagList("in", Constants.NBT.TAG_COMPOUND), supportedTypes);
+    }
+
+    private static boolean hasInvalidTypeInTagList(final NBTTagList tagList, final IAEStackType<?>[] supportedTypes) {
+        outer: for (int i = 0; i < tagList.tagCount(); i++) {
+            final NBTTagCompound entry = tagList.getCompoundTagAt(i);
+            if (entry.hasKey("FluidName") && !Arrays.asList(supportedTypes)
+                .contains(FLUID_STACK_TYPE)) return true;
+            if (entry.hasKey("StackType")) {
+                for (IAEStackType<?> type : supportedTypes) {
+                    if (entry.getString("StackType")
+                        .equals(type.getId())) {
+                        continue outer;
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     public InterfaceWirelessEntry getInterfaceEntry(long id) {
