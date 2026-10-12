@@ -119,6 +119,10 @@ public class NEI_TH_Config implements IConfigureNEI {
 
     @SubscribeEvent
     public void installNeeRecipeProcessor(NEIConfigsLoadedEvent event) {
+        if (!Mods.NOT_ENOUGH_ENERGISTICS.isModLoaded()) {
+            return;
+        }
+
         Set<String> defaultIdentifiers = new HashSet<>(
             Arrays.asList("crafting", "crafting2x2", "brewing", "smelting", "fuel", null));
         Set<String> identifiers = new HashSet<>(defaultIdentifiers);
