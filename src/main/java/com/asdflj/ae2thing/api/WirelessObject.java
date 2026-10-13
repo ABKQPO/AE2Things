@@ -2,7 +2,6 @@ package com.asdflj.ae2thing.api;
 
 import java.lang.reflect.InvocationTargetException;
 
-import com.gtnewhorizon.gtnhlib.item.ItemStackNBT;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -13,6 +12,7 @@ import com.asdflj.ae2thing.common.Config;
 import com.asdflj.ae2thing.common.item.ItemWirelessConnectorTerminal;
 import com.asdflj.ae2thing.common.item.ItemWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.inventory.item.WirelessTerminal;
+import com.gtnewhorizon.gtnhlib.item.ItemStackNBT;
 
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
