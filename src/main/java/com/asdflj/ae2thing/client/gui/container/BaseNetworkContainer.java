@@ -18,6 +18,8 @@ import appeng.api.storage.ITerminalHost;
 import appeng.container.AEBaseContainer;
 import appeng.container.sync.SyncRegistrar;
 import appeng.container.sync.handlers.BooleanSyncHandler;
+import appeng.core.localization.PlayerMessages;
+import appeng.helpers.WirelessTerminalGuiObject;
 import appeng.items.misc.ItemEncodedPattern;
 import appeng.me.helpers.ChannelPowerSrc;
 import appeng.util.Platform;
@@ -36,7 +38,7 @@ public class BaseNetworkContainer extends AEBaseContainer {
         super(ip, host);
         final SyncRegistrar sync = this.syncRegistrar();
         this.powerSync = sync.booleanS2C("hasPower")
-            .onClientChange((oldValue, newValue) -> { this.hasPower = newValue; });
+            .onClientChange((_, newValue) -> this.hasPower = newValue);
         this.player = ip.player;
         if (Platform.isClient()) return;
         if (host instanceof WirelessTerminal) {
@@ -83,7 +85,7 @@ public class BaseNetworkContainer extends AEBaseContainer {
         super(ip, anchor);
         final SyncRegistrar sync = this.syncRegistrar();
         this.powerSync = sync.booleanS2C("hasPower")
-            .onClientChange((oldValue, newValue) -> { this.hasPower = newValue; });
+            .onClientChange((_, newValue) -> this.hasPower = newValue);
         this.player = ip.player;
     }
 
@@ -128,6 +130,22 @@ public class BaseNetworkContainer extends AEBaseContainer {
             }
         }
         super.detectAndSendChanges();
+    }
+
+    @Override
+    protected void portableSourceTick() {
+        if (this.terminal == null) {
+            super.portableSourceTick();
+        }
+
+        final Object obj = this.getTarget();
+        if (obj instanceof WirelessTerminalGuiObject wtgo && !wtgo.rangeCheck()) {
+            if (Platform.isServer() && this.isValidContainer()) {
+                this.getPlayerInv().player.addChatMessage(PlayerMessages.OutOfRange.toChat());
+            }
+            this.setValidContainer(false);
+        }
+        this.checkItem(obj);
     }
 
     public double getPowerMultiplier() {

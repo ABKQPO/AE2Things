@@ -16,6 +16,7 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.me.storage.MEInventoryHandler;
 import appeng.me.storage.MEPassThrough;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.AEItemStackType;
 import appeng.util.prioitylist.FuzzyPriorityList;
@@ -35,7 +36,7 @@ public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack>
     public void init(ITCellInventory ci) {
         if (ci != null) {
             final IInventory upgrades = ci.getUpgradesInventory();
-            final IInventory config = ci.getConfigInventory();
+            final IAEStackInventory config = ci.getConfigAEInventory();
             final FuzzyMode fzMode = ci.getFuzzyMode();
             final String filter = ci.getOreFilter();
 
@@ -44,17 +45,19 @@ public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack>
             boolean hasOreFilter = false;
             boolean hasSticky = false;
 
-            for (int x = 0; x < upgrades.getSizeInventory(); x++) {
-                final ItemStack is = upgrades.getStackInSlot(x);
-                if (is != null && is.getItem() instanceof IUpgradeModule) {
-                    final Upgrades u = ((IUpgradeModule) is.getItem()).getType(is);
-                    if (u != null) {
-                        switch (u) {
-                            case FUZZY -> hasFuzzy = true;
-                            case INVERTER -> hasInverter = true;
-                            case ORE_FILTER -> hasOreFilter = true;
-                            case STICKY -> hasSticky = true;
-                            default -> {}
+            if (upgrades != null) {
+                for (int x = 0; x < upgrades.getSizeInventory(); x++) {
+                    final ItemStack is = upgrades.getStackInSlot(x);
+                    if (is != null && is.getItem() instanceof IUpgradeModule) {
+                        final Upgrades u = ((IUpgradeModule) is.getItem()).getType(is);
+                        if (u != null) {
+                            switch (u) {
+                                case FUZZY -> hasFuzzy = true;
+                                case INVERTER -> hasInverter = true;
+                                case ORE_FILTER -> hasOreFilter = true;
+                                case STICKY -> hasSticky = true;
+                                default -> {}
+                            }
                         }
                     }
                 }
@@ -65,20 +68,23 @@ public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack>
                 setSticky(true);
             }
 
-            if (hasOreFilter && !filter.isEmpty()) {
+            if (hasOreFilter && filter != null && !filter.isEmpty()) {
                 this.setPartitionList(new OreFilteredList(filter));
-            } else {
+            } else if (config != null) {
                 final IItemList<IAEItemStack> priorityList = AEApi.instance()
                     .storage()
                     .createItemList();
                 for (int x = 0; x < config.getSizeInventory(); x++) {
-                    final ItemStack is = config.getStackInSlot(x);
+                    if (!(config.getAEStackInSlot(x) instanceof IAEItemStack aes)) {
+                        continue;
+                    }
+                    final ItemStack is = aes.getItemStack();
                     if (is != null) {
                         priorityList.add(AEItemStack.create(is));
                     }
                 }
                 if (!priorityList.isEmpty()) {
-                    if (hasFuzzy) {
+                    if (hasFuzzy && fzMode != null) {
                         this.setPartitionList(new FuzzyPriorityList<>(priorityList, fzMode));
                     } else {
                         this.setPartitionList(new PrecisePriorityList<>(priorityList));

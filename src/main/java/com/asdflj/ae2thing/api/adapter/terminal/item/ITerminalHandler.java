@@ -34,7 +34,7 @@ public interface ITerminalHandler {
             player.addChatMessage(PlayerMessages.StationCanNotBeLocated.toChat());
             return false;
         }
-        if (handler.hasPower(player, 0.5, item)) {
+        if (handler.hasInfinityPower(item) || handler.hasPower(player, 0.5, item)) {
             return true;
         } else {
             player.addChatMessage(PlayerMessages.DeviceNotPowered.toChat());

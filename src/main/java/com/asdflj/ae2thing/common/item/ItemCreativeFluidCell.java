@@ -11,6 +11,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
 import net.minecraftforge.fluids.FluidStack;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.common.storage.FluidCellInventoryHandler;
 import com.asdflj.ae2thing.common.storage.ITFluidCellInventory;
@@ -26,13 +28,13 @@ import appeng.api.exceptions.AppEngException;
 import appeng.api.implementations.items.IStorageCell;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.ISaveProvider;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
 import appeng.core.features.AEFeature;
 import appeng.items.contents.CellUpgrades;
-import appeng.tile.inventory.AppEngInternalInventory;
+import appeng.tile.inventory.IAEStackInventory;
+import appeng.util.item.AEFluidStack;
 import appeng.util.item.AEFluidStackType;
 import codechicken.nei.recipe.StackInfo;
 import cpw.mods.fml.common.registry.GameRegistry;
@@ -47,14 +49,18 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageCell 
     @Override
     public IMEInventoryHandler<IAEFluidStack> getInventoryHandler(ItemStack o, ISaveProvider container,
         EntityPlayer player) throws AppEngException {
-        return new FluidCellInventoryHandler(new CreativeFluidCellInventory(o, container, player));
+        return new FluidCellInventoryHandler(new CreativeFluidCellInventory(o, container));
     }
 
-    protected static class InfinityConfig extends AppEngInternalInventory {
+    protected static class InfinityConfig extends IAEStackInventory {
 
         public InfinityConfig(final ItemStack is) {
             super(null, 1);
-            this.setInventorySlotContents(0, is);
+            FluidStack fs = StackInfo.getFluid(is);
+            if (fs == null || fs.getFluid() == null) {
+                return;
+            }
+            this.putAEStackInSlot(0, AEFluidStack.create(fs));
         }
 
         @Override
@@ -86,11 +92,6 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageCell 
         GameRegistry.registerItem(this, this.name, AE2Thing.MODID);
         setCreativeTab(AE2ThingTabs.INSTANCE);
         return this;
-    }
-
-    @Override
-    public StorageChannel getChannel() {
-        return StorageChannel.FLUIDS;
     }
 
     @Override
@@ -145,6 +146,7 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageCell 
     }
 
     @Override
+    @NotNull
     public IAEStackType<?> getStackType() {
         return AEFluidStackType.FLUID_STACK_TYPE;
     }
@@ -160,7 +162,7 @@ public class ItemCreativeFluidCell extends BaseCellItem implements IStorageCell 
     }
 
     @Override
-    public IInventory getConfigInventory(ItemStack is) {
+    public IAEStackInventory getConfigAEInventory(ItemStack is) {
         return new InfinityConfig(this.is);
     }
 

@@ -165,22 +165,28 @@ public class Util {
 
     private static int randTickSeed = 0;
 
-    public static int findBackPackTerminal(EntityPlayer player) {
+    public static int findBackPackTerminal(EntityPlayer player, ItemStack is) {
+        int fallback = -1;
         for (int x = 0; x < player.inventory.mainInventory.length; x++) {
             ItemStack item = player.inventory.mainInventory[x];
             if (item == null || item.getItem() == null) continue;
-            if (item.getItem() instanceof ItemBackpackTerminal) return x;
+            if (!(item.getItem() instanceof ItemBackpackTerminal)) continue;
+            if (is != null && Platform.isSameItemPrecise(item, is)) return x;
+            if (fallback == -1) fallback = x;
         }
-        return -1;
+        return fallback;
     }
 
-    public static int findDualInterfaceTerminal(EntityPlayer player) {
+    public static int findDualInterfaceTerminal(EntityPlayer player, ItemStack is) {
+        int fallback = -1;
         for (int x = 0; x < player.inventory.mainInventory.length; x++) {
-            ItemStack item = player.inventory.mainInventory[x];
+            final ItemStack item = player.inventory.mainInventory[x];
             if (item == null || item.getItem() == null) continue;
-            if (item.getItem() instanceof ItemWirelessDualInterfaceTerminal) return x;
+            if (!(item.getItem() instanceof ItemWirelessDualInterfaceTerminal)) continue;
+            if (is != null && Platform.isSameItemPrecise(item, is)) return x;
+            if (fallback == -1) fallback = x;
         }
-        return -1;
+        return fallback;
     }
 
     public static int findPatternModifier(EntityPlayer player) {

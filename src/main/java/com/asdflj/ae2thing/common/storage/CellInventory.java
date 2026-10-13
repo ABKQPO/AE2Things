@@ -10,6 +10,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTank;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.common.item.IItemInventoryHandler;
 import com.asdflj.ae2thing.common.storage.backpack.AdventureBackpackHandler;
@@ -29,9 +31,10 @@ import appeng.api.exceptions.AppEngException;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.ISaveProvider;
 import appeng.api.storage.IStorageHelper;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.Platform;
 import de.eydamos.backpack.item.ItemBackpackBase;
 import de.eydamos.backpack.util.BackpackUtil;
@@ -130,7 +133,7 @@ public class CellInventory implements ITCellInventory {
     }
 
     @Override
-    public IInventory getConfigInventory() {
+    public IAEStackInventory getConfigAEInventory() {
         return null;
     }
 
@@ -433,8 +436,9 @@ public class CellInventory implements ITCellInventory {
     }
 
     @Override
-    public StorageChannel getChannel() {
-        return ((IItemInventoryHandler) Objects.requireNonNull(this.cellItem.getItem())).getChannel();
+    @NotNull
+    public IAEStackType<?> getStackType() {
+        return ((IItemInventoryHandler) Objects.requireNonNull(this.cellItem.getItem())).getStackType();
     }
 
     @Override

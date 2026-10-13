@@ -184,6 +184,7 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
             });
         this.patternPanel = new PatternContainer(ip, monitorable, this);
         this.delegateContainer = new ContainerInterfaceTerminal(ip, (IInterfaceTerminal) monitorable);
+        Ae2Reflect.disablePortableDrain(this.delegateContainer);
         this.it = (IPatternTerminal) monitorable;
         this.setMonitor();
         this.lockSlot();

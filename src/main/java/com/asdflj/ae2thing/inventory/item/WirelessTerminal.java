@@ -94,6 +94,7 @@ public abstract class WirelessTerminal
 
     @Override
     public double extractAEPower(double amt, Actionable mode, PowerMultiplier usePowerMultiplier) {
+        if (this.obj.hasEnergyCard()) return amt;
         amt = usePowerMultiplier.multiply(amt);
         if (mode == Actionable.SIMULATE) {
             return usePowerMultiplier.divide(Math.min(amt, this.ips.getAECurrentPower(this.getItemStack())));

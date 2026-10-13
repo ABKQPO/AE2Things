@@ -10,6 +10,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.event.ForgeEventFactory;
 
+import com.asdflj.ae2thing.api.WirelessObject;
 import com.asdflj.ae2thing.client.gui.GuiWirelessConnectorTerminal;
 import com.asdflj.ae2thing.client.me.WirelessConnectorRepo;
 import com.asdflj.ae2thing.integration.ae2stuff.Ae2StuffIntegration;
@@ -102,6 +103,16 @@ public abstract class ItemBaseWirelessTerminal extends ToolWirelessTerminal impl
             }
         }
         return super.onItemUseFirst(itemstack, player, world, x, y, z, side, hitX, hitY, hitZ);
+    }
+
+    @Override
+    public boolean hasInfinityPower(ItemStack is) {
+        return WirelessObject.hasEnergyCard(is);
+    }
+
+    @Override
+    public boolean hasInfinityRange(ItemStack is) {
+        return WirelessObject.hasInfinityBoosterCard(is);
     }
 
     protected abstract GuiType guiGuiType(ItemStack item);

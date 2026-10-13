@@ -2,16 +2,14 @@ package com.asdflj.ae2thing.common.storage.infinityCell;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 
-import com.asdflj.ae2thing.common.item.BaseCellItem;
+import org.jetbrains.annotations.NotNull;
+
 import com.asdflj.ae2thing.common.storage.ITFluidCellInventory;
-import com.glodblock.github.util.Util;
 
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
@@ -20,9 +18,11 @@ import appeng.api.exceptions.AppEngException;
 import appeng.api.implementations.items.IStorageCell;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.ISaveProvider;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
+import appeng.tile.inventory.IAEStackInventory;
+import appeng.util.item.AEFluidStackType;
 
 public class CreativeFluidCellInventory implements ITFluidCellInventory {
 
@@ -31,7 +31,7 @@ public class CreativeFluidCellInventory implements ITFluidCellInventory {
     protected final ISaveProvider container;
     protected IItemList<IAEFluidStack> cellFluids = null;
 
-    public CreativeFluidCellInventory(ItemStack o, ISaveProvider c, EntityPlayer player) throws AppEngException {
+    public CreativeFluidCellInventory(ItemStack o, ISaveProvider c) throws AppEngException {
         if (o == null) {
             throw new AppEngException("ItemStack was used as a cell, but was not a cell!");
         }
@@ -61,8 +61,8 @@ public class CreativeFluidCellInventory implements ITFluidCellInventory {
     }
 
     @Override
-    public IInventory getConfigInventory() {
-        return this.cellType.getConfigInventory(this.cellItem);
+    public IAEStackInventory getConfigAEInventory() {
+        return this.cellType.getConfigAEInventory(this.cellItem);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class CreativeFluidCellInventory implements ITFluidCellInventory {
 
     @Override
     public long getTotalBytes() {
-        return this.cellType.getBytes(this.cellItem);
+        return this.cellType.getBytesLong(this.cellItem);
     }
 
     @Override
@@ -201,23 +201,23 @@ public class CreativeFluidCellInventory implements ITFluidCellInventory {
                 .createFluidList();
         }
         this.cellFluids.resetStatus(); // clears totals and stuff.
-        IInventory inv = this.cellType.getConfigInventory(this.cellItem);
+        IAEStackInventory inv = this.cellType.getConfigAEInventory(this.cellItem);
         for (int i = 0; i < inv.getSizeInventory(); i++) {
-            ItemStack is = inv.getStackInSlot(i);
-            if (Util.FluidUtil.isFluidContainer(is)) {
-                FluidStack fs = Util.getFluidFromItem(is);
-                if (fs == null) continue;
-                IAEFluidStack iaeFluidStack = Util.FluidUtil.createAEFluidStack(fs);
-                if (this.cellFluids.findPrecise(iaeFluidStack) == null) {
-                    iaeFluidStack.setStackSize(Integer.MAX_VALUE * 1000L);
-                    this.cellFluids.add(iaeFluidStack);
-                }
+            if (!(inv.getAEStackInSlot(i) instanceof IAEFluidStack afs)) {
+                continue;
+            }
+            FluidStack fs = afs.getFluidStack();
+            if (fs == null) continue;
+            if (this.cellFluids.findPrecise(afs) == null) {
+                afs.setStackSize(Integer.MAX_VALUE * 1000L);
+                this.cellFluids.add(afs);
             }
         }
     }
 
     @Override
-    public StorageChannel getChannel() {
-        return ((BaseCellItem) Objects.requireNonNull(this.cellItem.getItem())).getChannel();
+    @NotNull
+    public IAEStackType<?> getStackType() {
+        return AEFluidStackType.FLUID_STACK_TYPE;
     }
 }

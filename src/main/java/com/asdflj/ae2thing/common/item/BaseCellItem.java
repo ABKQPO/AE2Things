@@ -7,7 +7,6 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -19,8 +18,7 @@ import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.inventory.item.IItemInventory;
 import com.asdflj.ae2thing.util.BlockPos;
 import com.asdflj.ae2thing.util.NameConst;
-
-import appeng.util.Platform;
+import com.gtnewhorizon.gtnhlib.item.ItemStackNBT;
 
 public abstract class BaseCellItem extends BaseItem implements IItemInventory, IBaseCellItem, IItemInventoryHandler {
 
@@ -32,7 +30,7 @@ public abstract class BaseCellItem extends BaseItem implements IItemInventory, I
     @Override
     public ItemStack onItemRightClick(final ItemStack item, final World w, final EntityPlayer player) {
         if (player.isSneaking()) {
-            NBTTagCompound data = Platform.openNbtData(item);
+            ItemStackNBT data = ItemStackNBT.of(item);
             if (data.getBoolean(Constants.LINKED)) {
                 item.setTagCompound(null);
                 player.inventory.setInventorySlotContents(player.inventory.currentItem, item);
@@ -43,12 +41,12 @@ public abstract class BaseCellItem extends BaseItem implements IItemInventory, I
                 w,
                 new BlockPos(player.inventory.currentItem, 0, 0),
                 ForgeDirection.UNKNOWN,
-                this.guiGuiType(item));
+                this.guiGuiType());
         }
         return super.onItemRightClick(item, w, player);
     }
 
-    private GuiType guiGuiType(ItemStack item) {
+    private GuiType guiGuiType() {
         return GuiType.CELL_LINK;
     }
 
@@ -68,7 +66,7 @@ public abstract class BaseCellItem extends BaseItem implements IItemInventory, I
             lines.add(I18n.format(NameConst.TT_CELL_LINK_DISABLE));
             return;
         }
-        NBTTagCompound data = Platform.openNbtData(stack);
+        ItemStackNBT data = ItemStackNBT.of(stack);
         if (data.getBoolean(Constants.LINKED)) lines.add(I18n.format(NameConst.TT_LINKED));
         lines.addAll(
             Arrays.asList(

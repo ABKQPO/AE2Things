@@ -9,6 +9,8 @@ import net.minecraft.init.Blocks;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.common.storage.CellInventoryHandler;
 import com.asdflj.ae2thing.common.storage.infinityCell.CreativeCellInventory;
@@ -20,30 +22,30 @@ import appeng.api.implementations.items.IItemGroup;
 import appeng.api.implementations.items.IStorageCell;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.ISaveProvider;
-import appeng.api.storage.StorageChannel;
-import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.core.features.AEFeature;
 import appeng.core.localization.GuiText;
 import appeng.items.contents.CellUpgrades;
-import appeng.tile.inventory.AppEngInternalInventory;
+import appeng.tile.inventory.IAEStackInventory;
+import appeng.util.item.AEItemStack;
+import appeng.util.item.AEItemStackType;
 import cpw.mods.fml.common.registry.GameRegistry;
 
 public class ItemCreativeCell extends BaseCellItem implements IStorageCell, IItemGroup {
 
     public static ItemStack cobblestone = new ItemStack(Blocks.cobblestone, 1);
     private final int perType = 1;
-    private final double idleDrain = 2000D;
 
     @Override
     public String getUnlocalizedGroupName(Set<ItemStack> otherItems, ItemStack is) {
         return GuiText.StorageCells.getUnlocalized();
     }
 
-    protected static class InfinityConfig extends AppEngInternalInventory {
+    protected static class InfinityConfig extends IAEStackInventory {
 
         public InfinityConfig(final ItemStack is) {
             super(null, 1);
-            this.setInventorySlotContents(0, is);
+            this.putAEStackInSlot(0, AEItemStack.create(is));
         }
 
         @Override
@@ -75,8 +77,9 @@ public class ItemCreativeCell extends BaseCellItem implements IStorageCell, IIte
     }
 
     @Override
-    public StorageChannel getChannel() {
-        return StorageChannel.ITEMS;
+    @NotNull
+    public IAEStackType<?> getStackType() {
+        return AEItemStackType.ITEM_STACK_TYPE;
     }
 
     @Override
@@ -107,11 +110,6 @@ public class ItemCreativeCell extends BaseCellItem implements IStorageCell, IIte
     }
 
     @Override
-    public boolean isBlackListed(ItemStack cellItem, IAEItemStack requestedAddition) {
-        return false;
-    }
-
-    @Override
     public boolean storableInStorageCell() {
         return false;
     }
@@ -123,7 +121,7 @@ public class ItemCreativeCell extends BaseCellItem implements IStorageCell, IIte
 
     @Override
     public double getIdleDrain() {
-        return idleDrain;
+        return 2000D;
     }
 
     @Override
@@ -137,7 +135,7 @@ public class ItemCreativeCell extends BaseCellItem implements IStorageCell, IIte
     }
 
     @Override
-    public IInventory getConfigInventory(ItemStack is) {
+    public IAEStackInventory getConfigAEInventory(ItemStack is) {
         return new InfinityConfig(this.is);
     }
 
