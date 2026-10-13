@@ -19,6 +19,7 @@ import com.asdflj.ae2thing.api.adapter.pattern.DualInterfacePatternTarget;
 import appeng.api.networking.crafting.ICraftingCallback;
 import appeng.api.networking.crafting.ICraftingJob;
 import appeng.api.storage.IMEInventory;
+import appeng.container.AEBaseContainer;
 import appeng.container.implementations.ContainerCraftConfirm;
 import appeng.container.implementations.ContainerInterfaceTerminal;
 import appeng.container.slot.SlotCraftingTerm;
@@ -41,6 +42,7 @@ public class Ae2Reflect {
     private static final Field fCraftingJobV2_callback;
     private static final Field fGrid_myStorage;
     private static final Field fContainerCraftConfirm_result;
+    private static final Field fAEBaseContainer_powerMultiplier;
     private static final Method mSlotCraftingTerm_makeItem;
 
     static {
@@ -61,6 +63,7 @@ public class Ae2Reflect {
                 EntityPlayer.class,
                 ItemStack.class);
             fContainerCraftConfirm_result = reflectField(ContainerCraftConfirm.class, "result");
+            fAEBaseContainer_powerMultiplier = reflectField(AEBaseContainer.class, "powerMultiplier");
         } catch (Exception e) {
             throw new IllegalStateException("Failed to initialize AE2 reflection hacks!", e);
         }
@@ -109,6 +112,10 @@ public class Ae2Reflect {
 
     public static GridStorage getMyStorage(Grid grid) {
         return readField(grid, fGrid_myStorage);
+    }
+
+    public static void disablePortableDrain(AEBaseContainer container) {
+        writeField(container, fAEBaseContainer_powerMultiplier, 0.0D);
     }
 
     private static Class<?> findInterfaceTerminalTrackerClass() {

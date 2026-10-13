@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
@@ -26,6 +27,8 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.Tags;
 import com.asdflj.ae2thing.common.Config;
 import com.asdflj.ae2thing.common.fluids.Mana;
+import com.asdflj.ae2thing.common.item.ItemBackpackTerminal;
+import com.asdflj.ae2thing.common.item.ItemWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.common.storage.StorageManager;
 import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
@@ -167,13 +170,20 @@ public final class AE2ThingAPI implements IAE2ThingAPI {
     @SideOnly(Side.CLIENT)
     @Override
     public void openBackpackTerminal() {
-        AE2Thing.proxy.netHandler.sendToServer(new CPacketSwitchGuis(GuiType.BACKPACK_TERMINAL));
+        final EntityPlayer player = Minecraft.getMinecraft().thePlayer;
+        final ItemStack held = player == null ? null : player.getHeldItem();
+        final ItemStack target = held != null && held.getItem() instanceof ItemBackpackTerminal ? held : null;
+        AE2Thing.proxy.netHandler.sendToServer(new CPacketSwitchGuis(GuiType.BACKPACK_TERMINAL, target));
     }
 
     @SideOnly(Side.CLIENT)
     @Override
     public void openDualinterfaceTerminal() {
-        AE2Thing.proxy.netHandler.sendToServer(new CPacketSwitchGuis(GuiType.WIRELESS_DUAL_INTERFACE_TERMINAL));
+        final EntityPlayer player = Minecraft.getMinecraft().thePlayer;
+        final ItemStack held = player == null ? null : player.getHeldItem();
+        final ItemStack target = held != null && held.getItem() instanceof ItemWirelessDualInterfaceTerminal ? held
+            : null;
+        AE2Thing.proxy.netHandler.sendToServer(new CPacketSwitchGuis(GuiType.WIRELESS_DUAL_INTERFACE_TERMINAL, target));
     }
 
     @SideOnly(Side.CLIENT)

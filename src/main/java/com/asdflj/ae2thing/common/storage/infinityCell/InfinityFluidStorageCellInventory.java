@@ -3,20 +3,19 @@ package com.asdflj.ae2thing.common.storage.infinityCell;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+
+import org.jetbrains.annotations.NotNull;
 
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.api.Constants;
-import com.asdflj.ae2thing.common.item.BaseCellItem;
 import com.asdflj.ae2thing.common.storage.DataStorage;
 import com.asdflj.ae2thing.common.storage.ITFluidCellInventory;
+import com.gtnewhorizon.gtnhlib.item.ItemStackNBT;
 
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
@@ -26,10 +25,12 @@ import appeng.api.implementations.items.IStorageCell;
 import appeng.api.implementations.tiles.IChestOrDrive;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.ISaveProvider;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.Platform;
+import appeng.util.item.AEFluidStackType;
 
 public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
 
@@ -42,10 +43,10 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
     protected long storedFluidCount;
     protected long storedFluids;
     protected IItemList<IAEFluidStack> cellFluids = null;
-    protected final NBTTagCompound data;
+    protected final ItemStackNBT data;
     protected final DataStorage storage;
 
-    public InfinityFluidStorageCellInventory(ItemStack o, ISaveProvider c, EntityPlayer player) throws AppEngException {
+    public InfinityFluidStorageCellInventory(ItemStack o, ISaveProvider c) throws AppEngException {
         if (o == null) {
             throw new AppEngException("ItemStack was used as a cell, but was not a cell!");
         }
@@ -53,7 +54,7 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
         this.cellItem = o;
         this.cellType = (IStorageCell) this.cellItem.getItem();
         this.container = c;
-        this.data = Platform.openNbtData(o);
+        this.data = ItemStackNBT.of(o);
         this.storedFluids = this.data.getLong(FLUID_TYPE_TAG);
         this.storedFluidCount = this.data.getLong(FLUID_COUNT_TAG);
         this.storage = this.getStorage();
@@ -188,8 +189,9 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
     }
 
     @Override
-    public StorageChannel getChannel() {
-        return ((BaseCellItem) Objects.requireNonNull(this.cellItem.getItem())).getChannel();
+    @NotNull
+    public IAEStackType<?> getStackType() {
+        return AEFluidStackType.FLUID_STACK_TYPE;
     }
 
     @Override
@@ -213,8 +215,8 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
     }
 
     @Override
-    public IInventory getConfigInventory() {
-        return this.cellType.getConfigInventory(this.cellItem);
+    public IAEStackInventory getConfigAEInventory() {
+        return this.cellType.getConfigAEInventory(this.cellItem);
     }
 
     @Override
@@ -229,7 +231,7 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
 
     @Override
     public long getTotalBytes() {
-        return this.cellType.getBytes(this.cellItem);
+        return this.cellType.getBytesLong(this.cellItem);
     }
 
     @Override

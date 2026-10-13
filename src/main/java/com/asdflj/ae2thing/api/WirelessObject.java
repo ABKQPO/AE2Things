@@ -2,10 +2,10 @@ package com.asdflj.ae2thing.api;
 
 import java.lang.reflect.InvocationTargetException;
 
+import com.gtnewhorizon.gtnhlib.item.ItemStackNBT;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -165,13 +165,16 @@ public class WirelessObject implements IActionHost {
     }
 
     public int extractPower(double amt, Actionable mode, PowerMultiplier usePowerMultiplier, int ticks) {
-        if (this.hasEnergyCard()) return 0;
+        if (this.hasEnergyCard()) return (int) amt;
         if (mode == Actionable.SIMULATE) return ticks;
         if (ticks < 10) {
             ticks++;
             return ticks;
         }
-        if (this.energySource == null) closeGui();
+        if (this.energySource == null) {
+            closeGui();
+            return 0;
+        }
         double result = energySource.extractAEPower(amt, mode, usePowerMultiplier);
         if (result == 0) closeGui();
         this.player.inventory.setInventorySlotContents(getSlot(), getItemStack());
@@ -180,11 +183,11 @@ public class WirelessObject implements IActionHost {
     }
 
     public static boolean hasInfinityBoosterCard(ItemStack item) {
-        NBTTagCompound tag = Platform.openNbtData(item);
+        ItemStackNBT tag = ItemStackNBT.of(item);
         return hasInfinityBoosterCard(tag);
     }
 
-    private static boolean hasInfinityBoosterCard(NBTTagCompound data) {
+    private static boolean hasInfinityBoosterCard(ItemStackNBT data) {
         return data.hasKey(Constants.INFINITY_BOOSTER_CARD) && data.getBoolean(Constants.INFINITY_BOOSTER_CARD);
     }
 
@@ -193,11 +196,11 @@ public class WirelessObject implements IActionHost {
     }
 
     public static boolean hasEnergyCard(ItemStack is) {
-        NBTTagCompound data = Platform.openNbtData(is);
+        ItemStackNBT data = ItemStackNBT.of(is);
         return hasEnergyCard(data);
     }
 
-    private static boolean hasEnergyCard(NBTTagCompound data) {
+    private static boolean hasEnergyCard(ItemStackNBT data) {
         return data.hasKey(Constants.INFINITY_ENERGY_CARD) && data.getBoolean(Constants.INFINITY_ENERGY_CARD);
     }
 

@@ -13,6 +13,8 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.api.MagnetObject;
@@ -31,9 +33,11 @@ import appeng.api.config.FuzzyMode;
 import appeng.api.exceptions.AppEngException;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.ISaveProvider;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStackType;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.Platform;
+import appeng.util.item.AEItemStackType;
 import cpw.mods.fml.common.registry.GameRegistry;
 
 public class ItemBackpackTerminal extends BaseItem implements IItemInventory, IStorageItemCell, IItemInventoryHandler {
@@ -83,7 +87,7 @@ public class ItemBackpackTerminal extends BaseItem implements IItemInventory, IS
                 w,
                 new BlockPos(player.inventory.currentItem, 0, 0),
                 ForgeDirection.UNKNOWN,
-                this.guiGuiType(item));
+                this.guiGuiType());
         }
         return item;
     }
@@ -108,7 +112,7 @@ public class ItemBackpackTerminal extends BaseItem implements IItemInventory, IS
         return null;
     }
 
-    private GuiType guiGuiType(ItemStack item) {
+    private GuiType guiGuiType() {
         return GuiType.BACKPACK_TERMINAL;
     }
 
@@ -130,7 +134,7 @@ public class ItemBackpackTerminal extends BaseItem implements IItemInventory, IS
     }
 
     @Override
-    public IInventory getConfigInventory(ItemStack is) {
+    public IAEStackInventory getConfigAEInventory(ItemStack is) {
         return null;
     }
 
@@ -164,7 +168,8 @@ public class ItemBackpackTerminal extends BaseItem implements IItemInventory, IS
     }
 
     @Override
-    public StorageChannel getChannel() {
-        return StorageChannel.ITEMS;
+    @NotNull
+    public IAEStackType<?> getStackType() {
+        return AEItemStackType.ITEM_STACK_TYPE;
     }
 }

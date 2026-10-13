@@ -2,22 +2,19 @@ package com.asdflj.ae2thing.common.storage.infinityCell;
 
 import static appeng.me.storage.CellInventory.getCell;
 
-import java.util.Objects;
-
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 
 import org.jetbrains.annotations.NotNull;
 
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.api.Constants;
-import com.asdflj.ae2thing.common.item.BaseCellItem;
 import com.asdflj.ae2thing.common.item.ItemInfinityStorageCell;
 import com.asdflj.ae2thing.common.storage.DataStorage;
 import com.asdflj.ae2thing.common.storage.ITCellInventory;
+import com.gtnewhorizon.gtnhlib.item.ItemStackNBT;
 
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
@@ -28,11 +25,12 @@ import appeng.api.implementations.tiles.IChestOrDrive;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.IMEInventory;
 import appeng.api.storage.ISaveProvider;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
+import appeng.me.storage.ItemCellInventoryHandler;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.IterationCounter;
-import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.AEItemStackType;
 
@@ -46,8 +44,8 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
     protected final EntityPlayer player;
     protected IItemList<IAEItemStack> cellItems = null;
     protected long storedItemTypes;
-    protected long storedItemCount = 0;
-    protected final NBTTagCompound data;
+    protected long storedItemCount;
+    protected final ItemStackNBT data;
     protected final IChestOrDrive drive;
     protected final DataStorage storage;
 
@@ -60,7 +58,7 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
         player = p;
         this.drive = c instanceof IChestOrDrive ? (IChestOrDrive) c : null;
         this.cellType = (ItemInfinityStorageCell) this.cellItem.getItem();
-        this.data = Platform.openNbtData(this.cellItem);
+        this.data = ItemStackNBT.of(this.cellItem);
         this.storedItemTypes = data.getLong(ITEM_TYPE_TAG);
         this.storedItemCount = data.getLong(ITEM_COUNT_TAG);
         this.storage = this.getStorage();
@@ -113,8 +111,8 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
     }
 
     @Override
-    public IInventory getConfigInventory() {
-        return this.cellType.getConfigInventory(this.cellItem);
+    public IAEStackInventory getConfigAEInventory() {
+        return this.cellType.getConfigAEInventory(this.cellItem);
     }
 
     @Override
@@ -221,17 +219,20 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
             return null;
         }
 
-        if (this.cellType.isBlackListed(this.cellItem, input)) {
+        if (this.cellType.isBlackListed(input)) {
             return input;
         }
 
         final ItemStack sharedItemStack = input.getItemStack();
 
         if (isStorageCell(sharedItemStack)) {
-            final IMEInventory<IAEItemStack> meInventory = (IMEInventory<IAEItemStack>) (IMEInventory<?>) getCell(
+            if (!(getCell(
                 sharedItemStack,
                 null,
-                AEItemStackType.ITEM_STACK_TYPE);
+                AEItemStackType.ITEM_STACK_TYPE) instanceof ItemCellInventoryHandler handler)) {
+                return input;
+            }
+            final IMEInventory<IAEItemStack> meInventory = handler.getCellInv();
 
             if (meInventory != null && !this.isEmpty(meInventory)) {
                 return input;
@@ -382,7 +383,8 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
     }
 
     @Override
-    public StorageChannel getChannel() {
-        return ((BaseCellItem) Objects.requireNonNull(this.cellItem.getItem())).getChannel();
+    @NotNull
+    public IAEStackType<?> getStackType() {
+        return AEItemStackType.ITEM_STACK_TYPE;
     }
 }

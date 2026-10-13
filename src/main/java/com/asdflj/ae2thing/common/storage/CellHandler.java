@@ -1,5 +1,7 @@
 package com.asdflj.ae2thing.common.storage;
 
+import java.util.Objects;
+
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -14,6 +16,7 @@ import appeng.api.storage.IMEInventory;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.ISaveProvider;
 import appeng.api.storage.StorageChannel;
+import appeng.api.storage.data.IAEStackType;
 import appeng.client.texture.ExtraBlockTextures;
 import appeng.core.sync.GuiBridge;
 import appeng.util.Platform;
@@ -27,13 +30,13 @@ public class CellHandler implements ICellHandler {
     }
 
     @Override
-    public IMEInventoryHandler<?> getCellInventory(ItemStack is, ISaveProvider container, StorageChannel channel) {
+    public IMEInventoryHandler<?> getCellInventory(ItemStack is, ISaveProvider container, IAEStackType<?> stackType) {
         try {
             // The backpack terminal inventory is backed by a specific player's carried backpacks. Drives, chests and
             // generic cell probes do not have that player context and must not construct it as a storage cell.
             if (is == null || is.getItem() instanceof ItemBackpackTerminal) return null;
             if (is.getItem() instanceof IItemInventoryHandler iih) {
-                if (iih.getChannel() == channel) {
+                if (Objects.equals(iih.getStackType(), stackType)) {
                     return iih.getInventoryHandler(is, container, null);
                 }
             }

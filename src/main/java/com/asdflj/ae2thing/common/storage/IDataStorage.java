@@ -5,9 +5,10 @@ import java.util.UUID;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagList;
 
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
 
 public interface IDataStorage {
@@ -20,11 +21,13 @@ public interface IDataStorage {
 
     IItemList<IAEFluidStack> getFluids();
 
+    IItemList<IAEStack<?>> getOthers();
+
     boolean isEmpty();
 
     String getUUID();
 
     UUID getRawUUID();
 
-    StorageChannel getChannel();
+    IAEStackType<?> getStackType();
 }

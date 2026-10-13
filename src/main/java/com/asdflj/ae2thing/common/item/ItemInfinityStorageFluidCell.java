@@ -8,6 +8,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.common.storage.FluidCellInventoryHandler;
 import com.asdflj.ae2thing.common.storage.ITFluidCellInventory;
@@ -16,6 +18,7 @@ import com.asdflj.ae2thing.common.storage.infinityCell.InfinityFluidStorageCellI
 import com.asdflj.ae2thing.common.tabs.AE2ThingTabs;
 import com.asdflj.ae2thing.util.NameConst;
 import com.glodblock.github.api.FluidCraftAPI;
+import com.gtnewhorizon.gtnhlib.item.ItemStackNBT;
 
 import appeng.api.AEApi;
 import appeng.api.config.FuzzyMode;
@@ -24,23 +27,20 @@ import appeng.api.exceptions.AppEngException;
 import appeng.api.implementations.items.IStorageCell;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.ISaveProvider;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
 import appeng.core.features.AEFeature;
 import appeng.core.localization.GuiText;
 import appeng.items.contents.CellConfig;
-import appeng.items.contents.CellConfigLegacy;
 import appeng.items.contents.CellUpgrades;
-import appeng.util.Platform;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.item.AEFluidStackType;
 import cpw.mods.fml.common.registry.GameRegistry;
 
 public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStorageCell {
 
     private final int perType = 1;
-    private final double idleDrain = 2000D;
 
     public ItemInfinityStorageFluidCell() {
         this.setMaxStackSize(1);
@@ -61,6 +61,11 @@ public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStora
     @Override
     public int getBytes(ItemStack cellItem) {
         return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public long getBytesLong(ItemStack cellItem) {
+        return (Long.MAX_VALUE - 9) / 8 + 1;
     }
 
     @Override
@@ -96,12 +101,7 @@ public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStora
 
     @Override
     public double getIdleDrain() {
-        return this.idleDrain;
-    }
-
-    @Override
-    public double getIdleDrain(ItemStack is) {
-        return this.idleDrain;
+        return 2000D;
     }
 
     @Override
@@ -110,6 +110,7 @@ public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStora
     }
 
     @Override
+    @NotNull
     public IAEStackType<?> getStackType() {
         return AEFluidStackType.FLUID_STACK_TYPE;
     }
@@ -125,14 +126,13 @@ public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStora
     }
 
     @Override
-    public IInventory getConfigInventory(ItemStack is) {
-        return new CellConfigLegacy(new CellConfig(is), AEFluidStackType.FLUID_STACK_TYPE);
+    public IAEStackInventory getConfigAEInventory(ItemStack is) {
+        return new CellConfig(is);
     }
 
     @Override
     public FuzzyMode getFuzzyMode(ItemStack is) {
-        final String fz = Platform.openNbtData(is)
-            .getString("FuzzyMode");
+        final String fz = ItemStackNBT.getString(is, "FuzzyMode");
         try {
             return FuzzyMode.valueOf(fz);
         } catch (final Throwable t) {
@@ -142,8 +142,7 @@ public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStora
 
     @Override
     public void setFuzzyMode(ItemStack is, FuzzyMode fzMode) {
-        Platform.openNbtData(is)
-            .setString("FuzzyMode", fzMode.name());
+        ItemStackNBT.setString(is, "FuzzyMode", fzMode.name());
     }
 
     @Override
@@ -175,13 +174,8 @@ public class ItemInfinityStorageFluidCell extends BaseCellItem implements IStora
     }
 
     @Override
-    public StorageChannel getChannel() {
-        return StorageChannel.FLUIDS;
-    }
-
-    @Override
     public IMEInventoryHandler<IAEFluidStack> getInventoryHandler(ItemStack o, ISaveProvider container,
         EntityPlayer player) throws AppEngException {
-        return new FluidCellInventoryHandler(new InfinityFluidStorageCellInventory(o, container, player));
+        return new FluidCellInventoryHandler(new InfinityFluidStorageCellInventory(o, container));
     }
 }

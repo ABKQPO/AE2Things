@@ -4,8 +4,10 @@ public interface Constants {
 
     String DISKUUID = "diskuuid";
     String DISKDATA = "diskdata";
-    String FLUID_DISKLIST = "fluid_disklist";
     String DISKLIST = "disklist";
+    String DISKTYPE = "disktype";
+    String FLUID_DISKLIST = "fluid_disklist";
+    String OTHER_DISKLIST = "other_disklist";
     String LINKED = "linked";
     String DISPLAY_ONLY = "DisplayOnly";
     String TC_CRAFTING = "tc_crafting";

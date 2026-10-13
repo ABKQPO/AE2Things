@@ -1,13 +1,12 @@
 package com.asdflj.ae2thing.common.storage.infinityCell;
 
-import java.util.Objects;
-
 import javax.annotation.Nonnull;
 
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
-import com.asdflj.ae2thing.common.item.BaseCellItem;
+import org.jetbrains.annotations.NotNull;
+
 import com.asdflj.ae2thing.common.storage.ITCellInventory;
 
 import appeng.api.AEApi;
@@ -16,10 +15,11 @@ import appeng.api.config.FuzzyMode;
 import appeng.api.exceptions.AppEngException;
 import appeng.api.implementations.items.IStorageCell;
 import appeng.api.networking.security.BaseActionSource;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
-import appeng.util.item.AEItemStack;
+import appeng.tile.inventory.IAEStackInventory;
+import appeng.util.item.AEItemStackType;
 
 public class CreativeCellInventory implements ITCellInventory {
 
@@ -54,13 +54,13 @@ public class CreativeCellInventory implements ITCellInventory {
                 .createPrimitiveItemList();
         }
         this.itemListCache.resetStatus(); // clears totals and stuff.
-        IInventory inv = this.cellType.getConfigInventory(this.cellItem);
+        IAEStackInventory inv = this.cellType.getConfigAEInventory(this.cellItem);
         for (int i = 0; i < inv.getSizeInventory(); i++) {
-            IAEItemStack is = AEItemStack.create(inv.getStackInSlot(i));
-            if (is != null) {
-                is.setStackSize(Integer.MAX_VALUE * 1000L);
-                this.itemListCache.add(is);
+            if (!(inv.getAEStackInSlot(i) instanceof IAEItemStack is)) {
+                continue;
             }
+            is.setStackSize(Integer.MAX_VALUE * 1000L);
+            this.itemListCache.add(is);
         }
     }
 
@@ -75,8 +75,8 @@ public class CreativeCellInventory implements ITCellInventory {
     }
 
     @Override
-    public IInventory getConfigInventory() {
-        return this.cellType.getConfigInventory(this.cellItem);
+    public IAEStackInventory getConfigAEInventory() {
+        return this.cellType.getConfigAEInventory(this.cellItem);
     }
 
     @Override
@@ -160,7 +160,7 @@ public class CreativeCellInventory implements ITCellInventory {
         if (input == null || input.getStackSize() == 0) {
             return null;
         }
-        if (this.cellType.isBlackListed(this.cellItem, input)) {
+        if (this.cellType.isBlackListed(input)) {
             return input;
         }
         if (this.getCellItems()
@@ -204,7 +204,8 @@ public class CreativeCellInventory implements ITCellInventory {
     }
 
     @Override
-    public StorageChannel getChannel() {
-        return ((BaseCellItem) Objects.requireNonNull(this.cellItem.getItem())).getChannel();
+    @NotNull
+    public IAEStackType<?> getStackType() {
+        return AEItemStackType.ITEM_STACK_TYPE;
     }
 }

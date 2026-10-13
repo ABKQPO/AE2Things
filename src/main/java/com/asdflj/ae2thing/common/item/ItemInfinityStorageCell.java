@@ -9,6 +9,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.common.storage.CellInventoryHandler;
 import com.asdflj.ae2thing.common.storage.ICellInventoryHandler;
@@ -16,6 +18,7 @@ import com.asdflj.ae2thing.common.storage.ITCellInventory;
 import com.asdflj.ae2thing.common.storage.infinityCell.InfinityItemStorageCellInventory;
 import com.asdflj.ae2thing.common.tabs.AE2ThingTabs;
 import com.asdflj.ae2thing.util.NameConst;
+import com.gtnewhorizon.gtnhlib.item.ItemStackNBT;
 
 import appeng.api.AEApi;
 import appeng.api.config.FuzzyMode;
@@ -25,14 +28,14 @@ import appeng.api.implementations.items.IItemGroup;
 import appeng.api.implementations.items.IStorageCell;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.ISaveProvider;
-import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.core.features.AEFeature;
 import appeng.core.localization.GuiText;
 import appeng.items.contents.CellConfig;
-import appeng.items.contents.CellConfigLegacy;
 import appeng.items.contents.CellUpgrades;
-import appeng.util.Platform;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.item.AEItemStackType;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
@@ -41,7 +44,6 @@ import cpw.mods.fml.relauncher.SideOnly;
 public class ItemInfinityStorageCell extends BaseCellItem implements IStorageCell, IItemGroup {
 
     private final int perType = 1;
-    private final double idleDrain = 2000D;
 
     @SuppressWarnings("Guava")
     public ItemInfinityStorageCell() {
@@ -87,10 +89,12 @@ public class ItemInfinityStorageCell extends BaseCellItem implements IStorageCel
                         }
                         if (GuiScreen.isShiftKeyDown()) {
                             lines.add(GuiText.Filter.getLocal() + ": ");
-                            for (int i = 0; i < cellInventory.getConfigInventory()
-                                .getSizeInventory(); ++i) {
-                                ItemStack s = cellInventory.getConfigInventory()
-                                    .getStackInSlot(i);
+                            IAEStackInventory inv = cellInventory.getConfigAEInventory();
+                            for (int i = 0; i < inv.getSizeInventory(); ++i) {
+                                if (!(inv.getAEStackInSlot(i) instanceof IAEItemStack aes)) {
+                                    continue;
+                                }
+                                ItemStack s = aes.getItemStack();
                                 if (s != null) lines.add(s.getDisplayName());
                             }
                         }
@@ -114,7 +118,7 @@ public class ItemInfinityStorageCell extends BaseCellItem implements IStorageCel
 
     @Override
     public long getBytesLong(final ItemStack cellItem) {
-        return Integer.MAX_VALUE;
+        return (Long.MAX_VALUE - 9) / 8 + 1;
     }
 
     @Override
@@ -133,8 +137,12 @@ public class ItemInfinityStorageCell extends BaseCellItem implements IStorageCel
     }
 
     @Override
-    public boolean isBlackListed(ItemStack cellItem, IAEItemStack requestedAddition) {
-        return false;
+    public boolean isBlackListed(IAEStack<?> requestedAddition) {
+        if (!(requestedAddition instanceof IAEItemStack is)) {
+            return true;
+        }
+
+        return is.getItem() == null;
     }
 
     @Override
@@ -149,7 +157,7 @@ public class ItemInfinityStorageCell extends BaseCellItem implements IStorageCel
 
     @Override
     public double getIdleDrain() {
-        return this.idleDrain;
+        return 2000D;
     }
 
     @Override
@@ -163,8 +171,8 @@ public class ItemInfinityStorageCell extends BaseCellItem implements IStorageCel
     }
 
     @Override
-    public IInventory getConfigInventory(ItemStack is) {
-        return new CellConfigLegacy(new CellConfig(is), AEItemStackType.ITEM_STACK_TYPE);
+    public IAEStackInventory getConfigAEInventory(ItemStack is) {
+        return new CellConfig(is);
     }
 
     @Override
@@ -174,8 +182,7 @@ public class ItemInfinityStorageCell extends BaseCellItem implements IStorageCel
 
     @Override
     public void setFuzzyMode(ItemStack is, FuzzyMode fzMode) {
-        Platform.openNbtData(is)
-            .setString("FuzzyMode", fzMode.name());
+        ItemStackNBT.setString(is, "FuzzyMode", fzMode.name());
     }
 
     @Override
@@ -186,8 +193,9 @@ public class ItemInfinityStorageCell extends BaseCellItem implements IStorageCel
     }
 
     @Override
-    public StorageChannel getChannel() {
-        return StorageChannel.ITEMS;
+    @NotNull
+    public IAEStackType<?> getStackType() {
+        return AEItemStackType.ITEM_STACK_TYPE;
     }
 
     @Override

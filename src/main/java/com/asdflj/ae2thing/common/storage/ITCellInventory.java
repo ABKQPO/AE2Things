@@ -8,6 +8,7 @@ import com.asdflj.ae2thing.common.storage.infinityCell.BaseInventory;
 import appeng.api.config.FuzzyMode;
 import appeng.api.storage.IMEInventory;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.tile.inventory.IAEStackInventory;
 
 public interface ITCellInventory extends IMEInventory<IAEItemStack>, BaseInventory {
 
@@ -31,7 +32,7 @@ public interface ITCellInventory extends IMEInventory<IAEItemStack>, BaseInvento
     /**
      * @return access configured list
      */
-    IInventory getConfigInventory();
+    IAEStackInventory getConfigAEInventory();
 
     /**
      * @return access installed upgrades.
