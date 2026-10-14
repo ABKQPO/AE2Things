@@ -149,7 +149,8 @@ public class InfinityFluidStorageCellInventory implements ITFluidCellInventory {
 
     @Override
     public IItemList<IAEFluidStack> getAvailableItems(IItemList<IAEFluidStack> out, int iteration) {
-        if (this.storage != null && AE2ThingAPI.instance().getStorageManager() != null) {
+        if (this.storage != null && AE2ThingAPI.instance()
+            .getStorageManager() != null) {
             AE2ThingAPI.instance()
                 .getStorageManager()
                 .addGrid(this.getUUID(), this.drive);
