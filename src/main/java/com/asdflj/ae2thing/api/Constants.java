@@ -47,6 +47,7 @@ public interface Constants {
     String UPGRADES = "upgrades";
     String PLAYER = "player";
     String DEBUG_CARD_MODE = "debug_card_mode";
+    String PATTERN_MODIFIER_MODE = "pattern_modifier_mode";
     String DEBUG_CARD_EXPORT_FILENAME = "history.json";
     int MODE_CRAFTING = 1;
     int MODE_PROCESSING = 0;
