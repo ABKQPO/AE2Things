@@ -52,6 +52,8 @@ public class NameConst {
     public static final String TT_INTERFACE_TERMINAL_DESC = TT_INTERFACE_TERMINAL + "desc";
     public static final String TT_CRAFTING_DEBUG_CARD = TT_KEY + "crafting_debug_card.";
     public static final String TT_CRAFTING_DEBUG_CARD_DESC = TT_CRAFTING_DEBUG_CARD + "desc";
+    public static final String TT_PATTERN_MODIFIER = TT_KEY + "pattern_modifier.";
+    public static final String TT_PATTERN_MODIFIER_DESC = TT_PATTERN_MODIFIER + "desc";
     public static final String TT_FLUID_PACKET_ENCODER = TT_KEY + "fluid_packet_encoder.";
     public static final String TT_FLUID_PACKET_ENCODER_DESC = TT_FLUID_PACKET_ENCODER + "desc";
     public static final String TT_WIRELESS = TT_KEY + "wireless.";
@@ -132,6 +134,11 @@ public class NameConst {
     public static final String CRAFTING_DEBUG_CARD = AE2Thing.MODID + ".crafting_debug_card.";
     public static final String CRAFTING_DEBUG_CARD_CURRENT_MODE = CRAFTING_DEBUG_CARD + "current_mode";
     public static final String CRAFTING_DEBUG_CARD_EXPORT_FILE = CRAFTING_DEBUG_CARD + "export_file";
+    public static final String PATTERN_MODIFIER = AE2Thing.MODID + ".pattern_modifier.";
+    public static final String PATTERN_MODIFIER_CURRENT_MODE = PATTERN_MODIFIER + "current_mode";
+    public static final String PATTERN_MODIFIER_MODE = PATTERN_MODIFIER + "mode.";
+    public static final String PATTERN_MODIFIER_MODE_INSERT = PATTERN_MODIFIER_MODE + "insert";
+    public static final String PATTERN_MODIFIER_MODE_SWAP = PATTERN_MODIFIER_MODE + "swap";
     public static final String GUI_BUTTON = GUI_KEY + "button.";
     public static final String GUI_BUTTON_REPLAN = GUI_BUTTON + "replan";
 

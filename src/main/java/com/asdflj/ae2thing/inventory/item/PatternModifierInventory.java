@@ -5,10 +5,10 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
 import com.asdflj.ae2thing.api.Constants;
+import com.asdflj.ae2thing.api.PatternModifierModeObject;
 import com.asdflj.ae2thing.inventory.AEStackItemInventory;
 import com.asdflj.ae2thing.inventory.ItemBiggerAppEngInventory;
 
-import appeng.api.AEApi;
 import appeng.api.implementations.guiobjects.IGuiItemObject;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.ITerminalHost;
@@ -16,13 +16,11 @@ import appeng.api.storage.StorageName;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.api.storage.data.IItemList;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IInterfaceViewable;
 import appeng.container.interfaces.IInventorySlotAware;
 import appeng.tile.inventory.IAEStackInventory;
 import appeng.tile.inventory.IIAEStackInventory;
-import appeng.util.IterationCounter;
 import appeng.util.Platform;
 
 public class PatternModifierInventory
@@ -146,29 +144,46 @@ public class PatternModifierInventory
         return false;
     }
 
-    @SuppressWarnings("unchecked")
-    public void extractToHost(IInterfaceViewable host) {
-        if (host == null) return;
-        IItemList<IAEItemStack> itemList = this.pattern.getMEInventory()
-            .getAvailableItems(
-                AEApi.instance()
-                    .storage()
-                    .createPrimitiveItemList(),
-                IterationCounter.fetchNewId());
-        if (itemList.isEmpty()) return;
+    public boolean extractToHost(IInterfaceViewable host) {
+        if (host == null) return false;
         IInventory inv = host.getPatterns();
-        for (int i = 0; i < host.rowSize() * host.rows(); i++) {
-            ItemStack stored = inv.getStackInSlot(i);
-            if (stored != null) continue;
+        if (inv == null) return false;
+        final int slots = Math.min(Math.min(host.numSlots(), inv.getSizeInventory()), this.pattern.getSizeInventory());
+        if (PatternModifierModeObject.getMode(this.item) == PatternModifierModeObject.Mode.SWAP) {
+            return this.swapWithHost(inv, slots);
+        }
+        return this.insertToHost(inv, slots);
+    }
+
+    private boolean insertToHost(IInventory inv, int slots) {
+        boolean changed = false;
+        for (int i = 0; i < slots; i++) {
+            if (inv.getStackInSlot(i) != null) continue;
             for (int j = 0; j < this.pattern.getSizeInventory(); j++) {
                 ItemStack stack = this.pattern.getStackInSlot(j);
                 if (stack != null) {
                     inv.setInventorySlotContents(i, stack);
                     this.pattern.setInventorySlotContents(j, null);
+                    changed = true;
                     break;
                 }
             }
         }
+        return changed;
+    }
+
+    private boolean swapWithHost(IInventory inv, int slots) {
+        boolean changed = false;
+        for (int i = 0; i < slots; i++) {
+            final ItemStack mine = this.pattern.getStackInSlot(i);
+            final ItemStack theirs = inv.getStackInSlot(i);
+            if (mine == null && theirs == null) continue;
+            if (mine != null && theirs != null && Platform.isSameItemPrecise(mine, theirs)) continue;
+            inv.setInventorySlotContents(i, mine);
+            this.pattern.setInventorySlotContents(i, theirs);
+            changed = true;
+        }
+        return changed;
     }
 
 }
