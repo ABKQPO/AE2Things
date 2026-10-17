@@ -1,12 +1,13 @@
 package com.asdflj.ae2thing.util;
 
-import appeng.api.storage.data.IAEStack;
 import net.minecraft.item.ItemStack;
+
+import org.jetbrains.annotations.Nullable;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.storage.IMEMonitor;
-import org.jetbrains.annotations.Nullable;
+import appeng.api.storage.data.IAEStack;
 import thaumcraft.api.aspects.Aspect;
 import thaumicenergistics.common.integration.tc.EssentiaItemContainerHelper;
 import thaumicenergistics.common.storage.AEEssentiaStack;

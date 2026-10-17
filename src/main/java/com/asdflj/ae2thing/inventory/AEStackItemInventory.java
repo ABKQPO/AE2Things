@@ -1,13 +1,12 @@
 package com.asdflj.ae2thing.inventory;
 
-import codechicken.nei.recipe.StackInfo;
-import com.asdflj.ae2thing.integration.Mods;
-import com.asdflj.ae2thing.util.AspectUtil;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fluids.FluidStack;
 
+import com.asdflj.ae2thing.integration.Mods;
+import com.asdflj.ae2thing.util.AspectUtil;
 import com.glodblock.github.common.item.ItemFluidPacket;
 
 import appeng.api.storage.StorageName;
@@ -20,6 +19,7 @@ import appeng.util.Platform;
 import appeng.util.item.AEFluidStack;
 import appeng.util.item.AEItemStack;
 import codechicken.nei.item.ItemFluidDisplay;
+import codechicken.nei.recipe.StackInfo;
 
 public class AEStackItemInventory implements IIAEStackInventory {
 
