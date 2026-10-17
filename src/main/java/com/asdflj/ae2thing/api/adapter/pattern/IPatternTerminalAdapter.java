@@ -55,7 +55,7 @@ public interface IPatternTerminalAdapter {
             final int index = stack.getIndex();
             if (index < 0 || index >= inv.getSizeInventory()) continue;
             IAEStack<?> ae = null;
-            if (stack.getStack() instanceof IAEStack<?>aes) {
+            if (stack.getStack() instanceof IAEStack<?> aes) {
                 ae = aes;
             } else if (stack.getStack() instanceof ItemStack item) {
                 ae = AEStackItemInventory.toAEStack(item.copy());

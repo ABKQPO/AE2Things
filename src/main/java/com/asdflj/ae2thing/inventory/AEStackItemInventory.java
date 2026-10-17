@@ -1,11 +1,13 @@
 package com.asdflj.ae2thing.inventory;
 
+import codechicken.nei.recipe.StackInfo;
+import com.asdflj.ae2thing.integration.Mods;
+import com.asdflj.ae2thing.util.AspectUtil;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fluids.FluidStack;
 
-import com.glodblock.github.common.item.ItemFluidDrop;
 import com.glodblock.github.common.item.ItemFluidPacket;
 
 import appeng.api.storage.StorageName;
@@ -101,43 +103,42 @@ public class AEStackItemInventory implements IIAEStackInventory {
     public static IAEStack<?> toAEStack(ItemStack stack) {
         if (stack == null || stack.getItem() == null) return null;
 
-        if (stack.getItem() instanceof ItemFluidDisplay display) {
-            final FluidStack fluid = display.getFluid(stack);
-            if (fluid != null) {
-                final IAEFluidStack out = AEFluidStack.create(fluid);
-                out.setStackSize(Math.max(display.getAmountLong(stack), 0));
-                return out;
-            }
+        FluidStack fluid = StackInfo.getFluid(stack);
+        if (fluid != null && fluid.getFluid() != null) {
+            return AEFluidStack.create(fluid);
         }
-        if (stack.getItem() instanceof ItemFluidPacket) {
-            final IAEFluidStack fluid = ItemFluidPacket.getFluidAEStack(stack);
-            if (fluid != null) return fluid;
-        }
-        if (stack.getItem() instanceof ItemFluidDrop) {
-            final FluidStack fluid = ItemFluidDrop.getFluidStack(stack);
-            if (fluid != null) return AEFluidStack.create(fluid);
+
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
+            final IAEStack<?> essentia = AspectUtil.toAEStack(stack);
+            if (essentia != null) return essentia;
         }
         return AEItemStack.create(stack);
     }
 
     public static ItemStack toItemStack(IAEStack<?> stack) {
-        if (stack == null) return null;
-        if (stack instanceof IAEFluidStack fluid && fluid.getFluidStack() != null) {
-            if (Platform.isClient()) {
-                final ItemStack display = ItemFluidDisplay.createStack(
-                    fluid.getFluidStack()
-                        .getFluid(),
-                    stack.getStackSize());
-                if (display != null) return display;
+        switch (stack) {
+            case null -> {
+                return null;
             }
-            return ItemFluidPacket.newStack(fluid);
-        }
-        if (stack instanceof IAEItemStack item) {
-            final int size = (int) Math.min(Integer.MAX_VALUE, stack.getStackSize());
-            final ItemStack is = item.getItemStack()
-                .copy();
-            is.stackSize = Math.max(size, 1);
-            return is;
+            case IAEFluidStack fluid when fluid.getFluidStack() != null -> {
+                if (Platform.isClient()) {
+                    final ItemStack display = ItemFluidDisplay.createStack(
+                        fluid.getFluidStack()
+                            .getFluid(),
+                        stack.getStackSize());
+                    if (display != null) return display;
+                }
+                return ItemFluidPacket.newStack(fluid);
+            }
+            case IAEItemStack item -> {
+                final int size = (int) Math.min(Integer.MAX_VALUE, stack.getStackSize());
+                final ItemStack is = item.getItemStack()
+                    .copy();
+                is.stackSize = Math.max(size, 1);
+                return is;
+            }
+            default -> {
+            }
         }
         return stack.getItemStackForNEI();
     }

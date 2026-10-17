@@ -325,16 +325,25 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     private ItemStack getItemStackForTooltip(IAEStack<?> stack) {
-        if (stack instanceof IAEItemStack itemStack) return itemStack.getItemStack();
-        if (stack instanceof IAEFluidStack fluidStack && fluidStack.getFluidStack() != null) {
-            final ItemStack display = ItemFluidDisplay.createStack(
-                fluidStack.getFluidStack()
-                    .getFluid(),
-                stack.getStackSize());
-            if (display != null) return display;
-            return ItemFluidDrop.newDisplayStack(fluidStack.getFluidStack());
+        switch (stack) {
+            case null -> {
+                return null;
+            }
+            case IAEItemStack itemStack -> {
+                return itemStack.getItemStack();
+            }
+            case IAEFluidStack fluidStack when fluidStack.getFluidStack() != null -> {
+                final ItemStack display = ItemFluidDisplay.createStack(
+                    fluidStack.getFluidStack()
+                        .getFluid(),
+                    stack.getStackSize());
+                if (display != null) return display;
+                return ItemFluidDrop.newDisplayStack(fluidStack.getFluidStack());
+            }
+            default -> {
+            }
         }
-        return null;
+        return stack.getItemStackForNEI();
     }
 
     public boolean isVirtualSlotVisible(VirtualMESlot slot) {

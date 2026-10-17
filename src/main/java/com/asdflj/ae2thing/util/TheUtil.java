@@ -25,7 +25,7 @@ public class TheUtil {
     }
 
     public static boolean isEssentia(AEEssentiaStack essentia) {
-        return essentia != null && essentia.getAspect() != null;
+        return essentia != null;
     }
 
     public static AEEssentiaStack itemCraftingAspect2Essentia(IAEItemStack item) {
