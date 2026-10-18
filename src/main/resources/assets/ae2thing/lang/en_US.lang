@@ -176,7 +176,7 @@ nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc=§7With "AU
 nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_sum=§7If only one interface can run it, the pattern is placed automatically.
 nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_click=§7Otherwise the first match is highlighted; Alt + click places there.
 nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_scroll=§7Alt + scroll over this button to switch the highlighted interface.
-nei.options.ae2thing.dual_interface_terminal.enhanced_search.desc=If the default recipe filling fails to locate the interface, try enabling enhanced search.
+nei.options.ae2thing.dual_interface_terminal.enhanced_search.desc=If the default recipe filling fails to locate the interface, try enabling enhanced search (@recipe pool@ then filters; plain numbers match whole values, prefix a filter with - to exclude).
 
 ae2thing.tooltip.encode_auto_upload=§7[AE2Things]§r Auto upload pattern(AUP)
 ae2thing.tooltip.encode_auto_upload.desc_short=§7For more information, please check nei configs - AE2 Thing - Dual Interface Terminal
@@ -189,3 +189,9 @@ ae2thing.chat.auto_upload.failed=Auto upload failed
 nei.options.ae2thing.nei_craft_item=Middle click NEI panel to quick order item from ae terminal 
 nei.options.ae2thing.nei_craft_item.true=Yes
 nei.options.ae2thing.nei_craft_item.false=No
+
+ae2thing.interface_terminal.search.hits=§7Enhanced search: §a%1$s§7 interface(s)
+ae2thing.interface_terminal.search.empty=§7Enhanced search: no interface can run this recipe pool and none matches by name
+ae2thing.interface_terminal.search.invalid.syntax=§cRecipe pool is not closed by "@", e.g. @mixer@
+ae2thing.interface_terminal.search.invalid.category_only=§cUnknown recipe pool: %1$s
+ae2thing.interface_terminal.search.invalid.category_hint=§cUnknown recipe pool: %1$s (did you mean: %2$s?)

@@ -23,6 +23,7 @@ import codechicken.lib.config.ConfigTagParent;
 import codechicken.nei.NEIClientConfig;
 import codechicken.nei.api.API;
 import codechicken.nei.api.IConfigureNEI;
+import codechicken.nei.config.Option;
 import codechicken.nei.event.NEIConfigsLoadedEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
@@ -63,23 +64,23 @@ public class NEI_TH_Config implements IConfigureNEI {
                     identifier);
             }
         }
-        API.addOption(new BaseToggleButton(ButtonConstants.HISTORY, false));
-        API.addOption(new BaseToggleButton(ButtonConstants.INVENTORY_STATE));
-        API.addOption(new BaseToggleButton(ButtonConstants.ULTRA_TERMINAL_MODE));
-        API.addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL, false));
-        API.addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_CIRCUIT_DAMAGE));
-        API.addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_NON_CONSUMED_ITEMS, false));
-        API.addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_AUTO_UPLOAD, false));
-        API.addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH, false));
+        addOption(new BaseToggleButton(ButtonConstants.HISTORY, false));
+        addOption(new BaseToggleButton(ButtonConstants.INVENTORY_STATE));
+        addOption(new BaseToggleButton(ButtonConstants.ULTRA_TERMINAL_MODE));
+        addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL, false));
+        addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_CIRCUIT_DAMAGE));
+        addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_NON_CONSUMED_ITEMS, false));
+        addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_AUTO_UPLOAD, false));
+        addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH, false));
         // API.addOption(new BaseToggleButton(ButtonConstants.PINNED_BAR)); //remove
         // API.addOption(new BaseToggleButton(ButtonConstants.PINNED_BAR_REMOVE));
         // API.addOption(new BaseToggleButton(ButtonConstants.PINNED_BAR_CRAFTING_STATE));
-        API.addOption(new BaseToggleButton(ButtonConstants.NEI_CRAFT_ITEM));
+        addOption(new BaseToggleButton(ButtonConstants.NEI_CRAFT_ITEM));
         if (Mods.PROGRAMMABLE_HATCHES.isModLoaded()) {
-            API.addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT, false));
+            addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT, false));
         }
         if (Mods.BLOCK_RENDERER.isModLoaded()) {
-            API.addOption(new BaseToggleButton(ButtonConstants.BLOCK_RENDER));
+            addOption(new BaseToggleButton(ButtonConstants.BLOCK_RENDER));
         }
         if (Mods.NOT_ENOUGH_ENERGISTICS.isModLoaded()) {
             API.registerBookmarkContainerHandler(
@@ -91,7 +92,7 @@ public class NEI_TH_Config implements IConfigureNEI {
                 registered = true;
             }
         }
-        API.addOption(
+        addOption(
             new OptionLabel(
                 "ae2thing.dual_interface_terminal.encode_auto_upload",
                 "ae2thing.dual_interface_terminal.encode_auto_upload",
@@ -100,6 +101,12 @@ public class NEI_TH_Config implements IConfigureNEI {
                 "ae2thing.dual_interface_terminal.encode_auto_upload.desc_click",
                 "ae2thing.dual_interface_terminal.encode_auto_upload.desc_scroll",
                 "ae2thing.dual_interface_terminal.enhanced_search.desc"));
+    }
+
+    private static void addOption(Option option) {
+        try {
+            API.addOption(option);
+        } catch (Throwable ignored) {}
     }
 
     public static boolean getConfigValue(String identifier) {

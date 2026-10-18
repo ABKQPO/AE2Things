@@ -18,7 +18,7 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.EnumChatFormatting;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -43,13 +43,13 @@ import com.asdflj.ae2thing.client.gui.widget.PanelDragButton;
 import com.asdflj.ae2thing.client.gui.widget.PatternPanel;
 import com.asdflj.ae2thing.client.gui.widget.THGuiTextField;
 import com.asdflj.ae2thing.client.me.AdvItemRepo;
-import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.proxy.ClientProxy;
-import com.asdflj.ae2thing.util.NeCharUtil;
+import com.asdflj.ae2thing.util.EnhancedSearch;
+import com.asdflj.ae2thing.util.InterfacePoolResolver;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.config.Settings;
@@ -78,11 +78,6 @@ import appeng.util.IConfigManagerHost;
 import codechicken.nei.item.ItemFluidDisplay;
 import codechicken.nei.recipe.IRecipeHandler;
 import codechicken.nei.recipe.RecipeCatalysts;
-import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
-import gregtech.api.interfaces.tileentity.RecipeMapWorkable;
-import gregtech.api.recipe.RecipeCategory;
-import gregtech.api.recipe.RecipeMap;
-import gregtech.common.blocks.ItemMachines;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless implements IWidgetGui, IGuiDrawSlot,
@@ -111,11 +106,9 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private IRecipeHandler uploadRecipe;
     private boolean uploadCraft;
     private boolean highlightSlotRendered;
-    private String enhancedQuerySource;
-    private boolean enhancedQueryActive;
-    private List<String> enhancedTokens = Collections.emptyList();
-    private List<RecipeCategory> enhancedCategories = Collections.emptyList();
-    private List<RecipeMap<?>> enhancedMaps = Collections.emptyList();
+    private String interfaceSearchStats = "";
+    private String interfaceSearchFeedbackKey;
+    private String interfaceSearchFeedbackTooltip;
     private final List<DualTerminalComponentTree.Component> itemSlotComponents = new ArrayList<>();
     private VirtualMESlot renderedVirtualSlotUnderMouse;
     private DualPatternSlot[] patternInputSlots;
@@ -995,6 +988,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     public void initGui() {
         Keyboard.enableRepeatEvents(true);
         this.xSize = baseXSize;
+        InterfacePoolResolver.invalidateCaches();
+        EnhancedSearch.invalidate();
         super.initGui();
         for (IAEBasePanel panel : this.componentTree.getPanels()) {
             panel.initGui();
@@ -1395,15 +1390,13 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         boolean catalystGate = !craft && recipe != null
             && !RecipeCatalysts.getRecipeCatalysts(recipe)
                 .isEmpty();
-        List<InterfaceWirelessEntryWrapper> candidates = new ArrayList<>();
+        List<InterfaceWirelessEntryWrapper> matched = new ArrayList<>();
+        List<InterfaceWirelessEntryWrapper> unknown = new ArrayList<>();
         for (InterfaceWirelessSection section : this.masterList.getVisibleSections()) {
             for (InterfaceWirelessEntry entry : section.visibleEntries) {
                 if (craft) {
                     if (!entry.isCraftingPatternProvider) continue;
-                } else if (catalystGate
-                    && (entry.dispRep == null || !RecipeCatalysts.containsCatalyst(recipe, entry.dispRep))) {
-                        continue;
-                    }
+                }
                 int slot = -1;
                 for (int i = 0; i < entry.numSlots; i++) {
                     if (entry.inv.getStackInSlot(i) == null) {
@@ -1412,114 +1405,98 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                     }
                 }
                 if (slot < 0) continue;
-                candidates.add(new InterfaceWirelessEntryWrapper(entry, slot));
+                InterfaceWirelessEntryWrapper wrapper = new InterfaceWirelessEntryWrapper(entry, slot);
+                if (craft || !catalystGate) {
+                    matched.add(wrapper);
+                    continue;
+                }
+                switch (InterfacePoolResolver.classifyForRecipe(entry.dispRep, recipe)) {
+                    case MATCH -> matched.add(wrapper);
+                    case UNKNOWN -> unknown.add(wrapper);
+                    case NO_MATCH -> {}
+                }
             }
         }
-        return candidates;
+        matched.addAll(nameFiltered(unknown, EnhancedSearch.recipeTabName(recipe)));
+        return matched;
+    }
+
+    private static List<InterfaceWirelessEntryWrapper> nameFiltered(List<InterfaceWirelessEntryWrapper> entries,
+        String hint) {
+        if (entries.isEmpty() || hint == null) return Collections.emptyList();
+        final String lower = hint.trim()
+            .toLowerCase();
+        if (lower.isEmpty()) return Collections.emptyList();
+        final List<InterfaceWirelessEntryWrapper> hits = new ArrayList<>();
+        for (InterfaceWirelessEntryWrapper wrapper : entries) {
+            if (EnhancedSearch.matchesNameHint(lower, wrapper.entry.dispName, wrapper.entry.searchSuffix)) {
+                hits.add(wrapper);
+            }
+        }
+        return hits;
+    }
+
+    private EnhancedSearch.Query enhancedQuery() {
+        return EnhancedSearch
+            .parse(this.getSearchQueryText(), getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH));
     }
 
     @Override
-    protected boolean isEnhancedSearchActive(String query) {
-        parseEnhancedQuery(query);
-        return this.enhancedQueryActive;
+    protected String sectionFilterText(String query) {
+        final EnhancedSearch.Query enhanced = this.enhancedQuery();
+        final String text = query == null ? "" : query;
+        if (enhanced.isActive() || enhanced.isInvalid()) return "";
+        if (text.startsWith("@@")) return text.substring(1);
+        return text;
+    }
+
+    @Override
+    protected void onSearchFilterApplied() {
+        final EnhancedSearch.Query enhanced = this.enhancedQuery();
+        if (!enhanced.isActive()) {
+            this.interfaceSearchStats = "";
+            return;
+        }
+        int visible = 0;
+        for (InterfaceWirelessEntry entry : this.masterList.allEntries()) {
+            if (this.entryMatchesEnhancedSearch(entry)) {
+                visible++;
+            }
+        }
+        this.interfaceSearchStats = EnhancedSearch.summary(visible);
+    }
+
+    @Override
+    protected void updateSearchFieldFeedback() {
+        final String query = this.getSearchQueryText();
+        final EnhancedSearch.Query enhanced = this.enhancedQuery();
+        final String key = query + '\u0000'
+            + this.interfaceSearchStats
+            + '\u0000'
+            + enhanced.isInvalid()
+            + '\u0000'
+            + enhanced.invalidReason();
+        if (!key.equals(this.interfaceSearchFeedbackKey)) {
+            this.interfaceSearchFeedbackKey = key;
+            final StringBuilder tooltip = new StringBuilder(ButtonToolTips.SearchFieldNames.getLocal());
+            if (enhanced.isInvalid() && enhanced.invalidReason() != null) {
+                tooltip.append('\n')
+                    .append(EnumChatFormatting.RED)
+                    .append(enhanced.invalidReason());
+            }
+            if (!this.interfaceSearchStats.isEmpty()) {
+                tooltip.append('\n')
+                    .append(this.interfaceSearchStats);
+            }
+            this.interfaceSearchFeedbackTooltip = tooltip.toString();
+        }
+        this.setSearchFieldFeedback(this.interfaceSearchFeedbackTooltip, enhanced.isInvalid());
     }
 
     @Override
     protected boolean entryMatchesEnhancedSearch(InterfaceWirelessEntry entry) {
-        if (!this.enhancedQueryActive) return true;
-        if (!entryMatchesRecipe(entry)) return false;
-        if (hasCustomName(entry)) {
-            if (entry.searchSuffix == null) return true;
-            for (String token : this.enhancedTokens) {
-                if (!NeCharUtil.INSTANCE.contains(token, entry.searchSuffix)) return false;
-            }
-            return true;
-        }
-        String name = entry.dispName == null ? "" : entry.dispName.toLowerCase();
-        for (String token : this.enhancedTokens) {
-            if (!NeCharUtil.INSTANCE.contains(token, name)) return false;
-        }
-        return true;
-    }
-
-    private static boolean hasCustomName(InterfaceWirelessEntry entry) {
-        return entry.dispRep != null && entry.rawName != null
-            && !entry.rawName.equals(entry.dispRep.getUnlocalizedName());
-    }
-
-    private void parseEnhancedQuery(String text) {
-        String query = text == null ? "" : text;
-        if (query.equals(this.enhancedQuerySource)) return;
-        this.enhancedQuerySource = query;
-        this.enhancedQueryActive = false;
-        this.enhancedTokens = Collections.emptyList();
-        this.enhancedCategories = Collections.emptyList();
-        this.enhancedMaps = Collections.emptyList();
-
-        if (!getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH)) return;
-        if (!query.startsWith("@")) return;
-        int close = query.lastIndexOf('@');
-        if (close <= 0) return;
-        String recipeQuery = query.substring(1, close)
-            .trim();
-        if (recipeQuery.isEmpty()) return;
-
-        List<RecipeCategory> categories = resolveRecipeCategories(recipeQuery);
-        if (categories.isEmpty()) return;
-        List<RecipeMap<?>> maps = new ArrayList<>();
-        for (RecipeCategory category : categories) {
-            if (!maps.contains(category.recipeMap)) {
-                maps.add(category.recipeMap);
-            }
-        }
-
-        String rest = query.substring(close + 1)
-            .trim();
-        List<String> tokens = new ArrayList<>();
-        if (!rest.isEmpty()) {
-            for (String token : rest.toLowerCase()
-                .split(" +")) {
-                if (!token.isEmpty()) tokens.add(token);
-            }
-        }
-
-        this.enhancedCategories = categories;
-        this.enhancedMaps = maps;
-        this.enhancedTokens = tokens;
-        this.enhancedQueryActive = true;
-    }
-
-    private static List<RecipeCategory> resolveRecipeCategories(String recipeQuery) {
-        String lower = recipeQuery.toLowerCase();
-        List<RecipeCategory> exact = new ArrayList<>();
-        List<RecipeCategory> fuzzy = new ArrayList<>();
-        for (RecipeCategory category : RecipeCategory.ALL_RECIPE_CATEGORIES.values()) {
-            String localized = StatCollector.translateToLocal(category.unlocalizedName);
-            if (category.unlocalizedName.equalsIgnoreCase(recipeQuery) || localized.equalsIgnoreCase(recipeQuery)) {
-                exact.add(category);
-            } else if (category.unlocalizedName.toLowerCase()
-                .contains(lower) || NeCharUtil.INSTANCE.contains(lower, localized.toLowerCase())) {
-                    fuzzy.add(category);
-                }
-        }
-        return exact.isEmpty() ? fuzzy : exact;
-    }
-
-    private boolean entryMatchesRecipe(InterfaceWirelessEntry entry) {
-        ItemStack rep = entry.dispRep;
-        if (rep == null) return false;
-        if (Mods.hasGTRecipeMapWorkable()) {
-            IMetaTileEntity metaTileEntity = ItemMachines.getMetaTileEntity(rep);
-            if (metaTileEntity instanceof RecipeMapWorkable workable && workable.getAvailableRecipeMaps()
-                .stream()
-                .anyMatch(this.enhancedMaps::contains)) {
-                return true;
-            }
-        }
-        for (RecipeCategory category : this.enhancedCategories) {
-            if (RecipeCatalysts.containsCatalyst(category.unlocalizedName, rep)) return true;
-        }
-        return false;
+        return this.enhancedQuery()
+            .matches(entry.dispRep, entry.dispName, entry.searchSuffix);
     }
 
     public void cycleHighlight(int direction) {

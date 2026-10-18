@@ -60,7 +60,8 @@ public class GTUtil {
         }
 
         if (Mods.PROGRAMMABLE_HATCHES.isModLoaded()
-            && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT)) {
+            && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_FILL_CIRCUIT)
+            && PHUtil.isProgrammingToolkitEnabled()) {
             return suggestion.toString();
         }
 

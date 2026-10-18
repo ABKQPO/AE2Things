@@ -166,7 +166,7 @@ nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc=§7开启�
 nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_sum=§7若只有唯一接口能处理该配方，样板会自动放入该接口。
 nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_click=§7否则高亮第一个匹配的接口，按 Alt 点击即可放入。
 nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_scroll=§7在编码按钮上 Alt+滚轮 可切换高亮的接口。
-nei.options.ae2thing.dual_interface_terminal.enhanced_search.desc=若默认的配方填充找不到指定接口可以尝试开启增强配方搜索
+nei.options.ae2thing.dual_interface_terminal.enhanced_search.desc=若默认的配方填充找不到指定接口可以尝试开启增强配方搜索（@配方池@ 后接过滤词，纯数字按完整数值匹配，词前加 - 表示排除）
 
 ae2thing.tooltip.encode_auto_upload=§7[AE2Things]§r 自动上传样板
 ae2thing.tooltip.encode_auto_upload.desc_short=§7详细信息请查看 nei configs - AE2 Thing - 二合一接口终端
@@ -179,3 +179,9 @@ ae2thing.chat.auto_upload.failed=自动上传失败
 nei.options.ae2thing.nei_craft_item=NEI中鼠标中键快速下单终端中的物品 
 nei.options.ae2thing.nei_craft_item.true=是
 nei.options.ae2thing.nei_craft_item.false=否
+
+ae2thing.interface_terminal.search.hits=§7增强搜索：§a%1$s§7 个接口
+ae2thing.interface_terminal.search.empty=§7增强搜索：没有能运行该配方池的接口，也没有名称匹配的接口
+ae2thing.interface_terminal.search.invalid.syntax=§c配方池缺少结尾的 "@"，例如 @离心机@
+ae2thing.interface_terminal.search.invalid.category_only=§c未知配方池：%1$s
+ae2thing.interface_terminal.search.invalid.category_hint=§c未知配方池：%1$s（是否想输入：%2$s？）
