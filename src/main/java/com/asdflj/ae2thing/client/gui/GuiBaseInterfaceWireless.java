@@ -54,6 +54,7 @@ import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.GTUtil;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.asdflj.ae2thing.util.NeCharUtil;
+import com.asdflj.ae2thing.util.SearchTokens;
 import com.asdflj.ae2thing.util.Util;
 
 import appeng.api.AEApi;
@@ -569,6 +570,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             GL11.glPopMatrix();
             GL11.glPopAttrib();
         }
+        this.updateSearchFieldFeedback();
         searchFieldInputs.drawTextBox();
         searchFieldOutputs.drawTextBox();
         searchFieldNames.drawTextBox();
@@ -1370,32 +1372,40 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         final String searchTerm) {
         if (searchTerm.isEmpty()) return true;
 
-        String sectionName = section.name.toLowerCase();
+        final String sectionName = section.name.toLowerCase();
 
         if (searchTerm.length() >= 2 && searchTerm.startsWith("\"") && searchTerm.endsWith("\"")) {
-            return NeCharUtil.INSTANCE.contains(
+            return SearchTokens.matches(
                 searchTerm.substring(1, searchTerm.length() - 1)
                     .toLowerCase(),
                 sectionName);
-        } else {
-            String[] terms = searchTerm.toLowerCase()
-                .split(" +");
-
-            for (String term : terms) {
-                if (!NeCharUtil.INSTANCE.contains(term, sectionName)) {
-                    return false;
-                }
-            }
-            return true;
         }
-    }
-
-    protected boolean isEnhancedSearchActive(String query) {
-        return false;
+        return SearchTokens.matchesAll(SearchTokens.split(searchTerm.toLowerCase()), sectionName);
     }
 
     protected boolean entryMatchesEnhancedSearch(InterfaceWirelessEntry entry) {
         return true;
+    }
+
+    protected String sectionFilterText(String query) {
+        return query == null ? "" : query;
+    }
+
+    protected void onSearchFilterApplied() {}
+
+    protected void updateSearchFieldFeedback() {}
+
+    protected String getSearchQueryText() {
+        return this.searchFieldNames.getText();
+    }
+
+    protected void setSearchFieldFeedback(String tooltip, boolean error) {
+        this.searchFieldNames.setMessage(tooltip);
+        if (error) {
+            this.searchFieldNames.setBorder(1, 0xFFFF5555);
+        } else {
+            this.searchFieldNames.setBorder();
+        }
     }
 
     private boolean recipeIsBroken(final ItemStack itemStack) {
@@ -1533,10 +1543,10 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             height = 0;
             visibleSections.clear();
 
+            final String filterText = GuiBaseInterfaceWireless.this
+                .sectionFilterText(GuiBaseInterfaceWireless.this.searchFieldNames.getText());
             for (InterfaceWirelessSection section : sections.values()) {
-                String query = GuiBaseInterfaceWireless.this.searchFieldNames.getText();
-                if (!GuiBaseInterfaceWireless.this.isEnhancedSearchActive(query)
-                    && !interfaceSectionMatchesSearchTerm(section, query)) {
+                if (!filterText.isEmpty() && !interfaceSectionMatchesSearchTerm(section, filterText)) {
                     continue;
                 }
 
@@ -1547,7 +1557,12 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
                     visibleSections.add(section);
                 }
             }
+            GuiBaseInterfaceWireless.this.onSearchFilterApplied();
             isDirty = false;
+        }
+
+        Iterable<InterfaceWirelessEntry> allEntries() {
+            return this.list.values();
         }
 
         public void markDirty() {
