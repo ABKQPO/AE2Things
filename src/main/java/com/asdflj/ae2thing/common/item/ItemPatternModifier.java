@@ -97,21 +97,17 @@ public class ItemPatternModifier extends BaseItem implements IItemInventory {
         if (!Platform.isServer()) return false;
         TileEntity te = world.getTileEntity(x, y, z);
         PatternModifierInventory patternModifierInventory = new PatternModifierInventory(itemstack, player);
-        IInterfaceViewable host;
+        IInterfaceViewable host = null;
         if (te instanceof IInterfaceViewable h) {
             host = h;
-        } else if (Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded()) {
-            host = GTUtil.getIInterfaceViewable(te);
         } else if (te instanceof TileCableBus bus) {
             Vec3 vec = Vec3.createVectorHelper(hitX, hitY, hitZ);
             IPart part = bus.selectPart(vec).part;
             if (part instanceof IInterfaceViewable) {
                 host = (IInterfaceViewable) part;
-            } else {
-                host = null;
             }
-        } else {
-            host = null;
+        } else if (Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded()) {
+            host = GTUtil.getIInterfaceViewable(te);
         }
         if (patternModifierInventory.extractToHost(host) && player instanceof EntityPlayerMP serverPlayer) {
             serverPlayer.playerNetServerHandler
