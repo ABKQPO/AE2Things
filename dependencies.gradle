@@ -64,6 +64,7 @@ dependencies {
     compileOnly("curse.maven:hbms-nuclear-tech-mod-235439:5534354")
     compileOnly(files("libs/hbmaeaddon-1.4-dev.jar"))
     compileOnlyApi(files("libs/programmablehatches-0.1.3p50-dev.jar"))
+    compileOnly(files("libs/sciencenotleisure-0.2.7-rc2-dev.jar"))
 
     // jvmDowngrader
     compileOnly("javax.xml.bind:jaxb-api:2.3.1")

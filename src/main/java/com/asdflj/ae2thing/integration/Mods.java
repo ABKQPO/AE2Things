@@ -41,7 +41,8 @@ public enum Mods implements IMod, ITargetMod {
     THAUMIC_ENERGISTICS("thaumicenergistics"),
     TINKERS_CONSTRUCT("TConstruct"),
     WAILA("Waila"),
-    WIRELESS_CRAFTING_TERMINAL("ae2wct");
+    WIRELESS_CRAFTING_TERMINAL("ae2wct"),
+    SNL("sciencenotleisure");
 
     private final String modid;
     private final String resourceDomain;

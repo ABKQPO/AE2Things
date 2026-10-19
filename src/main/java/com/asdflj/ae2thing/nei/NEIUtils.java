@@ -1,5 +1,6 @@
 package com.asdflj.ae2thing.nei;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -7,9 +8,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.oredict.OreDictionary;
 
 import com.asdflj.ae2thing.nei.object.OrderStack;
+
+import gregtech.api.util.GTOreDictUnificator;
 
 public class NEIUtils {
 
@@ -52,5 +57,48 @@ public class NEIUtils {
                     && ((ItemStack) orderStack.getStack()).stackSize == 0))
             .peek(orderStack -> orderStack.setIndex(i.getAndIncrement()))
             .collect(Collectors.toList());
+    }
+
+    public static List<OrderStack<?>> replaceHotIngot(List<OrderStack<?>> outputs) {
+        if (outputs == null || outputs.isEmpty()) return outputs;
+
+        List<OrderStack<?>> result = new ArrayList<>(outputs.size());
+        for (OrderStack<?> src : outputs) {
+            if (src == null || !(src.getStack() instanceof ItemStack is)) {
+                result.add(src);
+                continue;
+            }
+
+            for (int id : OreDictionary.getOreIDs(is)) {
+                String oreName = OreDictionary.getOreName(id);
+                if (oreName == null || !oreName.startsWith("ingotHot")) continue;
+
+                String coldName = "ingot" + oreName.substring("ingotHot".length());
+                List<ItemStack> candidates = OreDictionary.getOres(coldName);
+                if (candidates == null || candidates.isEmpty()) continue;
+
+                // noinspection SequencedCollectionMethodCanBeUsed
+                ItemStack cold = candidates.get(0);
+                if (cold == null) continue;
+
+                ItemStack out = cold.copy();
+                try {
+                    ItemStack unified = GTOreDictUnificator.setStack(out);
+                    if (unified != null) out = unified;
+                } catch (Throwable ignored) {}
+
+                out.stackSize = is.stackSize;
+                if (is.hasTagCompound()) {
+                    out.setTagCompound(
+                        (NBTTagCompound) is.getTagCompound()
+                            .copy());
+                }
+                is = out;
+            }
+
+            result.add(new OrderStack<>(is, src.getIndex()));
+        }
+
+        return result;
     }
 }
