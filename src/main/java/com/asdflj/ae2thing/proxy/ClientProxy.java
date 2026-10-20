@@ -40,6 +40,7 @@ import com.asdflj.ae2thing.loader.RenderLoader;
 import com.asdflj.ae2thing.nei.recipes.DefaultExtractorLoader;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.FindITUtil;
+import com.asdflj.ae2thing.util.enhancedsearch.RecipeSearchAlias;
 
 import appeng.api.events.GuiScrollEvent;
 import appeng.client.gui.implementations.GuiCraftingTerm;
@@ -94,6 +95,8 @@ public class ClientProxy extends CommonProxy {
             if (Mods.FIND_IT.isModLoaded()) {
                 FindITUtil.instance.run();
             }
+            RecipeSearchAlias.loadAliases();
+            RecipeSearchAlias.loadCache();
         }
     }
 

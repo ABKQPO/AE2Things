@@ -74,6 +74,8 @@ public class NEI_TH_Config implements IConfigureNEI {
         addOption(new OptionTextField(ButtonConstants.DUAL_INTERFACE_TERMINAL_NO_MERGE));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_AUTO_UPLOAD, false));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH, false));
+        addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH_DEBUG, false));
+        addOption(new BaseToggleButton(ButtonConstants.HIDE_ENCODE_BUTTON_TOOLTIP, false));
         // API.addOption(new BaseToggleButton(ButtonConstants.PINNED_BAR)); //remove
         // API.addOption(new BaseToggleButton(ButtonConstants.PINNED_BAR_REMOVE));
         // API.addOption(new BaseToggleButton(ButtonConstants.PINNED_BAR_CRAFTING_STATE));
@@ -102,7 +104,8 @@ public class NEI_TH_Config implements IConfigureNEI {
                 "ae2thing.dual_interface_terminal.encode_auto_upload.desc_sum",
                 "ae2thing.dual_interface_terminal.encode_auto_upload.desc_click",
                 "ae2thing.dual_interface_terminal.encode_auto_upload.desc_scroll",
-                "ae2thing.dual_interface_terminal.enhanced_search.desc"));
+                "ae2thing.dual_interface_terminal.enhanced_search.desc",
+                "ae2thing.dual_interface_terminal.enhanced_search_debug.desc"));
     }
 
     private static void addOption(Option option) {

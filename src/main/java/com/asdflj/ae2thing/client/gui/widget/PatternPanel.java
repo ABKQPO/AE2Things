@@ -26,6 +26,8 @@ import com.asdflj.ae2thing.client.event.EncodeEvent;
 import com.asdflj.ae2thing.client.gui.IWidgetGui;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
+import com.asdflj.ae2thing.nei.ButtonConstants;
+import com.asdflj.ae2thing.nei.NEI_TH_Config;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
 import com.asdflj.ae2thing.util.GTNLUtil;
@@ -710,6 +712,7 @@ public class PatternPanel implements IAEBasePanel {
 
         @Override
         public String getMessage() {
+            if (NEI_TH_Config.getConfigValue(ButtonConstants.HIDE_ENCODE_BUTTON_TOOLTIP)) return null;
             String base = super.getMessage();
             FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
             List<String> lines = fontRenderer.listFormattedStringToWidth(

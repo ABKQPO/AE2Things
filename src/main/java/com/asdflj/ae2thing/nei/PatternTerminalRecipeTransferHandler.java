@@ -29,6 +29,7 @@ import com.asdflj.ae2thing.network.CPacketTransferRecipe;
 import com.asdflj.ae2thing.proxy.ClientProxy;
 import com.asdflj.ae2thing.util.GTUtil;
 import com.asdflj.ae2thing.util.PHUtil;
+import com.asdflj.ae2thing.util.enhancedsearch.EnhancedSearch;
 import com.google.common.base.Optional;
 
 import appeng.api.AEApi;
@@ -219,10 +220,14 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             } else {
                 suggestion = "";
             }
-        } else if (Mods.isGt5UnofficialLoaded() || Mods.isLegacyGt5Loaded()) {
-            suggestion = GTUtil.getRecipeName(recipe, in);
         } else {
-            suggestion = recipe.getRecipeName();
+            suggestion = recipe.getRecipeTabName();
+            if (Mods.isGt5Loaded()) {
+                suggestion = GTUtil.getRecipeName(recipe, in);
+            }
+            if (suggestion == null && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH)) {
+                suggestion = EnhancedSearch.poolQuery(recipe);
+            }
         }
         if (getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL)) {
             gui.setSearchFieldText(suggestion);

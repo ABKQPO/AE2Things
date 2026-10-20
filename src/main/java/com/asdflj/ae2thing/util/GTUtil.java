@@ -47,16 +47,24 @@ public class GTUtil {
         return ItemList.Tool_DataStick.isStackEqual(dataStick, false, true);
     }
 
+    @SideOnly(Side.CLIENT)
     public static String getRecipeName(IRecipeHandler recipe, List<OrderStack<?>> in) {
-        if (!(recipe instanceof GTNEIDefaultHandler)) return recipe.getRecipeTabName();
+        if (!(recipe instanceof GTNEIDefaultHandler)) return null;
+
+        String head = null;
+        try {
+            head = recipe.getOverlayIdentifier();
+        } catch (Throwable ignored) {}
+        if (head == null || head.trim()
+            .isEmpty()) head = recipe.getRecipeTabName();
+        if (head == null) return null;
 
         StringBuilder suggestion = new StringBuilder();
         if (getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH)) {
             suggestion.append('@')
-                .append(recipe.getRecipeTabName())
-                .append('@');
+                .append(head.trim());
         } else {
-            suggestion.append(recipe.getRecipeTabName());
+            suggestion.append(head.trim());
         }
 
         if (Mods.PROGRAMMABLE_HATCHES.isModLoaded()

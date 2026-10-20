@@ -1,7 +1,10 @@
-package com.asdflj.ae2thing.util;
+package com.asdflj.ae2thing.util.enhancedsearch;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import com.asdflj.ae2thing.util.NeCharUtil;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public final class SearchTokens {
 
@@ -12,7 +15,7 @@ public final class SearchTokens {
     }
 
     public static List<String> split(String text) {
-        final List<String> tokens = new ArrayList<>();
+        final List<String> tokens = new ObjectArrayList<>();
         if (text == null) return tokens;
         for (String token : text.split(" +")) {
             if (!token.isEmpty()) tokens.add(token);
