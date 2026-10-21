@@ -1,10 +1,7 @@
 package com.asdflj.ae2thing.common.storage.infinityCell;
 
-import static appeng.me.storage.CellInventory.getCell;
-
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,11 +21,11 @@ import appeng.api.implementations.items.IStorageCell;
 import appeng.api.implementations.tiles.IChestOrDrive;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.IMEInventory;
+import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.ISaveProvider;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
-import appeng.me.storage.ItemCellInventoryHandler;
 import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.IterationCounter;
 import appeng.util.item.AEItemStack;
@@ -191,24 +188,6 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
         return this.cellType.getOreFilter(this.cellItem);
     }
 
-    private static boolean isStorageCell(final ItemStack itemStack) {
-        if (itemStack == null) {
-            return false;
-        }
-
-        try {
-            final Item type = itemStack.getItem();
-
-            if (type instanceof IStorageCell) {
-                return !((IStorageCell) type).storableInStorageCell();
-            }
-        } catch (final Throwable err) {
-            return true;
-        }
-
-        return false;
-    }
-
     @Override
     public IAEItemStack injectItems(IAEItemStack input, Actionable mode, BaseActionSource src) {
         if (input == null) {
@@ -225,16 +204,13 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
 
         final ItemStack sharedItemStack = input.getItemStack();
 
-        if (isStorageCell(sharedItemStack)) {
-            if (!(getCell(
-                sharedItemStack,
-                null,
-                AEItemStackType.ITEM_STACK_TYPE) instanceof ItemCellInventoryHandler handler)) {
-                return input;
-            }
-            final IMEInventory<IAEItemStack> meInventory = handler.getCellInv();
-
-            if (meInventory != null && !this.isEmpty(meInventory)) {
+        if (sharedItemStack != null && sharedItemStack.getItem() instanceof IStorageCell cell
+            && !cell.storableInStorageCell()) {
+            final IMEInventoryHandler<?> handler = AEApi.instance()
+                .registries()
+                .cell()
+                .getCellInventory(sharedItemStack, null, cell.getStackType());
+            if (handler != null && !isEmpty(handler)) {
                 return input;
             }
         }
@@ -301,11 +277,11 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
         return input;
     }
 
-    private boolean isEmpty(IMEInventory<IAEItemStack> meInventory) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private boolean isEmpty(IMEInventory meInventory) {
         return meInventory.getAvailableItems(
-            AEApi.instance()
-                .storage()
-                .createItemList(),
+            meInventory.getStackType()
+                .createList(),
             IterationCounter.fetchNewId())
             .isEmpty();
     }
