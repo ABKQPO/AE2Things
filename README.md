@@ -8,7 +8,8 @@ This mod adds a new type of cell the DISK: Deep Item Storage disk. This cell has
 |-------|--------|----------------------------------------------------------------------------------------------------------------------------|:-----------:|
 | 2.7.4 | 1.1.28 | [![1.1.28](https://img.shields.io/badge/release-v1.1.28-orange)](https://github.com/asdflj/AE2Things/releases/v1.1.28)     |     ❌️      |
 | 2.8.0 | 1.2.8 | [![1.2.8](https://img.shields.io/badge/release-v1.2.8-orange)](https://github.com/asdflj/AE2Things/releases/v1.2.8)       |    ❌️️       |
-| 2.8.3 | 1.2.9+ | [![Latest](https://img.shields.io/github/v/release/asdflj/AE2Things)](https://github.com/asdflj/AE2Things/releases/latest) |    ✔️       |
+| 2.8.4 | 1.2.15 | [![1.2.8](https://img.shields.io/badge/release-v1.2.8-orange)](https://github.com/asdflj/AE2Things/releases/v1.2.15)       |    ❌️️       |
+| 2.9.0-rc2 | 1.2.15-pre7+ | [![Latest](https://img.shields.io/github/v/release/ABKQPO/AE2Things)](https://github.com/ABKQPO/AE2Things/releases/latest) |    ✔️       |
 
 
 **Infinity cell**</br>
