@@ -365,9 +365,12 @@ public class InfinityItemStorageCellInventory implements ITCellInventory {
 
     @Override
     public IItemList<IAEItemStack> getAvailableItems(IItemList<IAEItemStack> out, int iteration) {
-        AE2ThingAPI.instance()
-            .getStorageManager()
-            .addGrid(this.getUUID(), this.drive);
+        if (this.storage != null && AE2ThingAPI.instance()
+            .getStorageManager() != null) {
+            AE2ThingAPI.instance()
+                .getStorageManager()
+                .addGrid(this.getUUID(), this.drive);
+        }
         for (final IAEItemStack i : this.getCellItems()) {
             out.add(i);
         }
