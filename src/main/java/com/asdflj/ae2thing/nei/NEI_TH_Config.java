@@ -70,6 +70,7 @@ public class NEI_TH_Config implements IConfigureNEI {
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL, false));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_CIRCUIT_DAMAGE));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_NON_CONSUMED_ITEMS, false));
+        addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_INCLUDE_NON_CONSUMED, false));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_AUTO_UPLOAD, false));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH, false));
         // API.addOption(new BaseToggleButton(ButtonConstants.PINNED_BAR)); //remove

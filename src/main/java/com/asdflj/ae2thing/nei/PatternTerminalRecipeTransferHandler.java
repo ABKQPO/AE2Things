@@ -149,7 +149,7 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             if (Mods.PROGRAMMABLE_HATCHES.isModLoaded() && !craft) {
                 in = PHUtil.transfer(in);
             }
-            //in = NEIUtils.prepareInputs(in, getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_INCLUDE_NON_CONSUMED)); TODO
+            in = NEIUtils.prepareNonConsumedInputs(in, getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_INCLUDE_NON_CONSUMED));
             List<OrderStack<?>> out = FluidRecipe.getPackageOutputs(recipe, recipeIndex, !notUseOther(recipe));
 
             boolean autoEncode = false;

@@ -27,7 +27,10 @@ public class NEIUtils {
                 continue;
             }
             ItemStack currentStack = (ItemStack) orderStack.getStack();
-            if (currentStack.stackSize == 0) continue;
+            if (currentStack.stackSize == 0) {
+                comp.add(orderStack);
+                continue;
+            }
             boolean find = false;
             for (OrderStack<?> storedStack : comp) {
                 if (storedStack == null || !(storedStack.getStack() instanceof ItemStack firstStack)) continue;
@@ -131,6 +134,20 @@ public class NEIUtils {
             }
         }
 
+        return out;
+    }
+
+    public static List<OrderStack<?>> prepareNonConsumedInputs(List<OrderStack<?>> list, boolean includeNonConsumed) {
+        if (list == null || list.isEmpty()) return list;
+        final List<OrderStack<?>> out = new ArrayList<>(list.size());
+        for (OrderStack<?> orderStack : list) {
+            if (orderStack == null) continue;
+            if (orderStack.getStack() instanceof ItemStack is && is.stackSize == 0) {
+                if (!includeNonConsumed) continue;
+                is.stackSize = 1;
+            }
+            out.add(orderStack);
+        }
         return out;
     }
 }
