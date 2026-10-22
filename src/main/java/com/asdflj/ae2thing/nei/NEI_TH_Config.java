@@ -14,10 +14,8 @@ import com.asdflj.ae2thing.client.gui.GuiCraftingTerminal;
 import com.asdflj.ae2thing.client.gui.GuiInfusionPatternTerminal;
 import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.integration.Mods;
-import com.asdflj.ae2thing.nei.recipes.FluidRecipe;
+import com.asdflj.ae2thing.nei.recipes.Recipe;
 import com.github.vfyjxf.nee.nei.NEETerminalBookmarkContainerHandler;
-import com.github.vfyjxf.nee.processor.IRecipeProcessor;
-import com.github.vfyjxf.nee.processor.RecipeProcessor;
 
 import codechicken.lib.config.ConfigTagParent;
 import codechicken.nei.NEIClientConfig;
@@ -56,7 +54,7 @@ public class NEI_TH_Config implements IConfigureNEI {
                     identifier);
             }
         }
-        for (String identifier : FluidRecipe.getSupportRecipes()) {
+        for (String identifier : Recipe.getSupportRecipes()) {
             if (!API.hasGuiOverlayHandler(GuiWirelessDualInterfaceTerminal.class, identifier)) {
                 API.registerGuiOverlayHandler(
                     GuiWirelessDualInterfaceTerminal.class,
@@ -134,10 +132,7 @@ public class NEI_TH_Config implements IConfigureNEI {
         Set<String> defaultIdentifiers = new HashSet<>(
             Arrays.asList("crafting", "crafting2x2", "brewing", "smelting", "fuel", null));
         Set<String> identifiers = new HashSet<>(defaultIdentifiers);
-
-        RecipeProcessor.recipeProcessors.stream()
-            .map(IRecipeProcessor::getAllOverlayIdentifier)
-            .forEach(identifiers::addAll);
+        identifiers.addAll(NEEUtils.allIdentifiers());
 
         for (String identifier : identifiers) {
             if (!API.hasGuiOverlayHandler(GuiWirelessDualInterfaceTerminal.class, identifier)) {
