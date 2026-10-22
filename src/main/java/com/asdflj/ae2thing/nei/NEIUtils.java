@@ -101,4 +101,36 @@ public class NEIUtils {
 
         return result;
     }
+
+    public static List<OrderStack<?>> multiply(List<OrderStack<?>> list, int multiplier) {
+        if (list == null || list.isEmpty() || multiplier <= 1) return list;
+        final List<OrderStack<?>> out = new ArrayList<>(list.size());
+        for (OrderStack<?> src : list) {
+            if (src == null) continue;
+            if (src.getStack() instanceof ItemStack is) {
+                final ItemStack copy = is.copy();
+                if (copy.stackSize > 0) {
+                    final long scaled = (long) copy.stackSize * multiplier;
+                    copy.stackSize = (int) Math.min(Integer.MAX_VALUE, scaled);
+                }
+
+                final OrderStack<?> copyOS = new OrderStack<>(copy, src.getIndex());
+                if (src.getItems() != null && src.getItems().length > 1) {
+                    copyOS.putItems(src.getItems());
+                }
+                out.add(copyOS);
+            } else if (src.getStack() instanceof FluidStack fs) {
+                final FluidStack copy = fs.copy();
+                if (copy.amount > 0) {
+                    final long scaled = (long) copy.amount * multiplier;
+                    copy.amount = (int) Math.min(Integer.MAX_VALUE, scaled);
+                }
+                out.add(new OrderStack<>(copy, src.getIndex()));
+            } else {
+                out.add(src);
+            }
+        }
+
+        return out;
+    }
 }

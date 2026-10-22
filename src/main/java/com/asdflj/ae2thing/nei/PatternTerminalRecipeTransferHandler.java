@@ -7,6 +7,7 @@ import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -47,6 +48,9 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
 
     public static final HashSet<String> notOtherSet = new HashSet<>();
     public static final HashSet<String> craftSet = new HashSet<>();
+
+    private static final int DEFAULT_MULTIPLIER = 1;
+    private static final int MAX_MULTIPLIER = 64;
 
     static {
         notOtherSet.add("smelting");
@@ -123,19 +127,29 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
 
     @Override
     public void overlayRecipe(GuiContainer firstGui, IRecipeHandler recipe, int recipeIndex, boolean shift) {
+        this.transferRecipe(firstGui, recipe, recipeIndex, shift ? MAX_MULTIPLIER : DEFAULT_MULTIPLIER);
+    }
+
+    @Override
+    public int transferRecipe(GuiContainer firstGui, IRecipeHandler recipe, int recipeIndex, int multiplier) {
+        multiplier = Math.clamp(multiplier, DEFAULT_MULTIPLIER, MAX_MULTIPLIER);
+
         if (firstGui instanceof GuiInfusionPatternTerminal) {
             List<OrderStack<?>> in = FluidRecipe.getPackageInputs(recipe, recipeIndex, false);
             List<OrderStack<?>> out = FluidRecipe.getPackageOutputs(recipe, recipeIndex, false);
-            AE2Thing.proxy.netHandler.sendToServer(new CPacketTransferRecipe(out, in, true, shift));
+            AE2Thing.proxy.netHandler.sendToServer(new CPacketTransferRecipe(out, in, true, isShiftKeyDown()));
+            if (!in.isEmpty() || !out.isEmpty()) {
+                return multiplier;
+            }
         } else if (firstGui instanceof GuiWirelessDualInterfaceTerminal gui) {
             boolean priority = gui.container.prioritize;
             boolean craft = shouldCraft(recipe);
-            List<OrderStack<?>> in;
-            in = FluidRecipe.getPackageInputs(recipe, recipeIndex, !craft && priority);
+            List<OrderStack<?>> in = FluidRecipe.getPackageInputs(recipe, recipeIndex, !craft && priority);
             setSuggestion(craft, recipe, gui, in);
             if (Mods.PROGRAMMABLE_HATCHES.isModLoaded() && !craft) {
                 in = PHUtil.transfer(in);
             }
+            //in = NEIUtils.prepareInputs(in, getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_INCLUDE_NON_CONSUMED)); TODO
             List<OrderStack<?>> out = FluidRecipe.getPackageOutputs(recipe, recipeIndex, !notUseOther(recipe));
 
             boolean autoEncode = false;
@@ -155,17 +169,37 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
                     }
                 }
             }
+
+            final String realIdentifier;
+            if (recipe instanceof TemplateRecipeHandler template) {
+                realIdentifier = template.getOverlayIdentifier();
+            } else {
+                realIdentifier = null;
+            }
             AE2Thing.proxy.netHandler.sendToServer(
                 new CPacketTransferRecipe(
                     in,
                     out,
                     craft,
-                    shift,
+                    isShiftKeyDown(),
                     Constants.NEI_DEFAULT,
                     autoEncode,
                     target,
-                    targetSlot));
+                    targetSlot).withMultiplier(craft ? DEFAULT_MULTIPLIER : multiplier).withRealRecipe(realIdentifier, mergeAllowed(recipe, recipeIndex, realIdentifier))); // TODO
+
+            if (!in.isEmpty() || !out.isEmpty()) {
+                return multiplier;
+            }
         }
+
+        return 0;
+    }
+
+    private static final Set<String> NO_MERGE_IDENTIFIERS = new java.util.HashSet<>(
+        List.of("gt.recipe.fakeAssemblylineProcess"));
+
+    private static boolean mergeAllowed(IRecipeHandler recipe, int recipeIndex, String realIdentifier) {
+        return !NO_MERGE_IDENTIFIERS.contains(realIdentifier);
     }
 
     private void setSuggestion(boolean craft, IRecipeHandler recipe, GuiWirelessDualInterfaceTerminal gui,
