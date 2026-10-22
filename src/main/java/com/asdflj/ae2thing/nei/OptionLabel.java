@@ -200,6 +200,5 @@ public class OptionLabel extends Option {
         return (code >= '0' && code <= '9') || (code >= 'a' && code <= 'f');
     }
 
-    private record Line(String text, int height) {
-    }
+    private record Line(String text, int height) {}
 }

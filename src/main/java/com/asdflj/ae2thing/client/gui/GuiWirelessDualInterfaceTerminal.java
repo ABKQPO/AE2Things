@@ -1430,8 +1430,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                 if (craft && !entry.isCraftingPatternProvider) continue;
                 final int slot = entry.firstEmptySlot();
                 if (slot < 0) continue;
-                if (!GTNLUtil.isAssemblerMatrix(entry.dispRep)
-                    && gated
+                if (!GTNLUtil.isAssemblerMatrix(entry.dispRep) && gated
                     && UploadTarget.outcome(entry.dispRep, entry.dispName, entry.searchSuffix, poolIds, nameHint)
                         == UploadTarget.Outcome.SKIP) {
                     continue;
