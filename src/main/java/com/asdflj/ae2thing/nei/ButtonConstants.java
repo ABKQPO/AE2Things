@@ -16,5 +16,6 @@ public interface ButtonConstants {
     String DUAL_INTERFACE_TERMINAL_AUTO_UPLOAD = "ae2thing.dual_interface_terminal.auto_upload";
     String DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH = "ae2thing.dual_interface_terminal.enhanced_search";
     String DUAL_INTERFACE_TERMINAL_INCLUDE_NON_CONSUMED = "ae2thing.dual_interface_terminal.include_non_consumed";
+    String DUAL_INTERFACE_TERMINAL_NO_MERGE = "ae2thing.dual_interface_terminal.no_merge_identifiers";
     String NEI_CRAFT_ITEM = "ae2thing.nei_craft_item";
 }

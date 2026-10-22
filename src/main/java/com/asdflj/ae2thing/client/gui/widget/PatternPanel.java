@@ -82,7 +82,7 @@ public class PatternPanel implements IAEBasePanel {
     private static final int PANEL_HEIGHT = 202;
     private static final int GRID_WIDTH = 4;
     private static final int GRID_HEIGHT = 4;
-    private static final int GRID_SLOTS = GRID_WIDTH * GRID_HEIGHT;
+    private static final int MAX_PAGES = 2;
     private static final int INPUT_X = 224;
     private static final int INPUT_Y = -59;
     private static final int OUTPUT_X = 224 + 97;
@@ -609,32 +609,50 @@ public class PatternPanel implements IAEBasePanel {
         this.updateVirtualSlotPositions(this.absX - this.parent.getGuiLeft(), this.absY - this.parent.getGuiTop());
     }
 
+    private int inputColumns() {
+        return this.container.inverted ? 1 : GRID_WIDTH;
+    }
+
+    private int outputColumns() {
+        return this.container.inverted ? GRID_WIDTH : 1;
+    }
+
+    private int inputPageSize() {
+        return this.inputColumns() * GRID_HEIGHT;
+    }
+
+    private int outputPageSize() {
+        return this.outputColumns() * GRID_HEIGHT;
+    }
+
     private void updateVirtualSlotPositions(int panelX, int panelY) {
         if (this.virtualInputSlots == null || this.virtualOutputSlots == null) return;
         final int originX = panelX - PANEL_X;
         final int originY = panelY + this.slotRebaseY - PANEL_Y;
         final boolean crafting = this.container.isCraftingMode();
-        final boolean inverted = this.container.inverted;
-        final int page = this.container.activePage;
+        final int page = Math.clamp(this.container.activePage, 0, MAX_PAGES - 1);
+
+        final int inputColumns = this.inputColumns();
+        final int inputPageSize = this.inputPageSize();
         for (int index = 0; index < this.virtualInputSlots.length; index++) {
-            final int slotPage = index / GRID_SLOTS;
-            final int local = index % GRID_SLOTS;
-            final int x = local % GRID_WIDTH;
-            final int y = local / GRID_WIDTH;
+            final int local = index % inputPageSize;
+            final int x = local % inputColumns;
+            final int y = local / inputColumns;
             final DualPatternSlot slot = this.virtualInputSlots[index];
             slot.setX(originX + INPUT_X + x * 18);
             slot.setY(originY + INPUT_Y + y * 18);
-            slot.setHidden(crafting || slotPage != page || inverted && x > 0);
+            slot.setHidden(crafting || index / inputPageSize != page);
         }
+
+        final int outputPageSize = this.outputPageSize();
         for (int index = 0; index < this.virtualOutputSlots.length; index++) {
-            final int slotPage = index / GRID_SLOTS;
-            final int local = index % GRID_SLOTS;
+            final int local = index % outputPageSize;
             final int x = local / GRID_HEIGHT;
             final int y = local % GRID_HEIGHT;
             final DualPatternSlot slot = this.virtualOutputSlots[index];
             slot.setX(originX + OUTPUT_X - x * 18);
             slot.setY(originY + INPUT_Y + y * 18);
-            slot.setHidden(crafting || slotPage != page || !inverted && x > 0);
+            slot.setHidden(crafting || index / outputPageSize != page);
         }
     }
 

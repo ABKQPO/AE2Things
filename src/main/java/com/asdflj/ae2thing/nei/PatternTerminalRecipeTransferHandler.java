@@ -1,5 +1,6 @@
 package com.asdflj.ae2thing.nei;
 
+import static com.asdflj.ae2thing.nei.NEI_TH_Config.getConfigList;
 import static com.asdflj.ae2thing.nei.NEI_TH_Config.getConfigValue;
 import static com.asdflj.ae2thing.proxy.ClientProxy.mouseHandlers;
 import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
@@ -150,7 +151,9 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             if (Mods.PROGRAMMABLE_HATCHES.isModLoaded() && !craft) {
                 in = PHUtil.transfer(in);
             }
-            in = NEIUtils.prepareNonConsumedInputs(in, getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_INCLUDE_NON_CONSUMED));
+            in = NEIUtils.prepareNonConsumedInputs(
+                in,
+                getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_INCLUDE_NON_CONSUMED));
             List<OrderStack<?>> out = Recipe.getPackageOutputs(recipe, recipeIndex, !notUseOther(recipe));
 
             boolean autoEncode = false;
@@ -171,12 +174,7 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
                 }
             }
 
-            final String realIdentifier;
-            if (recipe instanceof TemplateRecipeHandler template) {
-                realIdentifier = template.getOverlayIdentifier();
-            } else {
-                realIdentifier = null;
-            }
+            final String realIdentifier = NEEUtils.realIdentifierOf(recipe);
             AE2Thing.proxy.netHandler.sendToServer(
                 new CPacketTransferRecipe(
                     in,
@@ -186,7 +184,8 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
                     Constants.NEI_DEFAULT,
                     autoEncode,
                     target,
-                    targetSlot).withMultiplier(craft ? DEFAULT_MULTIPLIER : multiplier).withRealRecipe(realIdentifier, mergeAllowed(recipe, recipeIndex, realIdentifier))); // TODO
+                    targetSlot).withMultiplier(craft ? DEFAULT_MULTIPLIER : multiplier)
+                        .withRealRecipe(realIdentifier, mergeAllowed(recipe, recipeIndex, realIdentifier)));
 
             if (!in.isEmpty() || !out.isEmpty()) {
                 return multiplier;
@@ -197,8 +196,11 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
     }
 
     private static boolean mergeAllowed(IRecipeHandler recipe, int recipeIndex, String realIdentifier) {
-        if (noMergeSet.contains(realIdentifier)) return false;
-        if (!(recipe instanceof TemplateRecipeHandler)) return true;
+        if (realIdentifier != null && (noMergeSet.contains(realIdentifier)
+            || getConfigList(ButtonConstants.DUAL_INTERFACE_TERMINAL_NO_MERGE).contains(realIdentifier))) {
+            return false;
+        }
+        if (!Mods.NOT_ENOUGH_ENERGISTICS.isModLoaded()) return true;
         return NEEUtils.mergeStacks(recipe, recipeIndex, realIdentifier);
     }
 

@@ -26,6 +26,8 @@ public class OrderStack<T> {
     public static final int FLUID = 2;
     public static final int CUSTOM = 3;
 
+    private static final String REPLACEMENTS = "ae2thing:replacements";
+
     public OrderStack(T stack, int order) {
         if (stack == null || order < 0)
             throw new IllegalArgumentException("Trying to create a null or negative order stack!");
@@ -86,17 +88,19 @@ public class OrderStack<T> {
     }
 
     public final void writeToNBT(NBTTagCompound buf) {
-        if (RealStack instanceof ItemStack) {
+        if (RealStack instanceof ItemStack itemStack) {
             NBTTagCompound tmp = new NBTTagCompound();
             tmp.setByte("t", (byte) ITEM);
-            Util.writeItemStackToNBT(((ItemStack) RealStack), tmp);
-            // replacement items
-            if (items != null) {
+            Util.writeItemStackToNBT(itemStack, tmp);
+            if (this.items != null && this.items.length > 1) {
                 NBTTagList list = new NBTTagList();
-                for (ItemStack is : this.items) {
-                    Util.writeItemStackToNBT(is, new NBTTagCompound());
+                for (ItemStack replacement : this.items) {
+                    if (replacement == null || replacement.getItem() == null) continue;
+                    NBTTagCompound entry = new NBTTagCompound();
+                    Util.writeItemStackToNBT(replacement, entry);
+                    list.appendTag(entry);
                 }
-                tmp.setTag(index + ":", list);
+                if (list.tagCount() > 1) tmp.setTag(REPLACEMENTS, list);
             }
             buf.setTag(index + ":", tmp);
         } else if (RealStack instanceof FluidStack) {
@@ -118,15 +122,19 @@ public class OrderStack<T> {
         byte id = info.getByte("t");
         switch (id) {
             case ITEM -> {
-                List<ItemStack> list = new ArrayList<>();
-                if (info.hasKey(index + ":")) {
-                    NBTTagList items = info.getTagList(index + ":", 10);
-                    for (int x = 0; x < items.tagCount(); x++) {
-                        final NBTTagCompound item = items.getCompoundTagAt(x);
-                        list.add(Util.loadItemStackFromNBT(item));
+                final ItemStack realStack = Util.loadItemStackFromNBT(info);
+                if (realStack == null) return null;
+                final OrderStack<ItemStack> stack = new OrderStack<>(realStack, index);
+                if (info.hasKey(REPLACEMENTS)) {
+                    final List<ItemStack> replacements = new ArrayList<>();
+                    final NBTTagList list = info.getTagList(REPLACEMENTS, 10);
+                    for (int x = 0; x < list.tagCount(); x++) {
+                        final ItemStack replacement = Util.loadItemStackFromNBT(list.getCompoundTagAt(x));
+                        if (replacement != null) replacements.add(replacement);
                     }
+                    if (replacements.size() > 1) stack.putItems(replacements.toArray(new ItemStack[0]));
                 }
-                return new OrderStack<>(Util.loadItemStackFromNBT(info), index, list.toArray(new ItemStack[0]));
+                return stack;
             }
             case FLUID -> {
                 return new OrderStack<>(FluidStack.loadFluidStackFromNBT(info), index);

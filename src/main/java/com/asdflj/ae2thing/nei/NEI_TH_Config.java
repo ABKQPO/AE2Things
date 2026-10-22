@@ -3,6 +3,7 @@ package com.asdflj.ae2thing.nei;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -22,6 +23,7 @@ import codechicken.nei.NEIClientConfig;
 import codechicken.nei.api.API;
 import codechicken.nei.api.IConfigureNEI;
 import codechicken.nei.config.Option;
+import codechicken.nei.config.OptionTextField;
 import codechicken.nei.event.NEIConfigsLoadedEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
@@ -69,6 +71,7 @@ public class NEI_TH_Config implements IConfigureNEI {
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_CIRCUIT_DAMAGE));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_NON_CONSUMED_ITEMS, false));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_INCLUDE_NON_CONSUMED, false));
+        addOption(new OptionTextField(ButtonConstants.DUAL_INTERFACE_TERMINAL_NO_MERGE));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_AUTO_UPLOAD, false));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH, false));
         // API.addOption(new BaseToggleButton(ButtonConstants.PINNED_BAR)); //remove
@@ -113,6 +116,17 @@ public class NEI_TH_Config implements IConfigureNEI {
             .getBooleanValue(true);
     }
 
+    public static Set<String> getConfigList(String identifier) {
+        final Set<String> values = new LinkedHashSet<>();
+        final String raw = tag.getTag(identifier)
+            .getValue("");
+        for (String part : raw.split(",")) {
+            final String trimmed = part.trim();
+            if (!trimmed.isEmpty()) values.add(trimmed);
+        }
+        return values;
+    }
+
     @Override
     public String getName() {
         return AE2Thing.NAME;
@@ -124,7 +138,7 @@ public class NEI_TH_Config implements IConfigureNEI {
     }
 
     @SubscribeEvent
-    public void installNeeRecipeProcessor(NEIConfigsLoadedEvent event) {
+    public void installNEERecipeProcessor(NEIConfigsLoadedEvent event) {
         if (!Mods.NOT_ENOUGH_ENERGISTICS.isModLoaded()) {
             return;
         }

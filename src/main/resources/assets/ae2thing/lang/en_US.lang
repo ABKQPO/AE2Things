@@ -167,6 +167,9 @@ nei.options.ae2thing.dual_interface_terminal.include_non_consumed=Encode non-con
 nei.options.ae2thing.dual_interface_terminal.include_non_consumed.true=Yes
 nei.options.ae2thing.dual_interface_terminal.include_non_consumed.false=No
 
+nei.options.ae2thing.dual_interface_terminal.no_merge_identifiers=Recipe ids never merged: 
+nei.options.ae2thing.dual_interface_terminal.no_merge_identifiers.tip=Comma separated recipe ids (i.e. gt.recipe.centrifuge). gt.recipe.fakeAssemblylineProcess is always excluded.
+
 nei.options.ae2thing.dual_interface_terminal.auto_upload=Auto upload pattern
 nei.options.ae2thing.dual_interface_terminal.auto_upload.true=Yes
 nei.options.ae2thing.dual_interface_terminal.auto_upload.false=No

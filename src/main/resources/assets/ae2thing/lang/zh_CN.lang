@@ -157,6 +157,9 @@ nei.options.ae2thing.dual_interface_terminal.include_non_consumed=把不消耗�
 nei.options.ae2thing.dual_interface_terminal.include_non_consumed.true=是
 nei.options.ae2thing.dual_interface_terminal.include_non_consumed.false=否
 
+nei.options.ae2thing.dual_interface_terminal.no_merge_identifiers=不合并的配方 id：
+nei.options.ae2thing.dual_interface_terminal.no_merge_identifiers.tip=用英文逗号分隔配方 id（例如 gt.recipe.centrifuge）。gt.recipe.fakeAssemblylineProcess 始终排除。
+
 nei.options.ae2thing.dual_interface_terminal.auto_upload=自动上传样板
 nei.options.ae2thing.dual_interface_terminal.auto_upload.true=是
 nei.options.ae2thing.dual_interface_terminal.auto_upload.false=否
