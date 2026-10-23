@@ -30,6 +30,20 @@ public final class SearchTokens {
         return NeCharUtil.INSTANCE.contains(token, text);
     }
 
+    public static boolean matchesLoose(String token, String text) {
+        if (token == null || token.isEmpty()) return true;
+        if (text == null || text.isEmpty()) return false;
+        if (matches(token, text)) return true;
+        if (isNumeric(token)) return false;
+        return matches(text, token) && closeEnough(token, text);
+    }
+
+    private static boolean closeEnough(String a, String b) {
+        final int shorter = Math.min(a.length(), b.length());
+        final int longer = Math.max(a.length(), b.length());
+        return shorter >= 4 && shorter * 5 >= longer * 3;
+    }
+
     public static boolean matchesAny(String token, String... texts) {
         if (token == null || token.isEmpty()) return true;
         for (String text : texts) {

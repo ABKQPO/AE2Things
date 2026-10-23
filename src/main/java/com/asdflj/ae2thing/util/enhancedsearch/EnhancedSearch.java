@@ -56,7 +56,9 @@ public final class EnhancedSearch {
 
         private static boolean matchesAnyNameHint(List<String> hints, String lowerName, String lowerSuffix) {
             for (String hint : hints) {
-                if (SearchTokens.matchesAny(hint, lowerName, lowerSuffix)) return true;
+                if (SearchTokens.matchesLoose(hint, lowerName) || SearchTokens.matchesLoose(hint, lowerSuffix)) {
+                    return true;
+                }
             }
             return false;
         }
@@ -102,7 +104,10 @@ public final class EnhancedSearch {
     }
 
     public static boolean matchesNameHint(String hint, String name, String suffix) {
-        return hint != null && SearchTokens.matchesAny(hint, lower(name), lower(suffix));
+        if (hint == null) return false;
+        final String lowerHint = hint.trim()
+            .toLowerCase();
+        return SearchTokens.matchesLoose(lowerHint, lower(name)) || SearchTokens.matchesLoose(lowerHint, lower(suffix));
     }
 
     public static String recipeTabName(IRecipeHandler recipe) {
@@ -180,6 +185,11 @@ public final class EnhancedSearch {
         for (String identifier : poolIds) {
             addHint(hints, identifier);
             addHint(hints, RecipeSearchAlias.titleOf(identifier));
+            final String baseId = GTRecipeUtil.baseMapId(identifier);
+            if (baseId != null) {
+                addHint(hints, baseId);
+                addHint(hints, RecipeSearchAlias.titleOf(baseId));
+            }
         }
 
         return new Query(
