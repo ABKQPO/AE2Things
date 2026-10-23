@@ -9,9 +9,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 
 import com.asdflj.ae2thing.api.Constants;
-import com.asdflj.ae2thing.inventory.AEStackItemInventory;
 import com.asdflj.ae2thing.nei.object.OrderStack;
 import com.asdflj.ae2thing.network.CPacketTransferRecipe;
+import com.asdflj.ae2thing.util.Util;
 import com.glodblock.github.common.item.ItemFluidPacket;
 
 import appeng.api.storage.data.IAEStack;
@@ -58,7 +58,7 @@ public interface IPatternTerminalAdapter {
             if (stack.getStack() instanceof IAEStack<?>aes) {
                 ae = aes;
             } else if (stack.getStack() instanceof ItemStack item) {
-                ae = AEStackItemInventory.toAEStack(item.copy());
+                ae = Util.toAEStack(item.copy());
             } else if (supportFluid() && stack.getStack() instanceof FluidStack fluid) {
                 ae = AEFluidStack.create(fluid);
             }

@@ -40,10 +40,12 @@ public class PatternTerminalLoader implements Runnable {
                         for (int i = 0; i < outputsInv.getSizeInventory(); i++) {
                             outputsInv.putAEStackInSlot(i, null);
                         }
-                        if (combine) {
+                        if (combine && message.mergeStacks) {
                             inputs = NEIUtils.compress(inputs);
                             outputs = NEIUtils.compress(outputs);
                         }
+                        inputs = NEIUtils.multiply(inputs, message.multiplier);
+                        outputs = NEIUtils.multiply(outputs, message.multiplier);
                         inputs = NEIUtils.clearNull(inputs);
                         outputs = NEIUtils.clearNull(outputs);
                         adapter.transferPackAE(inputs, inputsInv);

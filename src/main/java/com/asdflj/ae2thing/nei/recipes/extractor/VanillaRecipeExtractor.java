@@ -3,10 +3,13 @@ package com.asdflj.ae2thing.nei.recipes.extractor;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.asdflj.ae2thing.nei.NEEUtils;
+import com.asdflj.ae2thing.nei.NEIStackSelector;
 import com.asdflj.ae2thing.nei.object.IRecipeExtractor;
 import com.asdflj.ae2thing.nei.object.OrderStack;
 
 import codechicken.nei.PositionedStack;
+import codechicken.nei.recipe.IRecipeHandler;
 
 public class VanillaRecipeExtractor implements IRecipeExtractor {
 
@@ -18,20 +21,41 @@ public class VanillaRecipeExtractor implements IRecipeExtractor {
 
     @Override
     public List<OrderStack<?>> getInputIngredients(List<PositionedStack> rawInputs) {
-        List<OrderStack<?>> tmp = new LinkedList<>();
-        for (int i = 0; i < rawInputs.size(); i++) {
-            if (rawInputs.get(i) == null) continue;
-            final int col = (rawInputs.get(i).relx - 25) / 18;
-            final int row = (rawInputs.get(i).rely - 6) / 18;
-            int index = col + row * 3;
-            OrderStack<?> stack = OrderStack.pack(rawInputs.get(i), c ? index : i);
-            if (stack != null) tmp.add(stack);
-        }
-        return tmp;
+        return convert(rawInputs, NEEUtils.NULL_IDENTIFIER, false);
     }
 
     @Override
     public List<OrderStack<?>> getOutputIngredients(List<PositionedStack> rawOutputs) {
-        return getInputIngredients(rawOutputs);
+        return convert(rawOutputs, NEEUtils.NULL_IDENTIFIER, true);
+    }
+
+    @Override
+    public List<OrderStack<?>> getInputIngredients(List<PositionedStack> rawInputs, IRecipeHandler recipe, int index) {
+        return convert(rawInputs, NEEUtils.realIdentifierOf(recipe), false);
+    }
+
+    @Override
+    public List<OrderStack<?>> getOutputIngredients(List<PositionedStack> rawOutputs, IRecipeHandler recipe,
+        int index) {
+        return convert(rawOutputs, NEEUtils.realIdentifierOf(recipe), true);
+    }
+
+    private List<OrderStack<?>> convert(List<PositionedStack> raw, String identifier, boolean output) {
+        List<OrderStack<?>> tmp = new LinkedList<>();
+        for (int i = 0; i < raw.size(); i++) {
+            final PositionedStack positionedStack = raw.get(i);
+            if (positionedStack == null) continue;
+            final int index;
+            if (c) {
+                final int col = (positionedStack.relx - 25) / 18;
+                final int row = (positionedStack.rely - 6) / 18;
+                index = col + row * 3;
+            } else {
+                index = i;
+            }
+            final OrderStack<?> stack = NEIStackSelector.pack(positionedStack, index, identifier, output);
+            if (stack != null) tmp.add(stack);
+        }
+        return tmp;
     }
 }

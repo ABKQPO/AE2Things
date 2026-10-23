@@ -8,6 +8,7 @@ import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.api.PatternModifierModeObject;
 import com.asdflj.ae2thing.inventory.AEStackItemInventory;
 import com.asdflj.ae2thing.inventory.ItemBiggerAppEngInventory;
+import com.asdflj.ae2thing.util.Util;
 
 import appeng.api.implementations.guiobjects.IGuiItemObject;
 import appeng.api.storage.IMEMonitor;
@@ -60,7 +61,7 @@ public class PatternModifierInventory
     private void migrateReplace() {
         if (this.replaceSource.getAEStackInSlot(0) != null || this.replaceTarget.getAEStackInSlot(0) != null) return;
         for (int i = 0; i < this.replace.getSizeInventory(); i++) {
-            final IAEStack<?> stack = AEStackItemInventory.toAEStack(this.replace.getStackInSlot(i));
+            final IAEStack<?> stack = Util.toAEStack(this.replace.getStackInSlot(i));
             if (stack == null) continue;
             if (i == 0) {
                 this.replaceSource.putAEStackInSlot(0, stack);

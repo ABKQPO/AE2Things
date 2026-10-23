@@ -1,5 +1,6 @@
 package com.asdflj.ae2thing.nei;
 
+import static com.asdflj.ae2thing.nei.NEI_TH_Config.getConfigList;
 import static com.asdflj.ae2thing.nei.NEI_TH_Config.getConfigValue;
 import static com.asdflj.ae2thing.proxy.ClientProxy.mouseHandlers;
 import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
@@ -23,7 +24,7 @@ import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.widget.DualPatternSlot;
 import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.nei.object.OrderStack;
-import com.asdflj.ae2thing.nei.recipes.FluidRecipe;
+import com.asdflj.ae2thing.nei.recipes.Recipe;
 import com.asdflj.ae2thing.network.CPacketTransferRecipe;
 import com.asdflj.ae2thing.proxy.ClientProxy;
 import com.asdflj.ae2thing.util.GTUtil;
@@ -47,12 +48,17 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
 
     public static final HashSet<String> notOtherSet = new HashSet<>();
     public static final HashSet<String> craftSet = new HashSet<>();
+    public static final HashSet<String> noMergeSet = new HashSet<>();
+
+    private static final int DEFAULT_MULTIPLIER = 1;
+    private static final int MAX_MULTIPLIER = 64;
 
     static {
         notOtherSet.add("smelting");
         notOtherSet.add("brewing");
         craftSet.add("crafting");
         craftSet.add("crafting2x2");
+        noMergeSet.add("gt.recipe.fakeAssemblylineProcess");
     }
 
     private static Object findSameIngredient(ItemStack[] items, ItemStack item, FluidStack fluid,
@@ -123,20 +129,32 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
 
     @Override
     public void overlayRecipe(GuiContainer firstGui, IRecipeHandler recipe, int recipeIndex, boolean shift) {
+        this.transferRecipe(firstGui, recipe, recipeIndex, shift ? MAX_MULTIPLIER : DEFAULT_MULTIPLIER);
+    }
+
+    @Override
+    public int transferRecipe(GuiContainer firstGui, IRecipeHandler recipe, int recipeIndex, int multiplier) {
+        multiplier = Math.clamp(multiplier, DEFAULT_MULTIPLIER, MAX_MULTIPLIER);
+
         if (firstGui instanceof GuiInfusionPatternTerminal) {
-            List<OrderStack<?>> in = FluidRecipe.getPackageInputs(recipe, recipeIndex, false);
-            List<OrderStack<?>> out = FluidRecipe.getPackageOutputs(recipe, recipeIndex, false);
-            AE2Thing.proxy.netHandler.sendToServer(new CPacketTransferRecipe(out, in, true, shift));
+            List<OrderStack<?>> in = Recipe.getPackageInputs(recipe, recipeIndex, false);
+            List<OrderStack<?>> out = Recipe.getPackageOutputs(recipe, recipeIndex, false);
+            AE2Thing.proxy.netHandler.sendToServer(new CPacketTransferRecipe(out, in, true, isShiftKeyDown()));
+            if (!in.isEmpty() || !out.isEmpty()) {
+                return multiplier;
+            }
         } else if (firstGui instanceof GuiWirelessDualInterfaceTerminal gui) {
             boolean priority = gui.container.prioritize;
             boolean craft = shouldCraft(recipe);
-            List<OrderStack<?>> in;
-            in = FluidRecipe.getPackageInputs(recipe, recipeIndex, !craft && priority);
+            List<OrderStack<?>> in = Recipe.getPackageInputs(recipe, recipeIndex, !craft && priority);
             setSuggestion(craft, recipe, gui, in);
             if (Mods.PROGRAMMABLE_HATCHES.isModLoaded() && !craft) {
                 in = PHUtil.transfer(in);
             }
-            List<OrderStack<?>> out = FluidRecipe.getPackageOutputs(recipe, recipeIndex, !notUseOther(recipe));
+            in = NEIUtils.prepareNonConsumedInputs(
+                in,
+                getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_INCLUDE_NON_CONSUMED));
+            List<OrderStack<?>> out = Recipe.getPackageOutputs(recipe, recipeIndex, !notUseOther(recipe));
 
             boolean autoEncode = false;
             NBTTagCompound target = null;
@@ -155,17 +173,35 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
                     }
                 }
             }
+
+            final String realIdentifier = NEEUtils.realIdentifierOf(recipe);
             AE2Thing.proxy.netHandler.sendToServer(
                 new CPacketTransferRecipe(
                     in,
                     out,
                     craft,
-                    shift,
+                    isShiftKeyDown(),
                     Constants.NEI_DEFAULT,
                     autoEncode,
                     target,
-                    targetSlot));
+                    targetSlot).withMultiplier(craft ? DEFAULT_MULTIPLIER : multiplier)
+                        .withRealRecipe(realIdentifier, mergeAllowed(recipe, recipeIndex, realIdentifier)));
+
+            if (!in.isEmpty() || !out.isEmpty()) {
+                return multiplier;
+            }
         }
+
+        return 0;
+    }
+
+    private static boolean mergeAllowed(IRecipeHandler recipe, int recipeIndex, String realIdentifier) {
+        if (realIdentifier != null && (noMergeSet.contains(realIdentifier)
+            || getConfigList(ButtonConstants.DUAL_INTERFACE_TERMINAL_NO_MERGE).contains(realIdentifier))) {
+            return false;
+        }
+        if (!Mods.NOT_ENOUGH_ENERGISTICS.isModLoaded()) return true;
+        return NEEUtils.mergeStacks(recipe, recipeIndex, realIdentifier);
     }
 
     private void setSuggestion(boolean craft, IRecipeHandler recipe, GuiWirelessDualInterfaceTerminal gui,

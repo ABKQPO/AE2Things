@@ -8,13 +8,13 @@ public class DefaultExtractorLoader implements Runnable {
 
     @Override
     public void run() {
-        FluidRecipe.addRecipeMap("smelting", new VanillaRecipeExtractor(false));
-        FluidRecipe.addRecipeMap("brewing", new VanillaRecipeExtractor(false));
-        FluidRecipe.addRecipeMap("crafting", new VanillaRecipeExtractor(true));
-        FluidRecipe.addRecipeMap("crafting2x2", new VanillaRecipeExtractor(true));
+        Recipe.addRecipeMap("smelting", new VanillaRecipeExtractor(false));
+        Recipe.addRecipeMap("brewing", new VanillaRecipeExtractor(false));
+        Recipe.addRecipeMap("crafting", new VanillaRecipeExtractor(true));
+        Recipe.addRecipeMap("crafting2x2", new VanillaRecipeExtractor(true));
         if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
-            FluidRecipe.addRecipeMap("infusionCrafting", new TCRecipeExtractor(false));
-            FluidRecipe.addRecipeMap("cruciblerecipe", new TCRecipeExtractor(false));
+            Recipe.addRecipeMap("infusionCrafting", new TCRecipeExtractor(false));
+            Recipe.addRecipeMap("cruciblerecipe", new TCRecipeExtractor(false));
         }
     }
 }

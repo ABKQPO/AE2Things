@@ -3,6 +3,7 @@ package com.asdflj.ae2thing.nei;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -14,16 +15,15 @@ import com.asdflj.ae2thing.client.gui.GuiCraftingTerminal;
 import com.asdflj.ae2thing.client.gui.GuiInfusionPatternTerminal;
 import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.integration.Mods;
-import com.asdflj.ae2thing.nei.recipes.FluidRecipe;
+import com.asdflj.ae2thing.nei.recipes.Recipe;
 import com.github.vfyjxf.nee.nei.NEETerminalBookmarkContainerHandler;
-import com.github.vfyjxf.nee.processor.IRecipeProcessor;
-import com.github.vfyjxf.nee.processor.RecipeProcessor;
 
 import codechicken.lib.config.ConfigTagParent;
 import codechicken.nei.NEIClientConfig;
 import codechicken.nei.api.API;
 import codechicken.nei.api.IConfigureNEI;
 import codechicken.nei.config.Option;
+import codechicken.nei.config.OptionTextField;
 import codechicken.nei.event.NEIConfigsLoadedEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
@@ -56,7 +56,7 @@ public class NEI_TH_Config implements IConfigureNEI {
                     identifier);
             }
         }
-        for (String identifier : FluidRecipe.getSupportRecipes()) {
+        for (String identifier : Recipe.getSupportRecipes()) {
             if (!API.hasGuiOverlayHandler(GuiWirelessDualInterfaceTerminal.class, identifier)) {
                 API.registerGuiOverlayHandler(
                     GuiWirelessDualInterfaceTerminal.class,
@@ -70,6 +70,8 @@ public class NEI_TH_Config implements IConfigureNEI {
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL, false));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_CIRCUIT_DAMAGE));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_APPEND_NON_CONSUMED_ITEMS, false));
+        addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_INCLUDE_NON_CONSUMED, false));
+        addOption(new OptionTextField(ButtonConstants.DUAL_INTERFACE_TERMINAL_NO_MERGE));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_AUTO_UPLOAD, false));
         addOption(new BaseToggleButton(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH, false));
         // API.addOption(new BaseToggleButton(ButtonConstants.PINNED_BAR)); //remove
@@ -114,6 +116,17 @@ public class NEI_TH_Config implements IConfigureNEI {
             .getBooleanValue(true);
     }
 
+    public static Set<String> getConfigList(String identifier) {
+        final Set<String> values = new LinkedHashSet<>();
+        final String raw = tag.getTag(identifier)
+            .getValue("");
+        for (String part : raw.split(",")) {
+            final String trimmed = part.trim();
+            if (!trimmed.isEmpty()) values.add(trimmed);
+        }
+        return values;
+    }
+
     @Override
     public String getName() {
         return AE2Thing.NAME;
@@ -125,7 +138,7 @@ public class NEI_TH_Config implements IConfigureNEI {
     }
 
     @SubscribeEvent
-    public void installNeeRecipeProcessor(NEIConfigsLoadedEvent event) {
+    public void installNEERecipeProcessor(NEIConfigsLoadedEvent event) {
         if (!Mods.NOT_ENOUGH_ENERGISTICS.isModLoaded()) {
             return;
         }
@@ -133,10 +146,7 @@ public class NEI_TH_Config implements IConfigureNEI {
         Set<String> defaultIdentifiers = new HashSet<>(
             Arrays.asList("crafting", "crafting2x2", "brewing", "smelting", "fuel", null));
         Set<String> identifiers = new HashSet<>(defaultIdentifiers);
-
-        RecipeProcessor.recipeProcessors.stream()
-            .map(IRecipeProcessor::getAllOverlayIdentifier)
-            .forEach(identifiers::addAll);
+        identifiers.addAll(NEEUtils.allIdentifiers());
 
         for (String identifier : identifiers) {
             if (!API.hasGuiOverlayHandler(GuiWirelessDualInterfaceTerminal.class, identifier)) {

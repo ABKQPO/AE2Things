@@ -507,7 +507,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
         if (monitor == null) return;
         GenericMonitor generic = new GenericMonitor(monitor, this.crafters);
         genericMonitors.add(generic);
-        ((IMEMonitor) monitor).addListener(generic, null);
+        monitor.addListener(generic, null);
     }
 
     protected static class GenericMonitor implements IMEMonitorHandlerReceiver<IAEStack> {
@@ -1054,7 +1054,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
             }
 
         // Done. Put the output in the inventory or ground, and update stack size.
-        // We can assume slotIndex == -1, since we don't actually allow extraction via shift click.
+        // We can assume slotIndex == -1, since we don't actually allow Extraction via shift click.
         boolean shouldSendStack = true;
         if (untouchedTanks > 0) {
             ItemStack emptyStack = player.inventory.getItemStack();

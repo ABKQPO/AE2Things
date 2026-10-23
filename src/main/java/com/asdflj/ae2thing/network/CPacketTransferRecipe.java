@@ -32,6 +32,10 @@ public class CPacketTransferRecipe implements IMessage {
     public NBTTagCompound target;
     public int targetSlot = -1;
 
+    public int multiplier = 1;
+    public String realIdentifier = "";
+    public boolean mergeStacks = true;
+
     @SuppressWarnings("unused")
     public CPacketTransferRecipe() {}
 
@@ -61,6 +65,17 @@ public class CPacketTransferRecipe implements IMessage {
         this.targetSlot = targetSlot;
     }
 
+    public CPacketTransferRecipe withMultiplier(int multiplier) {
+        this.multiplier = Math.max(1, multiplier);
+        return this;
+    }
+
+    public CPacketTransferRecipe withRealRecipe(@Nullable String realIdentifier, boolean mergeStacks) {
+        this.realIdentifier = realIdentifier == null ? "" : realIdentifier;
+        this.mergeStacks = mergeStacks;
+        return this;
+    }
+
     // TODO: this should use GZIP to compress the message
     // NBT to ByteBuf has a compress stream
     @Override
@@ -86,6 +101,9 @@ public class CPacketTransferRecipe implements IMessage {
             ByteBufUtils.writeTag(buf, this.target);
             buf.writeInt(this.targetSlot);
         }
+        buf.writeInt(this.multiplier);
+        ByteBufUtils.writeUTF8String(buf, this.realIdentifier == null ? "" : this.realIdentifier);
+        buf.writeBoolean(this.mergeStacks);
     }
 
     @Override
@@ -111,6 +129,9 @@ public class CPacketTransferRecipe implements IMessage {
             target = ByteBufUtils.readTag(buf);
             targetSlot = buf.readInt();
         }
+        multiplier = buf.readInt();
+        realIdentifier = ByteBufUtils.readUTF8String(buf);
+        mergeStacks = buf.readBoolean();
     }
 
     public static class Handler implements IMessageHandler<CPacketTransferRecipe, IMessage> {

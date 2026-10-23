@@ -17,8 +17,8 @@ public class UpdateAmountTextEvent extends Event {
         UpdateAmountTextEvent.amount = amount;
     }
 
-    public UpdateAmountTextEvent(int stackSize) {
-        this(Integer.toString(stackSize));
+    public UpdateAmountTextEvent(long stackSize) {
+        this(Long.toString(stackSize));
     }
 
     public String getAmount() {
@@ -30,7 +30,7 @@ public class UpdateAmountTextEvent extends Event {
         GuiScreen gui = Minecraft.getMinecraft().currentScreen;
         if (gui instanceof IGuiCraftAmount guiCraftAmount) {
             try {
-                guiCraftAmount.setAmount(Integer.parseInt(amount));
+                guiCraftAmount.setAmount(Long.parseLong(amount));
                 UpdateAmountTextEvent.amount = "";
             } catch (NumberFormatException ignored) {
                 UpdateAmountTextEvent.amount = "";

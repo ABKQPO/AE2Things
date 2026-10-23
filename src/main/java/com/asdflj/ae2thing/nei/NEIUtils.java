@@ -27,7 +27,10 @@ public class NEIUtils {
                 continue;
             }
             ItemStack currentStack = (ItemStack) orderStack.getStack();
-            if (currentStack.stackSize == 0) continue;
+            if (currentStack.stackSize == 0) {
+                comp.add(orderStack);
+                continue;
+            }
             boolean find = false;
             for (OrderStack<?> storedStack : comp) {
                 if (storedStack == null || !(storedStack.getStack() instanceof ItemStack firstStack)) continue;
@@ -100,5 +103,51 @@ public class NEIUtils {
         }
 
         return result;
+    }
+
+    public static List<OrderStack<?>> multiply(List<OrderStack<?>> list, int multiplier) {
+        if (list == null || list.isEmpty() || multiplier <= 1) return list;
+        final List<OrderStack<?>> out = new ArrayList<>(list.size());
+        for (OrderStack<?> src : list) {
+            if (src == null) continue;
+            if (src.getStack() instanceof ItemStack is) {
+                final ItemStack copy = is.copy();
+                if (copy.stackSize > 0) {
+                    final long scaled = (long) copy.stackSize * multiplier;
+                    copy.stackSize = (int) Math.min(Integer.MAX_VALUE, scaled);
+                }
+
+                final OrderStack<?> copyOS = new OrderStack<>(copy, src.getIndex());
+                if (src.getItems() != null && src.getItems().length > 1) {
+                    copyOS.putItems(src.getItems());
+                }
+                out.add(copyOS);
+            } else if (src.getStack() instanceof FluidStack fs) {
+                final FluidStack copy = fs.copy();
+                if (copy.amount > 0) {
+                    final long scaled = (long) copy.amount * multiplier;
+                    copy.amount = (int) Math.min(Integer.MAX_VALUE, scaled);
+                }
+                out.add(new OrderStack<>(copy, src.getIndex()));
+            } else {
+                out.add(src);
+            }
+        }
+
+        return out;
+    }
+
+    public static List<OrderStack<?>> prepareNonConsumedInputs(List<OrderStack<?>> list, boolean includeNonConsumed) {
+        if (list == null || list.isEmpty()) return list;
+        final List<OrderStack<?>> out = new ArrayList<>(list.size());
+        for (OrderStack<?> orderStack : list) {
+            if (orderStack == null) continue;
+            if (orderStack.getStack() instanceof ItemStack is && is.stackSize == 0) {
+                if (!includeNonConsumed) continue;
+                is.stackSize = 1;
+            }
+            out.add(orderStack);
+        }
+        return out;
     }
 }

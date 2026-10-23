@@ -1,7 +1,5 @@
 package com.asdflj.ae2thing.proxy;
 
-import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +20,6 @@ import com.asdflj.ae2thing.api.adapter.terminal.item.FCUltraTerminal;
 import com.asdflj.ae2thing.api.adapter.terminal.item.WCTWirelessCraftingTerminal;
 import com.asdflj.ae2thing.api.adapter.terminal.parts.AETerminal;
 import com.asdflj.ae2thing.client.event.AEGuiCloseEvent;
-import com.asdflj.ae2thing.client.event.CraftTracking;
 import com.asdflj.ae2thing.client.event.EncodeEvent;
 import com.asdflj.ae2thing.client.event.GuiOverlayButtonEvent;
 import com.asdflj.ae2thing.client.event.OpenTerminalEvent;
@@ -41,13 +38,10 @@ import com.asdflj.ae2thing.loader.KeybindLoader;
 import com.asdflj.ae2thing.loader.ListenerLoader;
 import com.asdflj.ae2thing.loader.RenderLoader;
 import com.asdflj.ae2thing.nei.recipes.DefaultExtractorLoader;
-import com.asdflj.ae2thing.network.CPacketCraftRequest;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.FindITUtil;
 
 import appeng.api.events.GuiScrollEvent;
-import appeng.api.storage.data.IAEItemStack;
-import appeng.api.storage.data.IItemList;
 import appeng.client.gui.implementations.GuiCraftingTerm;
 import appeng.client.gui.implementations.GuiMEMonitorable;
 import appeng.client.gui.implementations.GuiPatternTerm;
@@ -110,21 +104,6 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void preInit(FMLPreInitializationEvent event) {
         super.preInit(event);
-    }
-
-    @SubscribeEvent
-    public void trackingMissingItems(CraftTracking c) {
-        GuiScreen screen = Minecraft.getMinecraft().currentScreen;
-        IItemList<IAEItemStack> list = c.getItems();
-        if (!list.isEmpty() && AE2ThingAPI.instance()
-            .terminal()
-            .isCraftingTerminal(screen)) {
-            for (IAEItemStack is : list) {
-                AE2Thing.proxy.netHandler.sendToServer(new CPacketCraftRequest(is, isShiftKeyDown()));
-                is.reset();
-                break;
-            }
-        }
     }
 
     @SubscribeEvent
@@ -255,11 +234,6 @@ public class ClientProxy extends CommonProxy {
     public void initGuiEvent(GuiScreenEvent.InitGuiEvent.Post event) {
         if (event.gui instanceof BaseMEGui bg) {
             bg.initDone();
-        }
-        if (AE2ThingAPI.instance()
-            .terminal()
-            .isCraftingTerminal(event.gui)) {
-            MinecraftForge.EVENT_BUS.post(new CraftTracking());
         }
         if (UpdateAmountTextEvent.needUpdateAmountText()) {
             MinecraftForge.EVENT_BUS.post(new UpdateAmountTextEvent());

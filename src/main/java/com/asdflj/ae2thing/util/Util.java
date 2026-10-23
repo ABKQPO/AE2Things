@@ -31,6 +31,7 @@ import com.asdflj.ae2thing.client.gui.IGuiMonitorTerminal;
 import com.asdflj.ae2thing.common.item.ItemBackpackTerminal;
 import com.asdflj.ae2thing.common.item.ItemPatternModifier;
 import com.asdflj.ae2thing.common.item.ItemWirelessDualInterfaceTerminal;
+import com.asdflj.ae2thing.integration.Mods;
 import com.glodblock.github.client.gui.FCGuiTextField;
 import com.glodblock.github.common.item.ItemFluidDrop;
 import com.glodblock.github.common.item.ItemFluidPacket;
@@ -43,6 +44,7 @@ import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.ICraftingGrid;
 import appeng.api.networking.crafting.ICraftingJob;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IDisplayRepo;
 import appeng.api.util.DimensionalCoord;
 import appeng.client.gui.AEBaseGui;
@@ -58,6 +60,8 @@ import appeng.integration.modules.NEI;
 import appeng.items.tools.powered.ToolWirelessTerminal;
 import appeng.me.cache.CraftingGridCache;
 import appeng.util.Platform;
+import appeng.util.item.AEFluidStack;
+import appeng.util.item.AEItemStack;
 import codechicken.nei.recipe.StackInfo;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.ModContainer;
@@ -349,6 +353,21 @@ public class Util {
                 repo.updateView();
             }
         }
+    }
+
+    public static IAEStack<?> toAEStack(ItemStack is) {
+        if (is == null || is.getItem() == null) return null;
+
+        FluidStack fluid = StackInfo.getFluid(is);
+        if (fluid != null && fluid.getFluid() != null) {
+            return AEFluidStack.create(fluid);
+        }
+
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
+            final IAEStack<?> essentia = AspectUtil.toAEStack(is);
+            if (essentia != null) return essentia;
+        }
+        return AEItemStack.create(is);
     }
 
     @SuppressWarnings("unchecked")

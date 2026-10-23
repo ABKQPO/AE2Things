@@ -22,6 +22,7 @@ import com.asdflj.ae2thing.inventory.ItemBiggerAppEngInventory;
 import com.asdflj.ae2thing.inventory.ItemPatternRefillInventory;
 import com.asdflj.ae2thing.inventory.ItemPatternsInventory;
 import com.asdflj.ae2thing.inventory.SlotBackedAEStackInventory;
+import com.asdflj.ae2thing.util.GTNLUtil;
 import com.asdflj.ae2thing.util.Util;
 
 import appeng.api.config.Settings;
@@ -92,17 +93,18 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
             obj.getPlayer(),
             obj.getSlot(),
             this);
+        final int patternSlots = GTNLUtil.patternSlotCount();
         craftingEx = new AEStackItemInventory(
             obj.getItemStack(),
             Constants.CRAFTING_EX,
-            32,
+            patternSlots,
             obj.getPlayer(),
             obj.getSlot(),
             StorageName.CRAFTING_INPUT);
         outputEx = new AEStackItemInventory(
             obj.getItemStack(),
             Constants.OUTPUT_EX,
-            32,
+            patternSlots,
             obj.getPlayer(),
             obj.getSlot(),
             StorageName.CRAFTING_OUTPUT);
