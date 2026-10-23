@@ -23,6 +23,7 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.Constants;
 import com.asdflj.ae2thing.api.InventoryActionExtend;
 import com.asdflj.ae2thing.api.WirelessObject;
+import com.asdflj.ae2thing.client.gui.container.AE2ThingPrimaryGui;
 import com.asdflj.ae2thing.client.gui.container.ContainerCraftingTerminal;
 import com.asdflj.ae2thing.client.gui.container.ContainerInfusionPatternTerminal;
 import com.asdflj.ae2thing.client.gui.container.ContainerPatternModifier;
@@ -200,8 +201,8 @@ public class CPacketInventoryActionExtend implements IMessage {
                                 return null;
                             }
                             cpv.setPrimaryGui(
-                                ContainerPatternValueAmount
-                                    .primaryGui(originGui, getOriginGuiIcon(originGui), pos, side));
+                                AE2ThingPrimaryGui
+                                    .create(originGui, getOriginGuiIcon(originGui), pos, side));
                             cpv.updateVirtualSlot(storage, index, message.stack);
                             cpv.detectAndSendChanges();
                         }
@@ -283,8 +284,8 @@ public class CPacketInventoryActionExtend implements IMessage {
                                 return null;
                             }
                             cpv.setPrimaryGui(
-                                ContainerPatternValueAmount
-                                    .primaryGui(originGui, getOriginGuiIcon(originGui), pos, side));
+                                AE2ThingPrimaryGui
+                                    .create(originGui, getOriginGuiIcon(originGui), pos, side));
                             cpv.updateVirtualSlot(storage, index, message.stack);
                             cpv.detectAndSendChanges();
                         }

@@ -32,7 +32,7 @@ import codechicken.nei.recipe.RecipeHandlerRef;
 public abstract class MixinGuiOverlayButton extends GuiRecipeButton {
 
     @Final
-    @Shadow
+    @Shadow(remap = false)
     public GuiContainer firstGui;
 
     protected MixinGuiOverlayButton(RecipeHandlerRef point, int x, int y, int buttonId, String label) {
