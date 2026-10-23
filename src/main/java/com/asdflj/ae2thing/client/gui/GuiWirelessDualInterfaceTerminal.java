@@ -827,6 +827,18 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         this.resetPanelColor();
     }
 
+    private void prepareSlotDepthState() {
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glDepthFunc(GL11.GL_LEQUAL);
+        GL11.glDepthMask(true);
+        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
+    }
+
+    private void finishSlotDepthState() {
+        GL11.glDepthMask(true);
+        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
+    }
+
     private void initPatternSlots() {
         if (this.container.inputsSync == null || this.container.outputsSync == null) return;
         this.patternPanel.setSlotRebaseY(this.ySize - this.viewHeight - 78 - 4);
@@ -854,9 +866,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         GL11.glPushMatrix();
         RenderHelper.enableGUIStandardItemLighting();
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-        GL11.glDepthFunc(GL11.GL_ALWAYS);
-        GL11.glDepthMask(false);
+        this.prepareSlotDepthState();
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glTranslatef(this.guiLeft, this.guiTop, 0.0F);
         try {
@@ -869,6 +879,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                 this.drawPatternVirtualSlot(slot, localMouseX, localMouseY, patternHovered);
             }
         } finally {
+            this.finishSlotDepthState();
             GL11.glMatrixMode(GL11.GL_MODELVIEW);
             GL11.glPopMatrix();
             GL11.glPopAttrib();
@@ -888,10 +899,12 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
 
     private void drawPatternSlots(int mouseX, int mouseY) {
         this.drawingPanelSlots = true;
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glPushMatrix();
         RenderHelper.enableGUIStandardItemLighting();
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+        this.prepareSlotDepthState();
         GL11.glTranslatef(this.guiLeft, this.guiTop, 0.0F);
         try {
             for (Object object : this.inventorySlots.inventorySlots) {
@@ -907,20 +920,22 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                     int screenY = this.guiTop + slot.yDisplayPosition;
                     if (mouseX >= screenX && mouseX < screenX + 16 && mouseY >= screenY && mouseY < screenY + 16) {
                         GL11.glDisable(GL11.GL_LIGHTING);
-                        GL11.glDepthFunc(GL11.GL_ALWAYS);
-                        GL11.glDepthMask(false);
+                        GL11.glDisable(GL11.GL_DEPTH_TEST);
                         drawRect(
                             slot.xDisplayPosition,
                             slot.yDisplayPosition,
                             slot.xDisplayPosition + 16,
                             slot.yDisplayPosition + 16,
                             0x80FFFFFF);
+                        GL11.glEnable(GL11.GL_DEPTH_TEST);
                     }
                 }
             }
         } finally {
+            this.finishSlotDepthState();
             GL11.glMatrixMode(GL11.GL_MODELVIEW);
             GL11.glPopMatrix();
+            GL11.glPopAttrib();
             this.drawingPanelSlots = false;
         }
     }
@@ -932,9 +947,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         try {
             RenderHelper.enableGUIStandardItemLighting();
             GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-            GL11.glEnable(GL11.GL_DEPTH_TEST);
-            GL11.glDepthFunc(GL11.GL_ALWAYS);
-            GL11.glDepthMask(false);
+            this.prepareSlotDepthState();
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
             int localMouseX = mouseX - this.guiLeft + 1;
             int localMouseY = mouseY - this.guiTop + 1;
@@ -950,6 +963,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                 }
             }
         } finally {
+            this.finishSlotDepthState();
             GL11.glPopMatrix();
             GL11.glPopAttrib();
         }
