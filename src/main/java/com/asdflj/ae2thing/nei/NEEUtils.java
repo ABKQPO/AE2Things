@@ -114,9 +114,14 @@ public final class NEEUtils {
         }
     }
 
-    public record Extraction(boolean matched, List<PositionedStack> inputs, List<PositionedStack> outputs, boolean mergeStacks) {
+    public record Extraction(boolean matched, List<PositionedStack> inputs, List<PositionedStack> outputs,
+        boolean mergeStacks) {
 
-        private static final Extraction MISS = new Extraction(false, Collections.emptyList(), Collections.emptyList(), true);
+        private static final Extraction MISS = new Extraction(
+            false,
+            Collections.emptyList(),
+            Collections.emptyList(),
+            true);
 
         public boolean unMatched() {
             return !this.matched;

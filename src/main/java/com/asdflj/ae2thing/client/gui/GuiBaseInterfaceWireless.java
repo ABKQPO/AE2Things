@@ -98,6 +98,7 @@ import appeng.tile.inventory.AppEngInternalInventory;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.AEItemStackType;
+import codechicken.nei.LayoutManager;
 import cpw.mods.fml.common.Loader;
 
 public class GuiBaseInterfaceWireless extends BaseMEGui
@@ -2224,21 +2225,23 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
 
     @Override
     public void handleMouseInput() {
-        if (!GuiScreen.isCtrlKeyDown()) {
+        final int wheel = Mouse.getEventDWheel();
+        if (!GuiScreen.isCtrlKeyDown() || wheel == 0) {
             super.handleMouseInput();
+            return;
+        }
+
+        final int x = Mouse.getEventX() * this.width / this.mc.displayWidth;
+        final int y = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
+        if ((LayoutManager.bookmarkPanel != null && LayoutManager.bookmarkPanel.contains(x, y)) || (LayoutManager.itemPanel != null && LayoutManager.itemPanel.contains(x, y))) {
+            super.handleMouseInput();
+            return;
+        }
+
+        if (wheel > 0) {
+            mouseClicked(x, y, 0);
         } else {
-            int wheel = Mouse.getEventDWheel();
-            if (wheel == 0) {
-                super.handleMouseInput();
-            } else {
-                final int x = Mouse.getEventX() * this.width / this.mc.displayWidth;
-                final int y = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
-                if (wheel > 0) {
-                    mouseClicked(x, y, 0);
-                } else {
-                    mouseClicked(x, y, 1);
-                }
-            }
+            mouseClicked(x, y, 1);
         }
     }
 
