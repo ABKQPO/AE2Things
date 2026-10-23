@@ -3,6 +3,7 @@ package com.asdflj.ae2thing.nei.recipes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import net.minecraft.item.ItemStack;
@@ -19,10 +20,22 @@ import codechicken.nei.PositionedStack;
 import codechicken.nei.recipe.IRecipeHandler;
 import codechicken.nei.recipe.TemplateRecipeHandler;
 
-public final class Recipe {
+public final class NEIRecipeUtil {
+
+    public static final HashSet<String> notOtherSet = new HashSet<>();
+    public static final HashSet<String> craftSet = new HashSet<>();
+    public static final HashSet<String> noMergeSet = new HashSet<>();
 
     private static final HashMap<String, IRecipeExtractor> IdentifierMap = new HashMap<>();
     private static final HashMap<String, IRecipeExtractor> IdentifierMapLegacy = new HashMap<>();
+
+    static {
+        notOtherSet.add("smelting");
+        notOtherSet.add("brewing");
+        craftSet.add("crafting");
+        craftSet.add("crafting2x2");
+        noMergeSet.add("gt.recipe.fakeAssemblylineProcess");
+    }
 
     public static void addRecipeMap(String recipeIdentifier, IRecipeExtractor extractor) {
         IdentifierMap.put(recipeIdentifier, extractor);
@@ -168,5 +181,18 @@ public final class Recipe {
         return IdentifierMapLegacy.get(
             recipe.getClass()
                 .getName());
+    }
+
+    public static boolean notUseOther(IRecipeHandler recipeHandler) {
+        if (!(recipeHandler instanceof TemplateRecipeHandler template)) {
+            return true;
+        }
+
+        return notOtherSet.contains(template.getOverlayIdentifier());
+    }
+
+    public static boolean shouldCraft(IRecipeHandler recipeHandler) {
+        TemplateRecipeHandler tRecipe = (TemplateRecipeHandler) recipeHandler;
+        return craftSet.contains(tRecipe.getOverlayIdentifier());
     }
 }

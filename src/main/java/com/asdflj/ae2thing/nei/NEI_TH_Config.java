@@ -15,7 +15,7 @@ import com.asdflj.ae2thing.client.gui.GuiCraftingTerminal;
 import com.asdflj.ae2thing.client.gui.GuiInfusionPatternTerminal;
 import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.integration.Mods;
-import com.asdflj.ae2thing.nei.recipes.Recipe;
+import com.asdflj.ae2thing.nei.recipes.NEIRecipeUtil;
 import com.github.vfyjxf.nee.nei.NEETerminalBookmarkContainerHandler;
 
 import codechicken.lib.config.ConfigTagParent;
@@ -56,7 +56,7 @@ public class NEI_TH_Config implements IConfigureNEI {
                     identifier);
             }
         }
-        for (String identifier : Recipe.getSupportRecipes()) {
+        for (String identifier : NEIRecipeUtil.getSupportRecipes()) {
             if (!API.hasGuiOverlayHandler(GuiWirelessDualInterfaceTerminal.class, identifier)) {
                 API.registerGuiOverlayHandler(
                     GuiWirelessDualInterfaceTerminal.class,
