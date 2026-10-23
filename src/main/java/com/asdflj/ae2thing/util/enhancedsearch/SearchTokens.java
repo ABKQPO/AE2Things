@@ -1,7 +1,10 @@
-package com.asdflj.ae2thing.util;
+package com.asdflj.ae2thing.util.enhancedsearch;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import com.asdflj.ae2thing.util.NeCharUtil;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public final class SearchTokens {
 
@@ -12,7 +15,7 @@ public final class SearchTokens {
     }
 
     public static List<String> split(String text) {
-        final List<String> tokens = new ArrayList<>();
+        final List<String> tokens = new ObjectArrayList<>();
         if (text == null) return tokens;
         for (String token : text.split(" +")) {
             if (!token.isEmpty()) tokens.add(token);
@@ -25,6 +28,20 @@ public final class SearchTokens {
         if (text == null || text.isEmpty()) return false;
         if (isNumeric(token)) return containsBoundedDigits(token, text);
         return NeCharUtil.INSTANCE.contains(token, text);
+    }
+
+    public static boolean matchesLoose(String token, String text) {
+        if (token == null || token.isEmpty()) return true;
+        if (text == null || text.isEmpty()) return false;
+        if (matches(token, text)) return true;
+        if (isNumeric(token)) return false;
+        return matches(text, token) && closeEnough(token, text);
+    }
+
+    private static boolean closeEnough(String a, String b) {
+        final int shorter = Math.min(a.length(), b.length());
+        final int longer = Math.max(a.length(), b.length());
+        return shorter >= 4 && shorter * 5 >= longer * 3;
     }
 
     public static boolean matchesAny(String token, String... texts) {

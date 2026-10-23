@@ -7,30 +7,18 @@ import java.util.stream.Collectors;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
 
 import org.spongepowered.asm.mixin.Mixin;
 
-import com.asdflj.ae2thing.api.AE2ThingAPI;
-import com.asdflj.ae2thing.client.gui.widget.IGuiMonitor;
 import com.asdflj.ae2thing.nei.AEItemOverlayState;
-import com.asdflj.ae2thing.util.Ae2ReflectClient;
-import com.asdflj.ae2thing.util.Util;
-import com.glodblock.github.common.item.ItemFluidDrop;
+import com.asdflj.ae2thing.nei.OverlayStacks;
 
-import appeng.api.config.FuzzyMode;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.api.storage.data.IDisplayRepo;
 import appeng.api.storage.data.IItemList;
-import appeng.client.gui.AEBaseGui;
-import appeng.client.me.ItemRepo;
-import appeng.util.item.AEItemStack;
 import codechicken.nei.PositionedStack;
 import codechicken.nei.api.IOverlayHandler;
 import codechicken.nei.recipe.GuiOverlayButton;
 import codechicken.nei.recipe.IRecipeHandler;
-import codechicken.nei.recipe.StackInfo;
 
 @Mixin(value = IOverlayHandler.class)
 public interface MixinIOverlayHandler extends IOverlayHandler {
@@ -40,19 +28,7 @@ public interface MixinIOverlayHandler extends IOverlayHandler {
         int recipeIndex) {
         final List<GuiOverlayButton.ItemOverlayState> itemPresenceSlots = new ArrayList<>();
         final List<PositionedStack> ingredients = recipe.getIngredientStacks(recipeIndex);
-        IItemList<IAEStack<?>> list = null;
-        boolean displayFluid = false;
-        if (firstGui instanceof IGuiMonitor gm) {
-            list = Ae2ReflectClient.getList(gm.getRepo());
-            displayFluid = true;
-        } else if (AE2ThingAPI.instance()
-            .terminal()
-            .isTerminal(firstGui)) {
-                IDisplayRepo repo = Util.getDisplayRepo((AEBaseGui) firstGui);
-                if (repo instanceof ItemRepo) {
-                    list = Ae2ReflectClient.getList((ItemRepo) repo);
-                }
-            }
+        final IItemList<IAEStack<?>> list = OverlayStacks.listFor(firstGui);
         final List<ItemStack> invStacks = firstGui.inventorySlots.inventorySlots.stream()
             .filter(
                 s -> s != null && s.getStack() != null
@@ -73,32 +49,8 @@ public interface MixinIOverlayHandler extends IOverlayHandler {
                 is.stackSize -= 1;
                 itemPresenceSlots.add(new GuiOverlayButton.ItemOverlayState(stack, true));
             } else if (list != null) {
-                boolean found = false;
-                boolean isCraftable = false;
-                FluidStack fs = StackInfo.getFluid(stack.item);
-                IAEItemStack item;
-                if (fs != null) {
-                    item = displayFluid ? AEItemStack.create(ItemFluidDrop.newDisplayStack(fs))
-                        : ItemFluidDrop.newAeStack(fs);
-                } else {
-                    item = AEItemStack.create(stack.item);
-                }
-                if (list.findPrecise(item) != null) {
-                    found = true;
-                    isCraftable = list.findPrecise(item)
-                        .isCraftable();
-                } else if (fs == null) {
-                    for (IAEStack<?> is : list.findFuzzy(item, FuzzyMode.IGNORE_ALL)) {
-                        if (is instanceof IAEItemStack ais && stack.contains(ais.getItemStack())) {
-                            found = true;
-                            if (is.isCraftable()) {
-                                isCraftable = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                itemPresenceSlots.add(new AEItemOverlayState(stack, found, isCraftable));
+                final OverlayStacks.Presence presence = OverlayStacks.presence(list, stack);
+                itemPresenceSlots.add(new AEItemOverlayState(stack, presence.found(), presence.craftable()));
             } else {
                 itemPresenceSlots.add(new GuiOverlayButton.ItemOverlayState(stack, false));
             }

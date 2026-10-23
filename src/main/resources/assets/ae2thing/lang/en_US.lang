@@ -171,16 +171,25 @@ nei.options.ae2thing.dual_interface_terminal.auto_upload=Auto upload pattern
 nei.options.ae2thing.dual_interface_terminal.auto_upload.true=Yes
 nei.options.ae2thing.dual_interface_terminal.auto_upload.false=No
 
-nei.options.ae2thing.dual_interface_terminal.enhanced_search=Enhanced recipe search (@recipe tab name@ then filters)
+nei.options.ae2thing.dual_interface_terminal.enhanced_search=Enhanced recipe search (@recipe pool then filters)
 nei.options.ae2thing.dual_interface_terminal.enhanced_search.true=Yes
 nei.options.ae2thing.dual_interface_terminal.enhanced_search.false=No
+
+nei.options.ae2thing.dual_interface_terminal.enhanced_search_debug=Enhanced recipe search debug
+nei.options.ae2thing.dual_interface_terminal.enhanced_search_debug.true=Yes
+nei.options.ae2thing.dual_interface_terminal.enhanced_search_debug.false=No
+
+nei.options.ae2thing.dual_interface_terminal.hide_encode_button_tooltip=Hide encode button tooltip
+nei.options.ae2thing.dual_interface_terminal.hide_encode_button_tooltip.true=Yes
+nei.options.ae2thing.dual_interface_terminal.hide_encode_button_tooltip.false=No
 
 nei.options.ae2thing.dual_interface_terminal.encode_auto_upload=§7[AE2Things]§r Auto upload pattern(AUP)
 nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc=§7With "AUP" on, NEI recipe transfer will automatically encode the pattern.
 nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_sum=§7If only one interface can run it, the pattern is placed automatically.
 nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_click=§7Otherwise the first match is highlighted; Alt + click places there.
 nei.options.ae2thing.dual_interface_terminal.encode_auto_upload.desc_scroll=§7Alt + scroll over this button to switch the highlighted interface.
-nei.options.ae2thing.dual_interface_terminal.enhanced_search.desc=If the default recipe filling fails to locate the interface, try enabling enhanced search (@recipe pool@ then filters; plain numbers match whole values, prefix a filter with - to exclude).
+nei.options.ae2thing.dual_interface_terminal.enhanced_search.desc=If the default recipe filling fails to locate the interface, try enabling enhanced search (@recipe pool then filters; a page title, a recipe category name or an id can be used; plain numbers match whole values, prefix a filter with - to exclude).
+nei.options.ae2thing.dual_interface_terminal.enhanced_search_debug.desc=§7Adds the resolved recipe pool id of the current query to the search field tooltip after enabling the enhanced recipe search debug.§7Also dumps the resolution result, the catalyst entries of that pool and the display stack plus verdict of every interface to the client log.
 
 ae2thing.tooltip.encode_auto_upload=§7[AE2Things]§r Auto upload pattern(AUP)
 ae2thing.tooltip.encode_auto_upload.desc_short=§7For more information, please check nei configs - AE2 Thing - Dual Interface Terminal
@@ -196,6 +205,8 @@ nei.options.ae2thing.nei_craft_item.false=No
 
 ae2thing.interface_terminal.search.hits=§7Enhanced search: §a%1$s§7 interface(s)
 ae2thing.interface_terminal.search.empty=§7Enhanced search: no interface can run this recipe pool and none matches by name
-ae2thing.interface_terminal.search.invalid.syntax=§cRecipe pool is not closed by "@", e.g. @mixer@
 ae2thing.interface_terminal.search.invalid.category_only=§cUnknown recipe pool: %1$s
 ae2thing.interface_terminal.search.invalid.category_hint=§cUnknown recipe pool: %1$s (did you mean: %2$s?)
+ae2thing.interface_terminal.search.current=§7Current query: §f%1$s
+ae2thing.interface_terminal.search.pool=§7Resolved recipe pool: §b%1$s
+ae2thing.interface_terminal.search.disabled=§cEnhanced search is off: enable it in the NEI options, otherwise a query starting with @ does nothing

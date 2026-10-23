@@ -30,14 +30,19 @@ public class AEItemOverlayState extends GuiOverlayButton.ItemOverlayState {
     public void draw(GuiOverlayButton.ItemOverlayFormat format) {
         super.draw(format);
         if (this.isPresent && this.isCraftable) {
-            GL11.glDisable(GL11.GL_LIGHTING);
-            GL11.glPushMatrix();
-            GL11.glTranslatef(0, 0, 200f);
-            GL11.glScalef(0.4f, 0.4f, 0.4f);
-            drawItem((int) ((this.slot.relx + 10) * 2.5), (int) (this.slot.rely * 2.5), PATTERN);
-            GL11.glTranslatef(0, 0, -200f);
-            GL11.glPopMatrix();
-            GL11.glEnable(GL11.GL_LIGHTING);
+            drawPatternIcon(this.slot);
         }
+    }
+
+    public static void drawPatternIcon(PositionedStack slot) {
+        if (slot == null) return;
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glPushMatrix();
+        GL11.glTranslatef(0, 0, 200f);
+        GL11.glScalef(0.4f, 0.4f, 0.4f);
+        drawItem((int) ((slot.relx + 10) * 2.5), (int) (slot.rely * 2.5), PATTERN);
+        GL11.glTranslatef(0, 0, -200f);
+        GL11.glPopMatrix();
+        GL11.glEnable(GL11.GL_LIGHTING);
     }
 }

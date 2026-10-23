@@ -11,6 +11,7 @@ public enum Mixins implements IMixins {
     AE(new MixinBuilder()
         .addCommonMixins(
             "ae.MixinContainerCraftConfirm",
+            "ae.MixinContainerSubGui",
             "ae.MixinCraftingJobV2",
             "ae.MixinGridStorage",
             "ae.MixinPacketMonitorableAction",

@@ -16,10 +16,13 @@ import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -48,9 +51,10 @@ import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.proxy.ClientProxy;
-import com.asdflj.ae2thing.util.EnhancedSearch;
 import com.asdflj.ae2thing.util.GTNLUtil;
-import com.asdflj.ae2thing.util.InterfacePoolResolver;
+import com.asdflj.ae2thing.util.enhancedsearch.EnhancedSearch;
+import com.asdflj.ae2thing.util.enhancedsearch.InterfacePoolResolver;
+import com.asdflj.ae2thing.util.enhancedsearch.UploadTarget;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
 import appeng.api.config.Settings;
@@ -76,15 +80,18 @@ import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.GuiText;
 import appeng.me.cache.ItemFlowGridCache.FlowRate;
 import appeng.util.IConfigManagerHost;
+import codechicken.nei.PositionedStack;
 import codechicken.nei.item.ItemFluidDisplay;
 import codechicken.nei.recipe.IRecipeHandler;
 import codechicken.nei.recipe.RecipeCatalysts;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2BooleanMap;
 
 public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless implements IWidgetGui, IGuiDrawSlot,
     IGuiMonitorTerminal, IConfigManagerHost, IGuiSelection, IDropToFillTextField, ITypeFilterGui, IFlowRateGui {
 
     private static final int PATTERN_DRAG_REGION_HEIGHT = 93;
+    private static final Logger LOG = LogManager.getLogger(AE2Thing.MODID);
 
     private int patternVirtualSlots() {
         if (this.container.inputsSync == null) return 32;
@@ -117,6 +124,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private String interfaceSearchStats = "";
     private String interfaceSearchFeedbackKey;
     private String interfaceSearchFeedbackTooltip;
+    private String interfaceSearchDumpedQuery;
     private final List<DualTerminalComponentTree.Component> itemSlotComponents = new ArrayList<>();
     private VirtualMESlot renderedVirtualSlotUnderMouse;
     private DualPatternSlot[] patternInputSlots;
@@ -1390,18 +1398,12 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     public void setHighlightSlot() {
-        for (InterfaceWirelessSection section : this.masterList.getVisibleSections()) {
-            for (InterfaceWirelessEntry entry : section.visibleEntries) {
-                for (int i = 0; i < entry.numSlots; i++) {
-                    ItemStack item = entry.inv.getStackInSlot(i);
-                    if (item == null) {
-                        ClientProxy.setInterfaceHighlightEntry(new InterfaceWirelessEntryWrapper(entry, i));
-                        scrollHighlightIntoView();
-                        return;
-                    }
-                }
-            }
-        }
+        final List<InterfaceWirelessEntryWrapper> candidates = collectUploadCandidates(
+            this.uploadRecipe,
+            this.uploadCraft);
+        if (candidates.isEmpty()) return;
+        ClientProxy.setInterfaceHighlightEntry(candidates.getFirst());
+        scrollHighlightIntoView();
     }
 
     public void setUploadContext(IRecipeHandler recipe, boolean craft) {
@@ -1410,57 +1412,33 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     public List<InterfaceWirelessEntryWrapper> collectUploadCandidates(IRecipeHandler recipe, boolean craft) {
-        boolean catalystGate = !craft && recipe != null
-            && !RecipeCatalysts.getRecipeCatalysts(recipe)
-                .isEmpty();
-        List<InterfaceWirelessEntryWrapper> matched = new ArrayList<>();
-        List<InterfaceWirelessEntryWrapper> unknown = new ArrayList<>();
+        final List<InterfaceWirelessEntryWrapper> matched = new ObjectArrayList<>();
+        final String pageId;
+        try {
+            pageId = recipe == null ? null : RecipeCatalysts.getRecipeID(recipe);
+        } catch (Throwable ignored) {
+            return matched;
+        }
+        final boolean hasPool = pageId != null && !pageId.trim()
+            .isEmpty();
+        final String poolId = hasPool ? pageId.trim() : null;
+        final List<String> poolIds = hasPool ? Collections.singletonList(poolId) : Collections.emptyList();
+        final boolean gated = !craft && hasPool && InterfacePoolResolver.hasCatalysts(poolId);
+        final String nameHint = EnhancedSearch.recipeTabName(recipe);
         for (InterfaceWirelessSection section : this.masterList.getVisibleSections()) {
             for (InterfaceWirelessEntry entry : section.visibleEntries) {
-                if (craft) {
-                    if (!entry.isCraftingPatternProvider) continue;
-                }
-                int slot = -1;
-                for (int i = 0; i < entry.numSlots; i++) {
-                    if (entry.inv.getStackInSlot(i) == null) {
-                        slot = i;
-                        break;
-                    }
-                }
+                if (craft && !entry.isCraftingPatternProvider) continue;
+                final int slot = entry.firstEmptySlot();
                 if (slot < 0) continue;
-                InterfaceWirelessEntryWrapper wrapper = new InterfaceWirelessEntryWrapper(entry, slot);
-                if (GTNLUtil.isAssemblerMatrix(entry.dispRep)) {
-                    matched.add(wrapper);
+                if (!GTNLUtil.isAssemblerMatrix(entry.dispRep) && gated
+                    && UploadTarget.outcome(entry.dispRep, entry.dispName, entry.searchSuffix, poolIds, nameHint)
+                        == UploadTarget.Outcome.SKIP) {
                     continue;
                 }
-                if (craft || !catalystGate) {
-                    matched.add(wrapper);
-                    continue;
-                }
-                switch (InterfacePoolResolver.classifyForRecipe(entry.dispRep, recipe)) {
-                    case MATCH -> matched.add(wrapper);
-                    case UNKNOWN -> unknown.add(wrapper);
-                    case NO_MATCH -> {}
-                }
+                matched.add(new InterfaceWirelessEntryWrapper(entry, slot));
             }
         }
-        matched.addAll(nameFiltered(unknown, EnhancedSearch.recipeTabName(recipe)));
         return matched;
-    }
-
-    private static List<InterfaceWirelessEntryWrapper> nameFiltered(List<InterfaceWirelessEntryWrapper> entries,
-        String hint) {
-        if (entries.isEmpty() || hint == null) return Collections.emptyList();
-        final String lower = hint.trim()
-            .toLowerCase();
-        if (lower.isEmpty()) return Collections.emptyList();
-        final List<InterfaceWirelessEntryWrapper> hits = new ArrayList<>();
-        for (InterfaceWirelessEntryWrapper wrapper : entries) {
-            if (EnhancedSearch.matchesNameHint(lower, wrapper.entry.dispName, wrapper.entry.searchSuffix)) {
-                hits.add(wrapper);
-            }
-        }
-        return hits;
     }
 
     private EnhancedSearch.Query enhancedQuery() {
@@ -1471,10 +1449,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     @Override
     protected String sectionFilterText(String query) {
         final EnhancedSearch.Query enhanced = this.enhancedQuery();
-        final String text = query == null ? "" : query;
         if (enhanced.isActive() || enhanced.isInvalid()) return "";
-        if (text.startsWith("@@")) return text.substring(1);
-        return text;
+        return query == null ? "" : query;
     }
 
     @Override
@@ -1491,18 +1467,71 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             }
         }
         this.interfaceSearchStats = EnhancedSearch.summary(visible);
+        this.dumpSearchDiagnostics(enhanced);
+    }
+
+    private void dumpSearchDiagnostics(EnhancedSearch.Query enhanced) {
+        if (!getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH_DEBUG)) {
+            return;
+        }
+
+        final String query = this.getSearchQueryText();
+        if (query.equals(this.interfaceSearchDumpedQuery)) return;
+        this.interfaceSearchDumpedQuery = query;
+        try {
+            LOG.info("[ae2thing] query '{}' resolved to {}", query, EnhancedSearch.describe(enhanced));
+            for (String id : enhanced.poolIds()) {
+                final List<PositionedStack> pool = RecipeCatalysts.getRecipeCatalysts(id);
+                LOG.info("[ae2thing] pool '{}' -> {} catalyst entry(ies): {}", id, pool.size(), describePool(pool));
+            }
+            for (InterfaceWirelessEntry entry : this.masterList.allEntries()) {
+                LOG.info(
+                    "[ae2thing] entry '{}' rep={} -> {}",
+                    entry.dispName,
+                    describeStack(entry.dispRep),
+                    InterfacePoolResolver.classify(entry.dispRep, enhanced.poolIds()));
+            }
+        } catch (Throwable t) {
+            LOG.warn("[ae2thing] search diagnostics failed", t);
+        }
+    }
+
+    private static String describePool(List<PositionedStack> pool) {
+        final StringBuilder result = new StringBuilder();
+        final int limit = Math.min(pool.size(), 16);
+        for (int i = 0; i < limit; i++) {
+            if (i > 0) result.append(", ");
+            result.append(describeStack(pool.get(i).item));
+        }
+        if (pool.size() > limit) result.append(", ...");
+        return result.toString();
+    }
+
+    private static String describeStack(ItemStack stack) {
+        if (stack == null || stack.getItem() == null) return "null";
+        return Item.itemRegistry.getNameForObject(stack.getItem()) + ":" + stack.getItemDamage();
     }
 
     @Override
     protected void updateSearchFieldFeedback() {
         final String query = this.getSearchQueryText();
         final EnhancedSearch.Query enhanced = this.enhancedQuery();
+        final String extra = EnhancedSearch.tooltipExtra(
+            enhanced,
+            query,
+            getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH),
+            getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH_DEBUG));
+        final boolean error = enhanced.isInvalid()
+            || (!getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH)
+                && EnhancedSearch.looksLikeQuery(query));
         final String key = query + '\u0000'
             + this.interfaceSearchStats
             + '\u0000'
             + enhanced.isInvalid()
             + '\u0000'
-            + enhanced.invalidReason();
+            + enhanced.invalidReason()
+            + '\u0000'
+            + extra;
         if (!key.equals(this.interfaceSearchFeedbackKey)) {
             this.interfaceSearchFeedbackKey = key;
             final StringBuilder tooltip = new StringBuilder(ButtonToolTips.SearchFieldNames.getLocal());
@@ -1515,9 +1544,10 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                 tooltip.append('\n')
                     .append(this.interfaceSearchStats);
             }
+            tooltip.append(extra);
             this.interfaceSearchFeedbackTooltip = tooltip.toString();
         }
-        this.setSearchFieldFeedback(this.interfaceSearchFeedbackTooltip, enhanced.isInvalid());
+        this.setSearchFieldFeedback(this.interfaceSearchFeedbackTooltip, error);
     }
 
     @Override

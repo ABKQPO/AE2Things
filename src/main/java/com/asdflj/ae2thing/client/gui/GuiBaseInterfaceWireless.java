@@ -54,8 +54,8 @@ import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.GTUtil;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.asdflj.ae2thing.util.NeCharUtil;
-import com.asdflj.ae2thing.util.SearchTokens;
 import com.asdflj.ae2thing.util.Util;
+import com.asdflj.ae2thing.util.enhancedsearch.SearchTokens;
 
 import appeng.api.AEApi;
 import appeng.api.config.ActionItems;
@@ -457,11 +457,13 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
     }
 
     public void setSearchFieldSuggestion(String text) {
-        searchFieldNames.setSuggestion(text);
+        if (this.searchFieldNames == null) return;
+        searchFieldNames.setSuggestion(text == null ? "" : text);
     }
 
     public void setSearchFieldText(String text) {
-        searchFieldNames.setText(text);
+        if (this.searchFieldNames == null) return;
+        searchFieldNames.setText(text == null ? "" : text);
     }
 
     @Override
@@ -1388,6 +1390,16 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         return true;
     }
 
+    boolean passesNonSearchFilters(InterfaceWirelessEntry entry) {
+        if (!entry.online || entry.p2pOutput || (!entry.terminalVisible && !showHidden)) return false;
+        if (AEConfig.instance.showOnlyInterfacesWithFreeSlotsInInterfaceTerminal && entry.numItems >= entry.numSlots) {
+            return false;
+        }
+        if (onlyBrokenRecipes && !entry.hasBrokenSlot()) return false;
+        if (onlySubstitute && !entry.hasUseSubstitute()) return false;
+        return true;
+    }
+
     protected String sectionFilterText(String query) {
         return query == null ? "" : query;
     }
@@ -1770,18 +1782,8 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
                 if (entry.doubleButton != null) {
                     entry.doubleButton.yPosition = -1;
                 }
-                if (!entry.online || entry.p2pOutput || (!entry.terminalVisible && !showHidden)) continue;
+                if (!GuiBaseInterfaceWireless.this.passesNonSearchFilters(entry)) continue;
                 if (onlyMolecularAssemblers && !entry.isCraftingPatternProvider) {
-                    continue;
-                }
-                if (AEConfig.instance.showOnlyInterfacesWithFreeSlotsInInterfaceTerminal
-                    && entry.numItems >= entry.numSlots) {
-                    continue;
-                }
-                if (onlyBrokenRecipes && !entry.hasBrokenSlot()) {
-                    continue;
-                }
-                if (onlySubstitute && !entry.hasUseSubstitute()) {
                     continue;
                 }
                 if (!GuiBaseInterfaceWireless.this.entryMatchesEnhancedSearch(entry)) {
@@ -2021,6 +2023,13 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             } catch (Exception e) {
                 AELog.error(e);
             }
+        }
+
+        public int firstEmptySlot() {
+            for (int idx = 0; idx < this.numSlots; idx++) {
+                if (this.inv.getStackInSlot(idx) == null) return idx;
+            }
+            return -1;
         }
 
         public boolean hasBrokenSlot() {

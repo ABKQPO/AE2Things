@@ -26,9 +26,7 @@ public class GuiCraftConfirm extends appeng.client.gui.implementations.GuiCraftC
         } else if (target instanceof WirelessDualInterfaceTerminalInventory) {
             originalGui = GuiType.WIRELESS_DUAL_INTERFACE_TERMINAL;
         }
-        if (btn == this.getCancelButton() && originalGui != null
-            && ((AEBaseContainer) this.inventorySlots).getPrimaryGui() == null) {
-            // only acts when shift is held and items are missing, exactly like upstream's handler
+        if (btn == this.getCancelButton() && originalGui != null) {
             this.addMissingItemsToBookMark();
             InventoryHandler.switchGui(originalGui);
             return;

@@ -6,7 +6,6 @@ import static com.asdflj.ae2thing.proxy.ClientProxy.mouseHandlers;
 import static net.minecraft.client.gui.GuiScreen.isShiftKeyDown;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
@@ -24,11 +23,12 @@ import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.client.gui.widget.DualPatternSlot;
 import com.asdflj.ae2thing.integration.Mods;
 import com.asdflj.ae2thing.nei.object.OrderStack;
-import com.asdflj.ae2thing.nei.recipes.Recipe;
+import com.asdflj.ae2thing.nei.recipes.NEIRecipeUtil;
 import com.asdflj.ae2thing.network.CPacketTransferRecipe;
 import com.asdflj.ae2thing.proxy.ClientProxy;
 import com.asdflj.ae2thing.util.GTUtil;
 import com.asdflj.ae2thing.util.PHUtil;
+import com.asdflj.ae2thing.util.enhancedsearch.EnhancedSearch;
 import com.google.common.base.Optional;
 
 import appeng.api.AEApi;
@@ -40,26 +40,14 @@ import codechicken.nei.api.IOverlayHandler;
 import codechicken.nei.recipe.GuiOverlayButton;
 import codechicken.nei.recipe.IRecipeHandler;
 import codechicken.nei.recipe.StackInfo;
-import codechicken.nei.recipe.TemplateRecipeHandler;
+import gregtech.nei.GTNEIDefaultHandler;
 
 public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
 
     public static final PatternTerminalRecipeTransferHandler INSTANCE = new PatternTerminalRecipeTransferHandler();
 
-    public static final HashSet<String> notOtherSet = new HashSet<>();
-    public static final HashSet<String> craftSet = new HashSet<>();
-    public static final HashSet<String> noMergeSet = new HashSet<>();
-
     private static final int DEFAULT_MULTIPLIER = 1;
     private static final int MAX_MULTIPLIER = 64;
-
-    static {
-        notOtherSet.add("smelting");
-        notOtherSet.add("brewing");
-        craftSet.add("crafting");
-        craftSet.add("crafting2x2");
-        noMergeSet.add("gt.recipe.fakeAssemblylineProcess");
-    }
 
     private static Object findSameIngredient(ItemStack[] items, ItemStack item, FluidStack fluid,
         Constants.MouseWheel wheel) {
@@ -115,7 +103,7 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
                                 new CPacketTransferRecipe(
                                     in,
                                     out,
-                                    shouldCraft(btn.handlerRef.handler),
+                                    NEIRecipeUtil.shouldCraft(btn.handlerRef.handler),
                                     isShiftKeyDown(),
                                     Constants.NEI_MOUSE_WHEEL));
                             return true;
@@ -137,16 +125,16 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
         multiplier = Math.clamp(multiplier, DEFAULT_MULTIPLIER, MAX_MULTIPLIER);
 
         if (firstGui instanceof GuiInfusionPatternTerminal) {
-            List<OrderStack<?>> in = Recipe.getPackageInputs(recipe, recipeIndex, false);
-            List<OrderStack<?>> out = Recipe.getPackageOutputs(recipe, recipeIndex, false);
+            List<OrderStack<?>> in = NEIRecipeUtil.getPackageInputs(recipe, recipeIndex, false);
+            List<OrderStack<?>> out = NEIRecipeUtil.getPackageOutputs(recipe, recipeIndex, false);
             AE2Thing.proxy.netHandler.sendToServer(new CPacketTransferRecipe(out, in, true, isShiftKeyDown()));
             if (!in.isEmpty() || !out.isEmpty()) {
                 return multiplier;
             }
         } else if (firstGui instanceof GuiWirelessDualInterfaceTerminal gui) {
             boolean priority = gui.container.prioritize;
-            boolean craft = shouldCraft(recipe);
-            List<OrderStack<?>> in = Recipe.getPackageInputs(recipe, recipeIndex, !craft && priority);
+            boolean craft = NEIRecipeUtil.shouldCraft(recipe);
+            List<OrderStack<?>> in = NEIRecipeUtil.getPackageInputs(recipe, recipeIndex, !craft && priority);
             setSuggestion(craft, recipe, gui, in);
             if (Mods.PROGRAMMABLE_HATCHES.isModLoaded() && !craft) {
                 in = PHUtil.transfer(in);
@@ -154,7 +142,8 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             in = NEIUtils.prepareNonConsumedInputs(
                 in,
                 getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_INCLUDE_NON_CONSUMED));
-            List<OrderStack<?>> out = Recipe.getPackageOutputs(recipe, recipeIndex, !notUseOther(recipe));
+            List<OrderStack<?>> out = NEIRecipeUtil
+                .getPackageOutputs(recipe, recipeIndex, !NEIRecipeUtil.notUseOther(recipe));
 
             boolean autoEncode = false;
             NBTTagCompound target = null;
@@ -196,7 +185,7 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
     }
 
     private static boolean mergeAllowed(IRecipeHandler recipe, int recipeIndex, String realIdentifier) {
-        if (realIdentifier != null && (noMergeSet.contains(realIdentifier)
+        if (realIdentifier != null && (NEIRecipeUtil.noMergeSet.contains(realIdentifier)
             || getConfigList(ButtonConstants.DUAL_INTERFACE_TERMINAL_NO_MERGE).contains(realIdentifier))) {
             return false;
         }
@@ -219,11 +208,16 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             } else {
                 suggestion = "";
             }
-        } else if (Mods.isGt5UnofficialLoaded() || Mods.isLegacyGt5Loaded()) {
-            suggestion = GTUtil.getRecipeName(recipe, in);
         } else {
-            suggestion = recipe.getRecipeName();
+            suggestion = recipe.getRecipeTabName();
+            if (Mods.isGt5Loaded() && recipe instanceof GTNEIDefaultHandler) {
+                suggestion = GTUtil.getRecipeName(recipe, in);
+            }
+            if (suggestion == null && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH)) {
+                suggestion = EnhancedSearch.poolQuery(recipe);
+            }
         }
+        if (suggestion == null) suggestion = "";
         if (getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL)) {
             gui.setSearchFieldText(suggestion);
             gui.setHighlightSlot();
@@ -235,15 +229,4 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             gui.setSearchFieldText(suggestion);
         }
     }
-
-    private boolean notUseOther(IRecipeHandler recipeHandler) {
-        TemplateRecipeHandler tRecipe = (TemplateRecipeHandler) recipeHandler;
-        return notOtherSet.contains(tRecipe.getOverlayIdentifier());
-    }
-
-    private boolean shouldCraft(IRecipeHandler recipeHandler) {
-        TemplateRecipeHandler tRecipe = (TemplateRecipeHandler) recipeHandler;
-        return craftSet.contains(tRecipe.getOverlayIdentifier());
-    }
-
 }
