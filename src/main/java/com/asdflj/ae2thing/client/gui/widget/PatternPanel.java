@@ -28,6 +28,7 @@ import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTe
 import com.asdflj.ae2thing.client.gui.container.slot.SlotPatternFake;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.util.Ae2ReflectClient;
+import com.asdflj.ae2thing.util.GTNLUtil;
 import com.asdflj.ae2thing.util.ModAndClassUtil;
 import com.glodblock.github.client.gui.GuiFCImgButton;
 
@@ -82,7 +83,6 @@ public class PatternPanel implements IAEBasePanel {
     private static final int PANEL_HEIGHT = 202;
     private static final int GRID_WIDTH = 4;
     private static final int GRID_HEIGHT = 4;
-    private static final int MAX_PAGES = 2;
     private static final int INPUT_X = 224;
     private static final int INPUT_Y = -59;
     private static final int OUTPUT_X = 224 + 97;
@@ -96,6 +96,7 @@ public class PatternPanel implements IAEBasePanel {
     private final List<SlotLayout> slotLayouts = new ArrayList<>();
     private int absX;
     private int absY;
+    private int lastPageCount = -1;
     private boolean initialized;
 
     public PatternPanel(IWidgetGui gui, ContainerWirelessDualInterfaceTerminal container) {
@@ -165,6 +166,11 @@ public class PatternPanel implements IAEBasePanel {
     @Override
     public void drawScreen(int mouseX, int mouseY, float btn) {
         this.updateFixedButtonPositions();
+        final int pages = this.pageCount();
+        if (pages != this.lastPageCount) {
+            this.lastPageCount = pages;
+            this.processingScrollBar.setRange(0, pages - 1, 1);
+        }
         if (this.container.isCraftingMode()) {
             substitutionsEnabledBtn.xPosition = this.absX + 82;
             substitutionsEnabledBtn.yPosition = this.absY + 14;
@@ -609,6 +615,13 @@ public class PatternPanel implements IAEBasePanel {
         this.updateVirtualSlotPositions(this.absX - this.parent.getGuiLeft(), this.absY - this.parent.getGuiTop());
     }
 
+    private int pageCount() {
+        if (this.container.inputsSync == null) return 2;
+        final int size = this.container.inputsSync.get()
+            .getSizeInventory();
+        return Math.max(2, size / GTNLUtil.largeSideSlots());
+    }
+
     private int inputColumns() {
         return this.container.inverted ? 1 : GRID_WIDTH;
     }
@@ -630,7 +643,7 @@ public class PatternPanel implements IAEBasePanel {
         final int originX = panelX - PANEL_X;
         final int originY = panelY + this.slotRebaseY - PANEL_Y;
         final boolean crafting = this.container.isCraftingMode();
-        final int page = Math.clamp(this.container.activePage, 0, MAX_PAGES - 1);
+        final int page = Math.clamp(this.container.activePage, 0, this.pageCount() - 1);
 
         final int inputColumns = this.inputColumns();
         final int inputPageSize = this.inputPageSize();

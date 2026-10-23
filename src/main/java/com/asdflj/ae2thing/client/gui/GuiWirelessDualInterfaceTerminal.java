@@ -49,6 +49,7 @@ import com.asdflj.ae2thing.network.CPacketSwitchGuis;
 import com.asdflj.ae2thing.network.CPacketTerminalBtns;
 import com.asdflj.ae2thing.proxy.ClientProxy;
 import com.asdflj.ae2thing.util.EnhancedSearch;
+import com.asdflj.ae2thing.util.GTNLUtil;
 import com.asdflj.ae2thing.util.InterfacePoolResolver;
 import com.glodblock.github.common.item.ItemFluidDrop;
 
@@ -84,7 +85,14 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     IGuiMonitorTerminal, IConfigManagerHost, IGuiSelection, IDropToFillTextField, ITypeFilterGui, IFlowRateGui {
 
     private static final int PATTERN_DRAG_REGION_HEIGHT = 93;
-    private static final int PATTERN_VIRTUAL_SLOTS = 32;
+
+    private int patternVirtualSlots() {
+        if (this.container.inputsSync == null) return 32;
+        return Math.max(
+            32,
+            this.container.inputsSync.get()
+                .getSizeInventory());
+    }
 
     public ContainerWirelessDualInterfaceTerminal container;
     private GuiTabButton craftingStatusBtn;
@@ -846,9 +854,10 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
             this.patternPanel.setVirtualSlots(this.patternInputSlots, this.patternOutputSlots);
             return;
         }
-        this.patternInputSlots = new DualPatternSlot[PATTERN_VIRTUAL_SLOTS];
-        this.patternOutputSlots = new DualPatternSlot[PATTERN_VIRTUAL_SLOTS];
-        for (int i = 0; i < PATTERN_VIRTUAL_SLOTS; i++) {
+        final int slots = this.patternVirtualSlots();
+        this.patternInputSlots = new DualPatternSlot[slots];
+        this.patternOutputSlots = new DualPatternSlot[slots];
+        for (int i = 0; i < slots; i++) {
             this.patternInputSlots[i] = new DualPatternSlot(0, 0, this.container.inputsSync, i, this.container);
             this.patternOutputSlots[i] = new DualPatternSlot(0, 0, this.container.outputsSync, i, this.container);
             this.registerVirtualSlots(this.patternInputSlots[i]);
@@ -1420,6 +1429,10 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
                 }
                 if (slot < 0) continue;
                 InterfaceWirelessEntryWrapper wrapper = new InterfaceWirelessEntryWrapper(entry, slot);
+                if (GTNLUtil.isAssemblerMatrix(entry.dispRep)) {
+                    matched.add(wrapper);
+                    continue;
+                }
                 if (craft || !catalystGate) {
                     matched.add(wrapper);
                     continue;
