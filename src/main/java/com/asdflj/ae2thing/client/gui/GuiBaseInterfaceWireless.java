@@ -457,11 +457,13 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
     }
 
     public void setSearchFieldSuggestion(String text) {
-        searchFieldNames.setSuggestion(text);
+        if (this.searchFieldNames == null) return;
+        searchFieldNames.setSuggestion(text == null ? "" : text);
     }
 
     public void setSearchFieldText(String text) {
-        searchFieldNames.setText(text);
+        if (this.searchFieldNames == null) return;
+        searchFieldNames.setText(text == null ? "" : text);
     }
 
     @Override

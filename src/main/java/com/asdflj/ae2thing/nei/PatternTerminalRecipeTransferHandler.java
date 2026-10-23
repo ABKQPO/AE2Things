@@ -40,6 +40,7 @@ import codechicken.nei.api.IOverlayHandler;
 import codechicken.nei.recipe.GuiOverlayButton;
 import codechicken.nei.recipe.IRecipeHandler;
 import codechicken.nei.recipe.StackInfo;
+import gregtech.nei.GTNEIDefaultHandler;
 
 public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
 
@@ -209,13 +210,14 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             }
         } else {
             suggestion = recipe.getRecipeTabName();
-            if (Mods.isGt5Loaded()) {
+            if (Mods.isGt5Loaded() && recipe instanceof GTNEIDefaultHandler) {
                 suggestion = GTUtil.getRecipeName(recipe, in);
             }
             if (suggestion == null && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH)) {
                 suggestion = EnhancedSearch.poolQuery(recipe);
             }
         }
+        if (suggestion == null) suggestion = "";
         if (getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL)) {
             gui.setSearchFieldText(suggestion);
             gui.setHighlightSlot();

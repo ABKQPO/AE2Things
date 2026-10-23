@@ -68,6 +68,7 @@ public class CPacketInventoryActionExtend implements IMessage {
     private IAEStack<?> stack;
     private boolean isEmpty;
 
+    @SuppressWarnings("unused")
     public CPacketInventoryActionExtend() {}
 
     public CPacketInventoryActionExtend(final InventoryActionExtend action, final int slot, final int id) {
@@ -222,12 +223,11 @@ public class CPacketInventoryActionExtend implements IMessage {
                         }
                         for (ICraftingCPU cpu: craftingGrid.getCpus()) {
                             i++;
-                            if(cpu instanceof CraftingCPUCluster ccc && ccc.getFinalOutput() != null){
-                                if(message.stack instanceof IAEItemStack requestStack
-                                    && requestStack.isSameType(ccc.getFinalOutput())){
-                                    IItemList<IAEItemStack> list =  AEApi.instance().storage().createPrimitiveItemList();
-                                    ccc.getListOfItem(list,ACTIVE);
-                                    List<IAEItemStack> activeItems = getActiveCraftingItems(list);
+                            if(cpu instanceof CraftingCPUCluster ccc && ccc.getFinalMultiOutput() != null){
+                                if(message.stack.isSameType(ccc.getFinalMultiOutput())){
+                                    IItemList<IAEStack<?>> list =  AEApi.instance().storage().createAEStackList();
+                                    ccc.getModernListOfItem(list, ACTIVE);
+                                    List<IAEStack<?>> activeItems = getActiveCraftingItems(list);
                                     if(activeItems.isEmpty()){
                                         continue;
                                     }
@@ -236,14 +236,14 @@ public class CPacketInventoryActionExtend implements IMessage {
                                     if(ccc.getName().isEmpty()){
                                         name = GuiText.CPUs.getLocal() + ": #" + i;
                                     }else{
-                                        name =GuiText.CPUs.getLocal() + ": "  + ccc.getName().substring(0, Math.min(20, ccc.getName().length()));
+                                        name = GuiText.CPUs.getLocal() + ": "  + ccc.getName().substring(0, Math.min(20, ccc.getName().length()));
                                     }
-                                    new CPUCraftingPreview(name, ccc.getRemainingItemCount(),ccc.getElapsedTime(),  activeItems).writeToNBT(data);
+                                    new CPUCraftingPreview(name, ccc.getRemainingItemCount(), ccc.getElapsedTime(), activeItems).writeToNBT(data);
                                     tagList.appendTag(data);
                                 }
                             }
                         }
-                        AE2Thing.proxy.netHandler.sendTo(new SPacketCraftingStateUpdate(cpuData),ctx.getServerHandler().playerEntity);
+                        AE2Thing.proxy.netHandler.sendTo(new SPacketCraftingStateUpdate(cpuData), ctx.getServerHandler().playerEntity);
                     }
                 } else if (message.action == InventoryActionExtend.CLEAR_PATTERN && baseContainer instanceof ContainerPatternModifier patternModifier) {
                     patternModifier.clearPattern();
@@ -318,13 +318,13 @@ public class CPacketInventoryActionExtend implements IMessage {
             };
         }
 
-        private List<IAEItemStack> getActiveCraftingItems(IItemList<IAEItemStack> list) {
-            List<IAEItemStack> activeItems = new ArrayList<>();
-            for (IAEItemStack item : list) {
+        private List<IAEStack<?>> getActiveCraftingItems(IItemList<IAEStack<?>> list) {
+            List<IAEStack<?>> activeItems = new ArrayList<>();
+            for (IAEStack<?> item : list) {
                 activeItems.add(item);
             }
             activeItems.sort(
-                Comparator.comparingLong(IAEItemStack::getStackSize)
+                Comparator.comparingLong(IAEStack<?>::getStackSize)
                     .reversed());
             if (activeItems.size() <= CPUCraftingPreview.maxSize) {
                 return activeItems;

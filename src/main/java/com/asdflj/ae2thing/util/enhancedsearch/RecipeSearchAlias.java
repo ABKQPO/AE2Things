@@ -203,7 +203,11 @@ public final class RecipeSearchAlias {
         final int scanned = scanHandlers();
         if (scanned <= 0) return;
         indexReady = true;
-        saveCache();
+        try {
+            saveCache();
+        } catch (Throwable e) {
+            LOG.warn("Failed to write {}", INDEX_FILE, e);
+        }
     }
 
     private static int scanHandlers() {
@@ -319,11 +323,13 @@ public final class RecipeSearchAlias {
         builder.append(INDEX_HEADER)
             .append(fingerprint())
             .append(separator);
-        for (Map.Entry<String, String> entry : new TreeSet<>(indexTitles.entrySet())) {
+        for (String identifier : new TreeSet<>(indexTitles.keySet())) {
+            final String title = indexTitles.get(identifier);
+            if (title == null) continue;
             builder.append(TITLE_LINE)
-                .append(entry.getKey())
+                .append(identifier)
                 .append('\t')
-                .append(entry.getValue())
+                .append(title)
                 .append(separator);
         }
         for (String key : new TreeSet<>(index.keySet())) {

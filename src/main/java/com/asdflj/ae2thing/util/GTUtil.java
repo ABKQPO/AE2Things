@@ -29,7 +29,6 @@ import gregtech.api.enums.ItemList;
 import gregtech.api.metatileentity.BaseMetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatch;
 import gregtech.common.blocks.ItemMachines;
-import gregtech.nei.GTNEIDefaultHandler;
 
 public class GTUtil {
 
@@ -49,8 +48,6 @@ public class GTUtil {
 
     @SideOnly(Side.CLIENT)
     public static String getRecipeName(IRecipeHandler recipe, List<OrderStack<?>> in) {
-        if (!(recipe instanceof GTNEIDefaultHandler)) return null;
-
         String head = null;
         try {
             head = recipe.getOverlayIdentifier();
