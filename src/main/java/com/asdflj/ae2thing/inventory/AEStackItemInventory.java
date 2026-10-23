@@ -3,10 +3,8 @@ package com.asdflj.ae2thing.inventory;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.fluids.FluidStack;
 
-import com.asdflj.ae2thing.integration.Mods;
-import com.asdflj.ae2thing.util.AspectUtil;
+import com.asdflj.ae2thing.util.Util;
 import com.glodblock.github.common.item.ItemFluidPacket;
 
 import appeng.api.storage.StorageName;
@@ -16,10 +14,7 @@ import appeng.api.storage.data.IAEStack;
 import appeng.tile.inventory.IAEStackInventory;
 import appeng.tile.inventory.IIAEStackInventory;
 import appeng.util.Platform;
-import appeng.util.item.AEFluidStack;
-import appeng.util.item.AEItemStack;
 import codechicken.nei.item.ItemFluidDisplay;
-import codechicken.nei.recipe.StackInfo;
 
 public class AEStackItemInventory implements IIAEStackInventory {
 
@@ -93,26 +88,11 @@ public class AEStackItemInventory implements IIAEStackInventory {
         for (int i = 0; i < this.getSizeInventory(); i++) {
             final NBTTagCompound slotTag = stored.getCompoundTag("#" + i);
             if (slotTag.hasNoTags()) continue;
-            final IAEStack<?> stack = toAEStack(ItemStack.loadItemStackFromNBT(slotTag));
+            final IAEStack<?> stack = Util.toAEStack(ItemStack.loadItemStackFromNBT(slotTag));
             if (stack != null) {
                 this.aeInventory.putAEStackInSlot(i, stack);
             }
         }
-    }
-
-    public static IAEStack<?> toAEStack(ItemStack stack) {
-        if (stack == null || stack.getItem() == null) return null;
-
-        FluidStack fluid = StackInfo.getFluid(stack);
-        if (fluid != null && fluid.getFluid() != null) {
-            return AEFluidStack.create(fluid);
-        }
-
-        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
-            final IAEStack<?> essentia = AspectUtil.toAEStack(stack);
-            if (essentia != null) return essentia;
-        }
-        return AEItemStack.create(stack);
     }
 
     public static ItemStack toItemStack(IAEStack<?> stack) {

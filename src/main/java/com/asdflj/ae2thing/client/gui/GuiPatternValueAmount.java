@@ -3,6 +3,8 @@ package com.asdflj.ae2thing.client.gui;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.entity.player.InventoryPlayer;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.asdflj.ae2thing.api.adapter.terminal.IGuiCraftAmount;
 import com.asdflj.ae2thing.client.gui.container.ContainerPatternValueAmount;
 
@@ -79,11 +81,7 @@ public class GuiPatternValueAmount extends appeng.client.gui.implementations.Gui
 
     @Override
     public int getAmount() {
-        try {
-            return (int) Math.min(Integer.MAX_VALUE, this.getAmountLong());
-        } catch (final NumberFormatException e) {
-            return 0;
-        }
+        return IGuiCraftAmount.super.getAmount();
     }
 
     @Override
@@ -98,13 +96,14 @@ public class GuiPatternValueAmount extends appeng.client.gui.implementations.Gui
     }
 
     @Override
-    public void setAmount(int amount) {
-        this.setAmount((long) amount);
-    }
-
     public void setAmount(long amount) {
         this.amountTextField.setText(Long.toString(amount));
         this.amountTextField.setCursorPositionEnd();
         this.amountTextField.setSelectionPos(0);
+    }
+
+    @Override
+    public @Nullable IAEStack<?> getTarget() {
+        return this.slot == null ? null : this.slot.getAEStack();
     }
 }

@@ -2233,7 +2233,8 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
 
         final int x = Mouse.getEventX() * this.width / this.mc.displayWidth;
         final int y = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
-        if ((LayoutManager.bookmarkPanel != null && LayoutManager.bookmarkPanel.contains(x, y)) || (LayoutManager.itemPanel != null && LayoutManager.itemPanel.contains(x, y))) {
+        if ((LayoutManager.bookmarkPanel != null && LayoutManager.bookmarkPanel.contains(x, y))
+            || (LayoutManager.itemPanel != null && LayoutManager.itemPanel.contains(x, y))) {
             super.handleMouseInput();
             return;
         }

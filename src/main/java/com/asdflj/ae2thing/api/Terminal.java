@@ -21,10 +21,7 @@ import com.asdflj.ae2thing.nei.ButtonConstants;
 import com.asdflj.ae2thing.nei.NEI_TH_Config;
 import com.asdflj.ae2thing.util.Util;
 
-import appeng.api.AEApi;
 import appeng.api.networking.IGridHost;
-import appeng.api.storage.data.IAEItemStack;
-import appeng.api.storage.data.IItemList;
 import appeng.client.gui.AEBaseGui;
 import codechicken.nei.recipe.GuiRecipe;
 import cpw.mods.fml.relauncher.Side;
@@ -36,9 +33,6 @@ public class Terminal {
     private static final HashSet<Class<? extends AEBaseGui>> terminal = new HashSet<>();
     private static final HashSet<Class<? extends AEBaseGui>> terminalBlackList = new HashSet<>();
     private static final HashMap<Class<? extends Container>, ICraftingTerminalAdapter> craftingTerminal = new HashMap<>();
-    private static final IItemList<IAEItemStack> tracking = AEApi.instance()
-        .storage()
-        .createPrimitiveItemList();
     private static final HashMap<Class<? extends IGridHost>, IFindItAdapter> storageProviders = new HashMap<>();
     private static final HashMap<Class<? extends Container>, IPatternTerminalAdapter> patternTerminal = new HashMap<>();
     private static final HashMap<Class<? extends Item>, ITerminalHandler> terminalItem = new HashMap<>();
@@ -119,21 +113,6 @@ public class Terminal {
             return craftingTerminal.containsKey(gc.inventorySlots.getClass());
         }
         return false;
-    }
-
-    @SideOnly(Side.CLIENT)
-    public void addTrackingMissingItem(IAEItemStack is) {
-        tracking.add(is);
-    }
-
-    @SideOnly(Side.CLIENT)
-    public IItemList<IAEItemStack> getTrackingMissingItems() {
-        return tracking;
-    }
-
-    @SideOnly(Side.CLIENT)
-    public void clearTrackingMissingItems() {
-        tracking.resetStatus();
     }
 
     public IPatternTerminalAdapter registerPatternTerminal(IPatternTerminalAdapter adapter) {

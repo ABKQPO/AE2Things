@@ -507,7 +507,7 @@ public abstract class ContainerMonitor extends BaseNetworkContainer implements I
         if (monitor == null) return;
         GenericMonitor generic = new GenericMonitor(monitor, this.crafters);
         genericMonitors.add(generic);
-        ((IMEMonitor) monitor).addListener(generic, null);
+        monitor.addListener(generic, null);
     }
 
     protected static class GenericMonitor implements IMEMonitorHandlerReceiver<IAEStack> {

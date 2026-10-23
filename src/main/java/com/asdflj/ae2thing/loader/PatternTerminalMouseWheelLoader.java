@@ -12,8 +12,8 @@ import com.asdflj.ae2thing.api.adapter.pattern.THDualInterfacePatternTerminal;
 import com.asdflj.ae2thing.client.gui.container.ContainerInfusionPatternTerminal;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.integration.Mods;
-import com.asdflj.ae2thing.inventory.AEStackItemInventory;
 import com.asdflj.ae2thing.inventory.IPatternTerminal;
+import com.asdflj.ae2thing.util.Util;
 import com.glodblock.github.common.item.ItemFluidPacket;
 
 import appeng.api.storage.StorageName;
@@ -103,7 +103,7 @@ public class PatternTerminalMouseWheelLoader implements Runnable {
                                 .getAEInventoryByName(StorageName.CRAFTING_INPUT);
                             final IAEItemStack target = AEItemStack.create(itemIn);
                             if (inv != null) {
-                                final IAEStack<?> replacement = AEStackItemInventory.toAEStack(itemOut);
+                                final IAEStack<?> replacement = Util.toAEStack(itemOut);
                                 for (int i = 0; i < inv.getSizeInventory(); i++) {
                                     final IAEStack<?> current = inv.getAEStackInSlot(i);
                                     if (current instanceof IAEItemStack item && target.isSameType(item)) {

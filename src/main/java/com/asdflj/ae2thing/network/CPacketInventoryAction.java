@@ -102,7 +102,11 @@ public class CPacketInventoryAction implements IMessage {
                         final TileEntity te = context.getTile();
                         if (te != null || target instanceof WirelessTerminal) {
                             if (message.stack == null){
-                                message.stack = baseContainer.getTargetStack();
+                                if (baseContainer.getTargetStack() != null) {
+                                    message.stack = baseContainer.getTargetStack();
+                                } else {
+                                    return null;
+                                }
                             }
                             if(message.stack instanceof IAEItemStack itemStack
                                 && itemStack.getItem() instanceof ItemFluidDrop){
@@ -133,9 +137,10 @@ public class CPacketInventoryAction implements IMessage {
                             }
                         }
                         if (sender.openContainer instanceof final ContainerCraftAmount cca) {
-                            if (baseContainer.getTargetStack() != null) {
-                                cca.setItemToCraft(baseContainer.getTargetStack());
-                            }
+                            final IAEStack<?> aes = baseContainer.getTargetStack();
+                            if (aes == null) return null;
+                            cca.setItemToCraft(aes);
+                            cca.setInitialCraftAmount(Math.max(1, aes.getStackSize()));
                             cca.detectAndSendChanges();
                         }
                     }
