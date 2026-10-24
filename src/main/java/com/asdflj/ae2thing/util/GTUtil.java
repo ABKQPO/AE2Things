@@ -49,15 +49,16 @@ public class GTUtil {
     @SideOnly(Side.CLIENT)
     public static String getRecipeName(IRecipeHandler recipe, List<OrderStack<?>> in) {
         String head = null;
+        boolean enhancedSearchEnabled = getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH);
         try {
             head = recipe.getOverlayIdentifier();
         } catch (Throwable ignored) {}
         if (head == null || head.trim()
-            .isEmpty()) head = recipe.getRecipeTabName();
+            .isEmpty() || !enhancedSearchEnabled) head = recipe.getRecipeTabName();
         if (head == null) return null;
 
         StringBuilder suggestion = new StringBuilder();
-        if (getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH)) {
+        if (enhancedSearchEnabled) {
             suggestion.append('@')
                 .append(head.trim());
         } else {

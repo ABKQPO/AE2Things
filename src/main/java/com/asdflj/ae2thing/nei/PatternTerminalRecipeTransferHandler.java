@@ -210,13 +210,11 @@ public class PatternTerminalRecipeTransferHandler implements IOverlayHandler {
             }
         } else {
             suggestion = recipe.getRecipeTabName();
-            if (getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH)) {
-                if (Mods.isGt5Loaded() && recipe instanceof GTNEIDefaultHandler) {
-                    suggestion = GTUtil.getRecipeName(recipe, in);
-                }
-                if (suggestion == null) {
-                    suggestion = EnhancedSearch.poolQuery(recipe);
-                }
+            if (Mods.isGt5Loaded() && recipe instanceof GTNEIDefaultHandler) {
+                suggestion = GTUtil.getRecipeName(recipe, in);
+            }
+            if (suggestion == null && getConfigValue(ButtonConstants.DUAL_INTERFACE_TERMINAL_ENHANCED_SEARCH)) {
+                suggestion = EnhancedSearch.poolQuery(recipe);
             }
         }
         if (suggestion == null) suggestion = "";
