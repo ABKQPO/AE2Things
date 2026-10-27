@@ -1,16 +1,20 @@
 package com.asdflj.ae2thing.common.item;
 
+import java.util.List;
+
 import javax.annotation.Nullable;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 
 import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.common.parts.PartInfusionPatternTerminal;
 import com.asdflj.ae2thing.common.tabs.AE2ThingTabs;
 import com.asdflj.ae2thing.util.NameConst;
+import com.asdflj.ae2thing.util.Util;
 
 import appeng.api.AEApi;
 import appeng.api.parts.IPart;
@@ -58,5 +62,14 @@ public class ItemPartInfusionPatternTerminal extends BaseItem implements IPartIt
     @SideOnly(Side.CLIENT)
     public int getSpriteNumber() {
         return 0;
+    }
+
+    @Override
+    protected void addCheckedInformation(ItemStack stack, EntityPlayer player, List<String> lines,
+        boolean displayMoreInfo) {
+        super.addCheckedInformation(stack, player, lines, displayMoreInfo);
+        if (Util.getAEVersion() >= 1080) {
+            lines.add(StatCollector.translateToLocal("item.deprecation"));
+        }
     }
 }

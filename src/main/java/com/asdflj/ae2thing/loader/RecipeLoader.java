@@ -10,6 +10,7 @@ import static com.asdflj.ae2thing.loader.ItemAndBlockHolder.FLUID_PACKET_ENCODER
 import static com.asdflj.ae2thing.loader.ItemAndBlockHolder.INFUSION_INTERFACE;
 import static com.asdflj.ae2thing.loader.ItemAndBlockHolder.INFUSION_PATTERN_TERMINAL;
 import static com.asdflj.ae2thing.loader.ItemAndBlockHolder.ITEM_CREATIVE_COBBLESTONE_CELL;
+import static com.asdflj.ae2thing.loader.ItemAndBlockHolder.ITEM_CREATIVE_LAVA_CELL;
 import static com.asdflj.ae2thing.loader.ItemAndBlockHolder.ITEM_CREATIVE_WATER_CELL;
 import static com.asdflj.ae2thing.loader.ItemAndBlockHolder.ITEM_INFINITY_CELL;
 import static com.asdflj.ae2thing.loader.ItemAndBlockHolder.ITEM_INFINITY_FLUID_CELL;
@@ -40,11 +41,16 @@ import com.asdflj.ae2thing.integration.ae2stuff.Ae2StuffIntegration;
 import com.asdflj.ae2thing.loader.recipe.WirelessTerminalEnergyRecipe;
 import com.asdflj.ae2thing.loader.recipe.WirelessTerminalQuantumBridgeRecipe;
 import com.asdflj.ae2thing.util.TicUtil;
+import com.asdflj.ae2thing.util.Util;
 import com.glodblock.github.common.storage.CellType;
 
 import appeng.api.AEApi;
 import appeng.api.util.AEColor;
 import cpw.mods.fml.common.registry.GameRegistry;
+import flaxbeard.thaumicexploration.ThaumicExploration;
+import gregtech.api.enums.TierEU;
+import gregtech.api.recipe.RecipeMaps;
+import gregtech.api.util.GTRecipeBuilder;
 import thaumcraft.common.config.ConfigBlocks;
 
 public class RecipeLoader implements Runnable {
@@ -206,7 +212,7 @@ public class RecipeLoader implements Runnable {
         GameRegistry.addShapelessRecipe(
             com.glodblock.github.loader.ItemAndBlockHolder.DECODER.stack(),
             FLUID_PACKET_ENCODER.stack());
-        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
+        if (Mods.THAUMIC_ENERGISTICS.isModLoaded() && Util.getAEVersion() < 1080) {
             final ItemStack THAUMIUM_INGOT = new ItemStack(itemResource, 1, 2);
             final ItemStack RUNIC_MATRIX = new ItemStack(ConfigBlocks.blockStoneDevice, 1, 2);
             final ItemStack THAUMONOMICON = new ItemStack(itemThaumonomicon, 1);
@@ -265,6 +271,18 @@ public class RecipeLoader implements Runnable {
                     ItemAndBlockHolder.WIRELESS_DISTRIBUTOR.stack(i));
             }
             GameRegistry.addShapelessRecipe(ItemAndBlockHolder.WIRE_CUTTER.stack(), AE2_WIRELESS, AE2_CERTUS);
+            if (Mods.THAUMCRAFT.isModLoaded() && Mods.THAUMIC_EXPLORATION.isModLoaded()) {
+                GTRecipeBuilder.builder()
+                    .circuit(20)
+                    .itemInputs(
+                        CELL_HOUSING.stack(1, 1),
+                        AE2_SINGULARITY,
+                        new ItemStack(ThaumicExploration.everburnUrn))
+                    .itemOutputs(ITEM_CREATIVE_LAVA_CELL.stack(1))
+                    .duration(400)
+                    .eut(TierEU.RECIPE_LuV)
+                    .addTo(RecipeMaps.assemblerRecipes);
+            }
         }
         WirelessTerminalQuantumBridgeRecipe.register(ITEM_WIRELESS_DUAL_INTERFACE_TERMINAL.stack());
         WirelessTerminalEnergyRecipe.register(ITEM_WIRELESS_DUAL_INTERFACE_TERMINAL.stack());

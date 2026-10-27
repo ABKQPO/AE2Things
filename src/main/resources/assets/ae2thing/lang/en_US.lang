@@ -24,6 +24,8 @@ tile.fluid_packet_encoder.name=ME Fluid Packet Encoder
 tile.wireless_distributor.name=ME Wireless Distributor(GT ME Hatch)
 fluid.botania.mana=Mana
 
+item.deprecation=§4this item/block is deprecated§r
+
 ae2thing.tooltip.shift_for_more=§r> Hold §3Shift§r for more information
 ae2thing.tooltip.ctrl_for_more=§r> Hold §3Ctrl§r for more information
 ae2thing.tooltip.toggleable_view_cell.desc=Right click in view cell slot to toggle view cell

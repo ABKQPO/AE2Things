@@ -37,12 +37,13 @@ public enum Mods implements IMod, ITargetMod {
     NOT_ENOUGH_ITEMS("NotEnoughItems"),
     OK_BACKPACK("okbackpack"),
     PROGRAMMABLE_HATCHES("programmablehatches"),
+    SNL("sciencenotleisure"),
     THAUMCRAFT("Thaumcraft"),
     THAUMIC_ENERGISTICS("thaumicenergistics"),
+    THAUMIC_EXPLORATION("ThaumicExploration"),
     TINKERS_CONSTRUCT("TConstruct"),
     WAILA("Waila"),
-    WIRELESS_CRAFTING_TERMINAL("ae2wct"),
-    SNL("sciencenotleisure");
+    WIRELESS_CRAFTING_TERMINAL("ae2wct");
 
     private final String modid;
     private final String resourceDomain;
