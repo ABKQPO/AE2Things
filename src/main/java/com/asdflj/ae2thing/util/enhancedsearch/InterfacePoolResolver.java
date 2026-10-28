@@ -98,9 +98,10 @@ public final class InterfacePoolResolver {
 
     private static PoolInfo computePoolInfo(ItemStack rep) {
         final Set<Object> maps = GTRecipeUtil.availableMaps(rep);
+        if (!maps.isEmpty()) return new PoolInfo(maps, false);
         final boolean hasCategory = GTRecipeUtil.hasCategory(rep);
-        if (maps.isEmpty() && !hasCategory) return NO_POOL;
-        return new PoolInfo(maps, hasCategory);
+        if (!hasCategory) return NO_POOL;
+        return new PoolInfo(maps, true);
     }
 
     private static boolean isCatalyst(String id, ItemStack rep) {
