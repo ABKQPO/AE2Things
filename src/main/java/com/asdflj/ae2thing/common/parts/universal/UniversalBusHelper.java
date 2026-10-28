@@ -20,7 +20,6 @@ import appeng.api.networking.security.BaseActionSource;
 import appeng.api.parts.IPartHost;
 import appeng.api.storage.IExternalStorageHandler;
 import appeng.api.storage.IMEInventory;
-import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
@@ -32,10 +31,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class UniversalBusHelper {
-
-    public static List<IAEStackType<?>> getTypes() {
-        return AEStackTypeRegistry.getSortedTypes();
-    }
 
     @SuppressWarnings("rawtypes")
     public static IMEInventory getStorageInventory(TileEntity target, ForgeDirection targetSide, IAEStackType<?> type,

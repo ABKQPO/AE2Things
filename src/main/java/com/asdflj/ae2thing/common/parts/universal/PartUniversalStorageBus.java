@@ -24,6 +24,7 @@ import com.asdflj.ae2thing.inventory.InventoryHandler;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.loader.ItemAndBlockHolder;
 import com.asdflj.ae2thing.util.BlockPos;
+import com.asdflj.ae2thing.util.Util;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.ExtractionMode;
@@ -672,7 +673,7 @@ public class PartUniversalStorageBus extends PartUpgradeable implements IStorage
         this.handlerHash = newHandlerHash;
         this.channels.clear();
         this.readOncePass.clear();
-        this.readOncePass.addAll(UniversalBusHelper.getTypes());
+        this.readOncePass.addAll(Util.getTypes());
 
         if (target != null) {
             final ForgeDirection targetSide = this.getSide()
@@ -696,7 +697,7 @@ public class PartUniversalStorageBus extends PartUpgradeable implements IStorage
             if (oreFilter) configured.remove(ITEM_STACK_TYPE);
             final boolean anyConfigured = !configured.isEmpty() || itemsByOre;
 
-            for (IAEStackType<?> type : UniversalBusHelper.getTypes()) {
+            for (IAEStackType<?> type : Util.getTypes()) {
                 final IMEInventory inv = UniversalBusHelper.getStorageInventory(target, targetSide, type, this.source);
                 if (inv == null) continue;
 

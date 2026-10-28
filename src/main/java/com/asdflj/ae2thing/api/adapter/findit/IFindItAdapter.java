@@ -4,77 +4,54 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
+
+import org.jetbrains.annotations.Nullable;
 
 import com.asdflj.ae2thing.util.StorageProvider;
-import com.glodblock.github.util.Util;
 
 import appeng.api.AEApi;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.storage.IMEInventory;
-import appeng.api.storage.StorageChannel;
-import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.IMEInventoryHandler;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.util.IterationCounter;
-import appeng.util.item.AEFluidStack;
-import appeng.util.item.AEFluidStackType;
-import appeng.util.item.AEItemStackType;
-import codechicken.nei.recipe.StackInfo;
 
 public interface IFindItAdapter {
 
     Class<? extends IGridHost> getCls();
 
-    boolean supportFluid();
-
-    default boolean isFluid(ItemStack item) {
-        return this.supportFluid() && StackInfo.getFluid(item) != null;
-    }
-
-    default List<StorageProvider> getStorageProviders(IGrid grid, IAEItemStack item) {
-        boolean isFluid = this.isFluid(item.getItemStack());
+    default List<StorageProvider> getStorageProviders(IGrid grid, IAEStack<?> request) {
+        if (request == null) return new ArrayList<>();
         List<StorageProvider> list = new ArrayList<>();
         for (IGridNode node : grid.getMachines(getCls())) {
-            List<StorageProvider> results = getStorageProver(grid, node, item, isFluid);
-            if (results != null) {
+            List<StorageProvider> results = getStorageProver(grid, node, request);
+            if (results != null && !results.isEmpty()) {
                 list.addAll(results);
             }
         }
         return list;
     }
 
-    List<StorageProvider> getStorageProver(IGrid grid, IGridNode node, IAEItemStack item, boolean isFluid);
+    @Nullable
+    List<StorageProvider> getStorageProver(IGrid grid, IGridNode node, IAEStack<?> request);
 
-    default boolean findStack(IMEInventory inv, boolean isFluid, IAEItemStack request) {
-        if (inv == null) return false;
-        boolean result = false;
-        if (isFluid && inv.getStackType() == AEFluidStackType.FLUID_STACK_TYPE) {
-            FluidStack fs = Util.getFluidFromItem(request.getItemStack());
-            result = inv.getAvailableItem(AEFluidStack.create(fs), IterationCounter.fetchNewId()) != null;
-        } else if (inv.getStackType() == AEItemStackType.ITEM_STACK_TYPE) {
-            result = inv.getAvailableItem(request, IterationCounter.fetchNewId()) != null;
-        }
-        return result;
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    default boolean findStack(IMEInventory inv, IAEStack<?> request) {
+        if (inv == null || request == null) return false;
+        if (inv.getStackType() != request.getStackType()) return false;
+        return inv.getAvailableItem(request, IterationCounter.fetchNewId()) != null;
     }
 
-    default boolean findStack(ItemStack cell, boolean isFluid, IAEItemStack request) {
-        IMEInventory inv = getInv(cell, isFluid ? StorageChannel.FLUIDS : StorageChannel.ITEMS);
-        return findStack(inv, isFluid, request);
-    }
-
-    default IMEInventory getInv(final ItemStack is, StorageChannel channel) {
-        if (channel == StorageChannel.ITEMS) {
-            return AEApi.instance()
-                .registries()
-                .cell()
-                .getCellInventory(is, null, AEItemStackType.ITEM_STACK_TYPE);
-        } else if (channel == StorageChannel.FLUIDS) {
-            return AEApi.instance()
-                .registries()
-                .cell()
-                .getCellInventory(is, null, AEFluidStackType.FLUID_STACK_TYPE);
-        }
-        return null;
+    @SuppressWarnings("rawtypes")
+    @Nullable
+    default IMEInventoryHandler getCellInventory(ItemStack cell, IAEStackType<?> type) {
+        if (cell == null || cell.getItem() == null) return null;
+        return AEApi.instance()
+            .registries()
+            .cell()
+            .getCellInventory(cell, null, type);
     }
 }

@@ -31,7 +31,6 @@ import com.asdflj.ae2thing.client.gui.IGuiMonitorTerminal;
 import com.asdflj.ae2thing.common.item.ItemBackpackTerminal;
 import com.asdflj.ae2thing.common.item.ItemPatternModifier;
 import com.asdflj.ae2thing.common.item.ItemWirelessDualInterfaceTerminal;
-import com.asdflj.ae2thing.integration.Mods;
 import com.glodblock.github.client.gui.FCGuiTextField;
 import com.glodblock.github.common.item.ItemFluidDrop;
 import com.glodblock.github.common.item.ItemFluidPacket;
@@ -43,8 +42,10 @@ import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.ICraftingGrid;
 import appeng.api.networking.crafting.ICraftingJob;
+import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IDisplayRepo;
 import appeng.api.util.DimensionalCoord;
 import appeng.client.gui.AEBaseGui;
@@ -60,7 +61,6 @@ import appeng.integration.modules.NEI;
 import appeng.items.tools.powered.ToolWirelessTerminal;
 import appeng.me.cache.CraftingGridCache;
 import appeng.util.Platform;
-import appeng.util.item.AEFluidStack;
 import appeng.util.item.AEItemStack;
 import codechicken.nei.recipe.StackInfo;
 import cpw.mods.fml.common.Loader;
@@ -96,6 +96,10 @@ public class Util {
             }
         }
         return AE_VERSION;
+    }
+
+    public static List<IAEStackType<?>> getTypes() {
+        return AEStackTypeRegistry.getSortedTypes();
     }
 
     public static boolean replan(EntityPlayer player, appeng.container.implementations.ContainerCraftConfirm c) {
@@ -357,17 +361,17 @@ public class Util {
 
     public static IAEStack<?> toAEStack(ItemStack is) {
         if (is == null || is.getItem() == null) return null;
-
-        FluidStack fluid = StackInfo.getFluid(is);
-        if (fluid != null && fluid.getFluid() != null) {
-            return AEFluidStack.create(fluid);
-        }
-
-        if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
-            final IAEStack<?> essentia = AspectUtil.toAEStack(is);
-            if (essentia != null) return essentia;
+        for (IAEStackType<?> type : Util.getTypes()) {
+            final IAEStack<?> converted = toAEStack(type, is);
+            if (converted != null) return converted;
         }
         return AEItemStack.create(is);
+    }
+
+    public static IAEStack<?> toAEStack(IAEStackType<?> type, ItemStack is) {
+        if (type == null || is == null || is.getItem() == null) return null;
+        final IAEStack<?> converted = type.convertStackFromItem(is);
+        return converted != null ? converted : type.getStackFromContainerItem(is);
     }
 
     @SuppressWarnings("unchecked")

@@ -17,6 +17,7 @@ import com.asdflj.ae2thing.inventory.InventoryHandler;
 import com.asdflj.ae2thing.inventory.gui.GuiType;
 import com.asdflj.ae2thing.loader.ItemAndBlockHolder;
 import com.asdflj.ae2thing.util.BlockPos;
+import com.asdflj.ae2thing.util.Util;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.FuzzyMode;
@@ -89,7 +90,7 @@ public class PartUniversalImportBus extends PartBaseImportBus<IAEItemStack> impl
             if (this.getInstalledUpgrades(Upgrades.ORE_FILTER) > 0) configured.remove(ITEM_STACK_TYPE);
             final boolean anyConfigured = !configured.isEmpty() || orePredicate != null;
 
-            for (IAEStackType<?> type : UniversalBusHelper.getTypes()) {
+            for (IAEStackType<?> type : Util.getTypes()) {
                 final List<IAEStack<?>> filters = configured.get(type);
                 final boolean itemsByOre = type == ITEM_STACK_TYPE && orePredicate != null;
                 if (anyConfigured && filters == null && !itemsByOre) continue;

@@ -13,12 +13,9 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.api.adapter.crafting.AECraftingTerminal;
 import com.asdflj.ae2thing.api.adapter.crafting.WCTCraftingTerminal;
-import com.asdflj.ae2thing.api.adapter.findit.EssentiaStorageBusAdapter;
-import com.asdflj.ae2thing.api.adapter.findit.FluidStorageBusAdapter;
 import com.asdflj.ae2thing.api.adapter.findit.MEChestAdapter;
 import com.asdflj.ae2thing.api.adapter.findit.MEDriverAdapter;
-import com.asdflj.ae2thing.api.adapter.findit.StorageBusAdapter;
-import com.asdflj.ae2thing.api.adapter.findit.UniversalStorageBusAdapter;
+import com.asdflj.ae2thing.api.adapter.findit.PartStorageBusAdapter;
 import com.asdflj.ae2thing.api.adapter.terminal.item.BackpackTerminalHandler;
 import com.asdflj.ae2thing.api.adapter.terminal.item.DualInterfaceTerminalHandler;
 import com.asdflj.ae2thing.api.adapter.terminal.item.FCBaseTerminalHandler;
@@ -28,6 +25,7 @@ import com.asdflj.ae2thing.common.item.ItemBackpackTerminal;
 import com.asdflj.ae2thing.common.item.ItemPatternModifier;
 import com.asdflj.ae2thing.common.item.ItemWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.common.parts.PartThaumatoriumInterface;
+import com.asdflj.ae2thing.common.parts.universal.PartUniversalStorageBus;
 import com.asdflj.ae2thing.common.storage.StorageManager;
 import com.asdflj.ae2thing.common.storage.backpack.OKBackpackHandler;
 import com.asdflj.ae2thing.common.tile.TileInfusionInterface;
@@ -45,10 +43,12 @@ import com.glodblock.github.common.item.ItemWirelessInterfaceTerminal;
 import com.glodblock.github.common.item.ItemWirelessLevelTerminal;
 import com.glodblock.github.common.item.ItemWirelessPatternTerminal;
 import com.glodblock.github.common.item.ItemWirelessUltraTerminal;
+import com.glodblock.github.common.parts.PartFluidStorageBus;
 
 import appeng.api.AEApi;
 import appeng.api.config.Upgrades;
 import appeng.api.implementations.ICraftingPatternItem;
+import appeng.parts.misc.PartStorageBus;
 import appeng.util.Platform;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -61,6 +61,7 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import de.eydamos.backpack.item.ItemBackpackBase;
 import forestry.storage.items.ItemBackpack;
 import ic2.core.Ic2Items;
+import thaumicenergistics.common.parts.PartEssentiaStorageBus;
 
 public class CommonProxy {
 
@@ -198,19 +199,19 @@ public class CommonProxy {
             .registerFindItStorageProvider(new MEDriverAdapter());
         AE2ThingAPI.instance()
             .terminal()
-            .registerFindItStorageProvider(new StorageBusAdapter());
+            .registerFindItStorageProvider(new PartStorageBusAdapter(PartStorageBus.class));
         AE2ThingAPI.instance()
             .terminal()
-            .registerFindItStorageProvider(new FluidStorageBusAdapter());
+            .registerFindItStorageProvider(new PartStorageBusAdapter(PartFluidStorageBus.class));
         if (!Mods.SNL.isModLoaded()) {
             AE2ThingAPI.instance()
                 .terminal()
-                .registerFindItStorageProvider(new UniversalStorageBusAdapter());
+                .registerFindItStorageProvider(new PartStorageBusAdapter(PartUniversalStorageBus.class));
         }
         if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             AE2ThingAPI.instance()
                 .terminal()
-                .registerFindItStorageProvider(new EssentiaStorageBusAdapter());
+                .registerFindItStorageProvider(new PartStorageBusAdapter(PartEssentiaStorageBus.class));
         }
         AE2ThingAPI.instance()
             .terminal()

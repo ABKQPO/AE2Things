@@ -47,7 +47,6 @@ import com.glodblock.github.common.storage.CellType;
 import appeng.api.AEApi;
 import appeng.api.util.AEColor;
 import cpw.mods.fml.common.registry.GameRegistry;
-import flaxbeard.thaumicexploration.ThaumicExploration;
 import gregtech.api.enums.TierEU;
 import gregtech.api.recipe.RecipeMaps;
 import gregtech.api.util.GTRecipeBuilder;
@@ -295,12 +294,10 @@ public class RecipeLoader implements Runnable {
             }
             GameRegistry.addShapelessRecipe(ItemAndBlockHolder.WIRE_CUTTER.stack(), AE2_WIRELESS, AE2_CERTUS);
             if (Mods.THAUMCRAFT.isModLoaded() && Mods.THAUMIC_EXPLORATION.isModLoaded()) {
+                ItemStack EVERBURN_URN = GameRegistry.findItemStack("ThaumicExploration", "everburnUrn", 1);
                 GTRecipeBuilder.builder()
                     .circuit(20)
-                    .itemInputs(
-                        CELL_HOUSING.stack(1, 1),
-                        AE2_SINGULARITY,
-                        new ItemStack(ThaumicExploration.everburnUrn))
+                    .itemInputs(CELL_HOUSING.stack(1, 1), AE2_SINGULARITY, EVERBURN_URN)
                     .itemOutputs(ITEM_CREATIVE_LAVA_CELL.stack(1))
                     .duration(400)
                     .eut(TierEU.RECIPE_LuV)

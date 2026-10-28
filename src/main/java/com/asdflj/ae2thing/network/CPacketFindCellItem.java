@@ -11,13 +11,12 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.api.AE2ThingAPI;
 import com.asdflj.ae2thing.api.adapter.findit.IFindItAdapter;
 import com.asdflj.ae2thing.util.StorageProvider;
-import com.glodblock.github.util.Util;
+import com.asdflj.ae2thing.util.Util;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.security.PlayerSource;
-import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.container.AEBaseContainer;
-import appeng.util.item.AEItemStack;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -27,36 +26,28 @@ import io.netty.handler.codec.EncoderException;
 
 public class CPacketFindCellItem implements IMessage {
 
-    public boolean isFluid;
-    public IAEItemStack item;
+    public IAEStack<?> request;
 
+    @SuppressWarnings("unused")
     public CPacketFindCellItem() {}
 
     public CPacketFindCellItem(ItemStack is) {
-        this(is, Util.getFluidFromItem(is) != null);
-    }
-
-    public CPacketFindCellItem(ItemStack is, boolean isFluid) {
-        this.item = AEItemStack.create(is);
-        this.isFluid = isFluid;
+        this.request = Util.toAEStack(is);
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        this.isFluid = buf.readBoolean();
         try {
-            this.item = AEItemStack.loadItemStackFromPacket(buf);
+            this.request = IAEStack.fromPacketGeneric(buf);
         } catch (Exception e) {
             throw new DecoderException("Failed to decode Find Cell request", e);
         }
-
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
-        buf.writeBoolean(isFluid);
         try {
-            this.item.writeToPacket(buf);
+            IAEStack.writeToPacketGeneric(buf, this.request);
         } catch (Exception e) {
             throw new EncoderException("Failed to encode Find Cell request", e);
         }
@@ -67,7 +58,7 @@ public class CPacketFindCellItem implements IMessage {
         @Override
         public IMessage onMessage(CPacketFindCellItem message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
-            if (message.item != null && player.openContainer instanceof AEBaseContainer container
+            if (message.request != null && player.openContainer instanceof AEBaseContainer container
                 && container.getActionSource() instanceof PlayerSource ps) {
                 List<StorageProvider> posList = new ArrayList<>();
                 IGrid iGrid = null;
@@ -80,7 +71,7 @@ public class CPacketFindCellItem implements IMessage {
                     .terminal()
                     .getStorageProviders();
                 for (IFindItAdapter adapter : adapters) {
-                    posList.addAll(adapter.getStorageProviders(iGrid, message.item));
+                    posList.addAll(adapter.getStorageProviders(iGrid, message.request));
                 }
 
                 if (!posList.isEmpty()) AE2Thing.proxy.netHandler.sendTo(new SPacketFindCellItem(posList), player);
