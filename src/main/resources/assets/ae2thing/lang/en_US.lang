@@ -216,4 +216,5 @@ ae2thing.interface_terminal.search.invalid.category_only=§cUnknown recipe pool:
 ae2thing.interface_terminal.search.invalid.category_hint=§cUnknown recipe pool: %1$s (did you mean: %2$s?)
 ae2thing.interface_terminal.search.current=§7Current query: §f%1$s
 ae2thing.interface_terminal.search.pool=§7Resolved recipe pool: §b%1$s
+ae2thing.interface_terminal.search.mode_mismatch=§7Also §e%1$s§7 interface(s) could switch their machine to this pool, but it is currently set to another mode and was hidden
 ae2thing.interface_terminal.search.disabled=§cEnhanced search is off: enable it in the NEI options, otherwise a query starting with @ does nothing

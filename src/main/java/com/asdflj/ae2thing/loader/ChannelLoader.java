@@ -8,6 +8,7 @@ import com.asdflj.ae2thing.AE2Thing;
 import com.asdflj.ae2thing.network.CPacketCraftRequest;
 import com.asdflj.ae2thing.network.CPacketFindCellItem;
 import com.asdflj.ae2thing.network.CPacketFluidUpdate;
+import com.asdflj.ae2thing.network.CPacketInterfaceRecipeMapRequest;
 import com.asdflj.ae2thing.network.CPacketInventoryAction;
 import com.asdflj.ae2thing.network.CPacketInventoryActionExtend;
 import com.asdflj.ae2thing.network.CPacketNEIRecipe;
@@ -24,6 +25,7 @@ import com.asdflj.ae2thing.network.SPacketCraftingDebugCardUpdate;
 import com.asdflj.ae2thing.network.SPacketCraftingStateUpdate;
 import com.asdflj.ae2thing.network.SPacketFindCellItem;
 import com.asdflj.ae2thing.network.SPacketFlowRates;
+import com.asdflj.ae2thing.network.SPacketInterfaceRecipeMapUpdate;
 import com.asdflj.ae2thing.network.SPacketInterfaceSuffixUpdate;
 import com.asdflj.ae2thing.network.SPacketMEFluidInvUpdate;
 import com.asdflj.ae2thing.network.SPacketMEItemInvUpdate;
@@ -47,7 +49,8 @@ public class ChannelLoader implements Runnable {
         CPacketValueConfig.class, SPacketCraftingDebugCardUpdate.class, SPacketCraftingStateUpdate.class,
         SPacketFindCellItem.class, SPacketFlowRates.class, SPacketMEFluidInvUpdate.class, SPacketMEItemInvUpdate.class,
         SPacketNBTDataUpdate.class, SPacketStringUpdate.class, SPacketSwitchBack.class, SPacketTypeFilter.class,
-        SPacketInterfaceSuffixUpdate.class, CPacketUniversalStorageBusAction.class };
+        SPacketInterfaceSuffixUpdate.class, CPacketUniversalStorageBusAction.class,
+        SPacketInterfaceRecipeMapUpdate.class, CPacketInterfaceRecipeMapRequest.class };
 
     @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })

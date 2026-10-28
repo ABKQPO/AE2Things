@@ -1,6 +1,7 @@
 package com.asdflj.ae2thing.util.enhancedsearch;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import net.minecraft.item.ItemStack;
@@ -25,5 +26,9 @@ public interface RecipePools {
 
     default boolean matchesTransferRect(Set<Object> maps, String id) {
         return false;
+    }
+
+    default Boolean mapVerdict(String activeMapId, Set<Object> machineMaps, List<String> poolIds) {
+        return null;
     }
 }

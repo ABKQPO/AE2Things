@@ -209,4 +209,5 @@ ae2thing.interface_terminal.search.invalid.category_only=§c未知配方池：%1
 ae2thing.interface_terminal.search.invalid.category_hint=§c未知配方池：%1$s（是否想输入：%2$s？）
 ae2thing.interface_terminal.search.current=§7当前查询：§f%1$s
 ae2thing.interface_terminal.search.pool=§7实际查询的配方池：§b%1$s
+ae2thing.interface_terminal.search.mode_mismatch=§7另有 §e%1$s§7 个接口的机器能切换到该配方池，但当前模式不是它，已隐藏
 ae2thing.interface_terminal.search.disabled=§c强化搜索未开启：请先在 NEI 选项里打开「强化搜索」，@ 开头的查询才会生效

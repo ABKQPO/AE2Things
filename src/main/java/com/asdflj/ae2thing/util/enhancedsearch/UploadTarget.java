@@ -18,8 +18,9 @@ public final class UploadTarget {
 
     private UploadTarget() {}
 
-    public static Outcome outcome(ItemStack rep, String name, String suffix, List<String> poolIds, String nameHint) {
-        return switch (InterfacePoolResolver.classify(rep, poolIds)) {
+    public static Outcome outcome(ItemStack rep, String activeMapId, String name, String suffix, List<String> poolIds,
+        String nameHint) {
+        return switch (InterfacePoolResolver.classify(rep, activeMapId, poolIds)) {
             case MATCH -> Outcome.TARGET;
             case NO_MATCH -> Outcome.SKIP;
             case UNKNOWN -> EnhancedSearch.matchesNameHint(nameHint, name, suffix) ? Outcome.NAME_TARGET : Outcome.SKIP;

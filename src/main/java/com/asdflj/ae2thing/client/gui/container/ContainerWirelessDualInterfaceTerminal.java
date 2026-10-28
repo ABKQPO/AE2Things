@@ -41,9 +41,11 @@ import com.asdflj.ae2thing.inventory.item.INetworkTerminal;
 import com.asdflj.ae2thing.inventory.item.PatternModifierInventory;
 import com.asdflj.ae2thing.inventory.item.WirelessDualInterfaceTerminalInventory;
 import com.asdflj.ae2thing.inventory.item.WirelessTerminal;
+import com.asdflj.ae2thing.network.SPacketInterfaceRecipeMapUpdate;
 import com.asdflj.ae2thing.network.SPacketInterfaceSuffixUpdate;
 import com.asdflj.ae2thing.util.Ae2Reflect;
 import com.asdflj.ae2thing.util.GTUtil;
+import com.asdflj.ae2thing.util.enhancedsearch.GTRecipeServerUtil;
 import com.glodblock.github.common.item.ItemFluidPacket;
 import com.glodblock.github.util.Util;
 import com.google.common.base.Optional;
@@ -136,6 +138,8 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
     private static Field trackerIdField;
     private final Long2ObjectMap<String> sentSuffixes = new Long2ObjectOpenHashMap<>();
     private int suffixScanTicks;
+    private final Long2ObjectMap<String> sentRecipeMaps = new Long2ObjectOpenHashMap<>();
+    private int recipeMapScanTicks = 99;
 
     public ContainerWirelessDualInterfaceTerminal(InventoryPlayer ip, ITerminalHost monitorable) {
         super(ip, monitorable);
@@ -247,6 +251,10 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
         if (++this.suffixScanTicks >= 20) {
             this.suffixScanTicks = 0;
             syncInterfaceSuffixs();
+        }
+        if (++this.recipeMapScanTicks >= 40) {
+            this.recipeMapScanTicks = 0;
+            syncInterfaceRecipeMaps();
         }
         this.patternPanel.detectAndSendChanges();
         this.syncPatternState();
@@ -854,5 +862,37 @@ public class ContainerWirelessDualInterfaceTerminal extends ContainerMonitor
         if (changed.isEmpty()) return;
         AE2Thing.proxy.netHandler
             .sendTo(new SPacketInterfaceSuffixUpdate(changed), (EntityPlayerMP) this.getPlayerInv().player);
+    }
+
+    public void resendInterfaceRecipeMaps() {
+        syncInterfaceRecipeMaps(true);
+    }
+
+    private void syncInterfaceRecipeMaps() {
+        syncInterfaceRecipeMaps(false);
+    }
+
+    private void syncInterfaceRecipeMaps(boolean forceFull) {
+        final Map<?, ?> tracked = Ae2Reflect.getTracked(this.delegateContainer);
+        if (tracked.isEmpty()) return;
+        final Long2ObjectMap<String> payload = new Long2ObjectOpenHashMap<>();
+        for (Map.Entry<?, ?> entry : tracked.entrySet()) {
+            if (!(entry.getKey() instanceof IInterfaceViewable iHost)) continue;
+            final long id = trackerId(entry.getValue());
+            if (id < 0) continue;
+            final String mapId = GTRecipeServerUtil.activeMapId(iHost);
+            if (mapId == null) {
+                if (this.sentRecipeMaps.remove(id) != null) payload.put(id, "");
+                continue;
+            }
+            if (mapId.equals(this.sentRecipeMaps.put(id, mapId))) {
+                if (forceFull) payload.put(id, mapId);
+                continue;
+            }
+            payload.put(id, mapId);
+        }
+        if (payload.isEmpty()) return;
+        AE2Thing.proxy.netHandler
+            .sendTo(new SPacketInterfaceRecipeMapUpdate(payload), (EntityPlayerMP) this.getPlayerInv().player);
     }
 }

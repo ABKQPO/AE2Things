@@ -53,8 +53,22 @@ public final class InterfacePoolResolver {
         return info;
     }
 
-    public static PoolState classify(ItemStack rep, List<String> poolIds) {
+    public static PoolState classify(ItemStack rep, String activeMapId, List<String> poolIds) {
         final PoolInfo info = poolInfoOf(rep);
+        if (activeMapId != null && info.hasAnyPool()) {
+            final Boolean verdict = GTRecipeUtil.mapVerdict(activeMapId, info.maps(), poolIds);
+            if (verdict != null) {
+                return verdict ? PoolState.MATCH : PoolState.NO_MATCH;
+            }
+        }
+        return classifyByMachine(info, rep, poolIds);
+    }
+
+    public static PoolState classifyByMachine(ItemStack rep, List<String> poolIds) {
+        return classifyByMachine(poolInfoOf(rep), rep, poolIds);
+    }
+
+    private static PoolState classifyByMachine(PoolInfo info, ItemStack rep, List<String> poolIds) {
         for (String id : poolIds) {
             if (isCatalyst(id, rep)) return PoolState.MATCH;
             if (GTRecipeUtil.matchesCategory(info.maps(), id)) return PoolState.MATCH;

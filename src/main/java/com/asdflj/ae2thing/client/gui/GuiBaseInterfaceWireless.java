@@ -1855,6 +1855,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         String rawName;
         String rawSuffix;
         String searchSuffix;
+        String activeRecipeMapId;
         AppEngInternalInventory inv;
         GuiImgButton optionsButton;
         GuiImgButton renameButton;

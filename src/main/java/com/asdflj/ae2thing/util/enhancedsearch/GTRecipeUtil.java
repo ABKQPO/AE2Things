@@ -1,6 +1,8 @@
 package com.asdflj.ae2thing.util.enhancedsearch;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import net.minecraft.item.ItemStack;
@@ -47,6 +49,10 @@ public final class GTRecipeUtil {
 
     public static boolean matchesTransferRect(Set<Object> maps, String id) {
         return PoolsHolder.INSTANCE.matchesTransferRect(maps, id);
+    }
+
+    public static Boolean mapVerdict(String activeMapId, Set<Object> machineMaps, List<String> poolIds) {
+        return PoolsHolder.INSTANCE.mapVerdict(activeMapId, machineMaps, poolIds);
     }
 
     private record PagesHolder() {
@@ -167,6 +173,57 @@ public final class GTRecipeUtil {
                 return RecipePools.super.matchesTransferRect(maps, id);
             }
             return RecipePools.super.matchesTransferRect(maps, id);
+        }
+
+        private static boolean isPoolId(String id) {
+            if (id == null || id.isEmpty() || !Mods.isGt5UnofficialLoaded()) return false;
+            try {
+                return categoryById(id) != null || mapById(id) != null || transferRectMaps().containsKey(id);
+            } catch (Throwable ignored) {
+                return false;
+            }
+        }
+
+        @Override
+        public Boolean mapVerdict(String activeMapId, Set<Object> machineMaps, List<String> poolIds) {
+            if (activeMapId == null || activeMapId.isEmpty() || poolIds == null || poolIds.isEmpty()) {
+                return null;
+            }
+            final RecipeMap<?> active = mapById(activeMapId);
+            if (active == null) return null;
+            boolean owned = false;
+            for (String id : poolIds) {
+                if (id == null || id.isEmpty() || !isPoolId(id)) continue;
+                if (!matchesAny(machineMaps, id)) continue;
+                owned = true;
+                if (matchesMap(active, id)) return Boolean.TRUE;
+            }
+            return owned ? Boolean.FALSE : null;
+        }
+
+        private boolean matchesAny(Set<Object> maps, String id) {
+            if (maps == null || maps.isEmpty()) return false;
+            final RecipeMap<?> map = mapById(id);
+            if (map != null && maps.contains(map)) return true;
+            return matchesCategory(maps, id) || matchesTransferRect(maps, id);
+        }
+
+        private static RecipeMap<?> mapById(String id) {
+            if (id == null || id.isEmpty() || !Mods.isGt5UnofficialLoaded()) return null;
+            try {
+                return RecipeMap.ALL_RECIPE_MAPS.get(id);
+            } catch (Throwable ignored) {
+                return null;
+            }
+        }
+
+        private boolean matchesMap(RecipeMap<?> map, String id) {
+            if (map == null || id == null) return false;
+            final String mapId = map.unlocalizedName;
+            if (mapId == null || mapId.isEmpty()) return false;
+            if (mapId.equals(id)) return true;
+            if (mapId.equals(baseMapId(id))) return true;
+            return matchesTransferRect(Collections.<Object>singleton(map), id);
         }
 
         private static RecipeCategory categoryById(String id) {

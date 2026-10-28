@@ -40,14 +40,28 @@ public final class EnhancedSearch {
             return this.invalid;
         }
 
-        public boolean matches(ItemStack rep, String name, String suffix) {
+        public boolean matches(ItemStack rep, String activeMapId, String name, String suffix) {
             if (!this.active) return true;
             final String lowerName = lower(name);
             final String lowerSuffix = lower(suffix);
             if (!this.tokens.isEmpty() && !SearchTokens.matchesAll(this.tokens, lowerName, lowerSuffix)) {
                 return false;
             }
-            return switch (InterfacePoolResolver.classify(rep, this.poolIds)) {
+            return switch (InterfacePoolResolver.classify(rep, activeMapId, this.poolIds)) {
+                case MATCH -> true;
+                case NO_MATCH -> false;
+                case UNKNOWN -> matchesAnyNameHint(this.nameHints, lowerName, lowerSuffix);
+            };
+        }
+
+        public boolean matchesIgnoringMode(ItemStack rep, String name, String suffix) {
+            if (!this.active) return true;
+            final String lowerName = lower(name);
+            final String lowerSuffix = lower(suffix);
+            if (!this.tokens.isEmpty() && !SearchTokens.matchesAll(this.tokens, lowerName, lowerSuffix)) {
+                return false;
+            }
+            return switch (InterfacePoolResolver.classifyByMachine(rep, this.poolIds)) {
                 case MATCH -> true;
                 case NO_MATCH -> false;
                 case UNKNOWN -> matchesAnyNameHint(this.nameHints, lowerName, lowerSuffix);
@@ -122,6 +136,14 @@ public final class EnhancedSearch {
     public static String summary(int visible) {
         return visible == 0 ? StatCollector.translateToLocal("ae2thing.interface_terminal.search.empty")
             : StatCollector.translateToLocalFormatted("ae2thing.interface_terminal.search.hits", visible);
+    }
+
+    public static String summary(int visible, int modeMismatched) {
+        final String summary = summary(visible);
+        if (modeMismatched <= 0) return summary;
+        return summary + '\n'
+            + StatCollector
+                .translateToLocalFormatted("ae2thing.interface_terminal.search.mode_mismatch", modeMismatched);
     }
 
     public static boolean looksLikeQuery(String text) {
