@@ -22,6 +22,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
+@Deprecated
 public class ItemPartThaumatoriumInterface extends BaseItem implements IPartItem {
 
     public ItemPartThaumatoriumInterface() {

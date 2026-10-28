@@ -20,6 +20,7 @@ import com.asdflj.ae2thing.api.adapter.terminal.item.FCUltraTerminal;
 import com.asdflj.ae2thing.api.adapter.terminal.item.WCTWirelessCraftingTerminal;
 import com.asdflj.ae2thing.api.adapter.terminal.parts.AETerminal;
 import com.asdflj.ae2thing.client.event.AEGuiCloseEvent;
+import com.asdflj.ae2thing.client.event.BookmarkGroupDropHandler;
 import com.asdflj.ae2thing.client.event.EncodeEvent;
 import com.asdflj.ae2thing.client.event.GuiOverlayButtonEvent;
 import com.asdflj.ae2thing.client.event.OpenTerminalEvent;
@@ -48,6 +49,7 @@ import appeng.client.gui.implementations.GuiMEMonitorable;
 import appeng.client.gui.implementations.GuiPatternTerm;
 import appeng.client.gui.implementations.GuiPatternTermEx;
 import codechicken.nei.api.API;
+import codechicken.nei.guihook.GuiContainerManager;
 import codechicken.nei.recipe.GuiOverlayButton;
 import codechicken.nei.recipe.GuiRecipe;
 import codechicken.nei.recipe.GuiRecipeButton;
@@ -180,6 +182,8 @@ public class ClientProxy extends CommonProxy {
             .terminal()
             .registerTerminalSet(new AETerminal());
         Ae2StuffIntegration.registerClientOverlayRenderer();
+
+        if (!Mods.SNL.isModLoaded()) GuiContainerManager.addInputHandler(BookmarkGroupDropHandler.INSTANCE);
     }
 
     private void placePattern() {

@@ -23,6 +23,9 @@ import com.asdflj.ae2thing.common.item.ItemPartThaumatoriumInterface;
 import com.asdflj.ae2thing.common.item.ItemPartWirelessConnectorTerminal;
 import com.asdflj.ae2thing.common.item.ItemPatternModifier;
 import com.asdflj.ae2thing.common.item.ItemPhial;
+import com.asdflj.ae2thing.common.item.ItemUniversalExportBus;
+import com.asdflj.ae2thing.common.item.ItemUniversalImportBus;
+import com.asdflj.ae2thing.common.item.ItemUniversalStorageBus;
 import com.asdflj.ae2thing.common.item.ItemWireCutter;
 import com.asdflj.ae2thing.common.item.ItemWirelessConnectorTerminal;
 import com.asdflj.ae2thing.common.item.ItemWirelessDualInterfaceTerminal;
@@ -43,6 +46,9 @@ public class ItemAndBlockHolder implements Runnable {
     public static ItemPhial PHIAL;
     public static ItemManaImportBus MANA_IMPORT_BUS;
     public static ItemManaExportBus MANA_EXPORT_BUS;
+    public static ItemUniversalImportBus UNIVERSAL_IMPORT_BUS;
+    public static ItemUniversalExportBus UNIVERSAL_EXPORT_BUS;
+    public static ItemUniversalStorageBus UNIVERSAL_STORAGE_BUS;
     public static BlockEssentiaDiscretizer ESSENTIA_DISCRETIZER;
     public static BlockFluidPacketEncoder FLUID_PACKET_ENCODER = new BlockFluidPacketEncoder().register();
     public static BlockWirelessDistributor WIRELESS_DISTRIBUTOR;
@@ -87,6 +93,11 @@ public class ItemAndBlockHolder implements Runnable {
         if (Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded()) {
             WIRELESS_DISTRIBUTOR = new BlockWirelessDistributor().register();
             WIRE_CUTTER = new ItemWireCutter().register();
+        }
+        if (!Mods.SNL.isModLoaded()) {
+            UNIVERSAL_IMPORT_BUS = new ItemUniversalImportBus().register();
+            UNIVERSAL_EXPORT_BUS = new ItemUniversalExportBus().register();
+            UNIVERSAL_STORAGE_BUS = new ItemUniversalStorageBus().register();
         }
     }
 }

@@ -5,6 +5,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -21,9 +23,12 @@ import com.asdflj.ae2thing.client.gui.GuiPatternModifier;
 import com.asdflj.ae2thing.client.gui.GuiPatternValueAmount;
 import com.asdflj.ae2thing.client.gui.GuiRenamer;
 import com.asdflj.ae2thing.client.gui.GuiTerminalMenu;
+import com.asdflj.ae2thing.client.gui.GuiUniversalIO;
+import com.asdflj.ae2thing.client.gui.GuiUniversalStorageBus;
 import com.asdflj.ae2thing.client.gui.GuiWirelessConnectorTerminal;
 import com.asdflj.ae2thing.client.gui.GuiWirelessDistributor;
 import com.asdflj.ae2thing.client.gui.GuiWirelessDualInterfaceTerminal;
+import com.asdflj.ae2thing.client.gui.container.AE2ThingPrimaryGui;
 import com.asdflj.ae2thing.client.gui.container.ContainerCellLink;
 import com.asdflj.ae2thing.client.gui.container.ContainerCraftConfirm;
 import com.asdflj.ae2thing.client.gui.container.ContainerCraftingTerminal;
@@ -35,19 +40,32 @@ import com.asdflj.ae2thing.client.gui.container.ContainerPatternModifier;
 import com.asdflj.ae2thing.client.gui.container.ContainerPatternValueAmount;
 import com.asdflj.ae2thing.client.gui.container.ContainerRenamer;
 import com.asdflj.ae2thing.client.gui.container.ContainerTerminalMenu;
+import com.asdflj.ae2thing.client.gui.container.ContainerUniversalIO;
+import com.asdflj.ae2thing.client.gui.container.ContainerUniversalStorageBus;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessConnectorTerminal;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDistributor;
 import com.asdflj.ae2thing.client.gui.container.ContainerWirelessDualInterfaceTerminal;
 import com.asdflj.ae2thing.common.parts.SharedManaBus;
 import com.asdflj.ae2thing.common.parts.THPart;
+import com.asdflj.ae2thing.common.parts.universal.PartUniversalExportBus;
+import com.asdflj.ae2thing.common.parts.universal.PartUniversalImportBus;
+import com.asdflj.ae2thing.common.parts.universal.PartUniversalStorageBus;
 import com.asdflj.ae2thing.common.tile.TileFluidPacketEncoder;
 import com.asdflj.ae2thing.common.tile.TileWirelessDistributor;
 import com.asdflj.ae2thing.inventory.ItemCellLinkInventory;
+import com.asdflj.ae2thing.util.BlockPos;
 import com.google.common.collect.ImmutableList;
 
+import appeng.api.parts.IPart;
+import appeng.api.parts.IPartHost;
 import appeng.api.storage.ITerminalHost;
+import appeng.client.gui.implementations.GuiPriority;
 import appeng.container.implementations.ContainerCraftAmount;
 import appeng.container.implementations.ContainerCraftingStatus;
+import appeng.container.implementations.ContainerPriority;
+import appeng.helpers.IPrimaryGuiIconProvider;
+import appeng.helpers.IPriorityHost;
+import appeng.parts.automation.PartSharedItemBus;
 
 public enum GuiType {
 
@@ -316,7 +334,73 @@ public enum GuiType {
             return new GuiWirelessDistributor(player.inventory, inv);
         }
     }),
-    WCT_CRAFTING_TERMINAL_BRIDGE(new OptionalWCTGuiFactory());
+    WCT_CRAFTING_TERMINAL_BRIDGE(new OptionalWCTGuiFactory()),
+    UNIVERSAL_BUS(new PartGuiFactory<>(PartSharedItemBus.class) {
+
+        @Override
+        protected PartSharedItemBus<?> getInventory(TileEntity tile, ForgeDirection face) {
+            if (!(super.getInventory(tile, face) instanceof PartSharedItemBus<?>bus)) return null;
+            return bus instanceof PartUniversalImportBus || bus instanceof PartUniversalExportBus ? bus : null;
+        }
+
+        @Override
+        @SuppressWarnings("rawtypes")
+        protected Object createServerGui(EntityPlayer player, PartSharedItemBus inv) {
+            return new ContainerUniversalIO(player.inventory, inv);
+        }
+
+        @Override
+        @SuppressWarnings("rawtypes")
+        protected Object createClientGui(EntityPlayer player, PartSharedItemBus inv) {
+            return new GuiUniversalIO(player.inventory, inv);
+        }
+    }),
+    UNIVERSAL_STORAGE_BUS(new PartGuiFactory<>(PartUniversalStorageBus.class) {
+
+        @Override
+        protected Object createServerGui(EntityPlayer player, PartUniversalStorageBus inv) {
+            return new ContainerUniversalStorageBus(player.inventory, inv);
+        }
+
+        @Override
+        protected Object createClientGui(EntityPlayer player, PartUniversalStorageBus inv) {
+            return new GuiUniversalStorageBus(player.inventory, inv);
+        }
+    }),
+    PRIORITY(new PartGuiFactory<>(IPriorityHost.class) {
+
+        @Override
+        public Object createServerGui(EntityPlayer player, World world, int x, int y, int z, ForgeDirection face) {
+            if (!(super.createServerGui(player, world, x, y, z, face) instanceof ContainerPriority container)) {
+                return null;
+            }
+            final TileEntity te = world.getTileEntity(x, y, z);
+            if (!(te instanceof IPartHost host)) return container;
+            final IPart part = host.getPart(face);
+            final GuiType returnGui = returnGuiOf(part);
+            final ItemStack icon = part instanceof IPrimaryGuiIconProvider provider ? provider.getPrimaryGuiIcon()
+                : null;
+            if (returnGui != null && icon != null) {
+                container.setPrimaryGui(AE2ThingPrimaryGui.create(returnGui, icon, new BlockPos(te), face));
+            }
+            return container;
+        }
+
+        @Override
+        protected Object createServerGui(EntityPlayer player, IPriorityHost inv) {
+            return new ContainerPriority(player.inventory, inv);
+        }
+
+        @Override
+        protected Object createClientGui(EntityPlayer player, IPriorityHost inv) {
+            return new GuiPriority(player.inventory, inv);
+        }
+
+        private static GuiType returnGuiOf(final IPart part) {
+            if (part instanceof PartUniversalStorageBus) return UNIVERSAL_STORAGE_BUS;
+            return null;
+        }
+    });
 
     public static final List<GuiType> VALUES = ImmutableList.copyOf(values());
 

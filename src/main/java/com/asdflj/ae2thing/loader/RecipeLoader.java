@@ -81,13 +81,13 @@ public class RecipeLoader implements Runnable {
         .blocks()
         .iOPort()
         .maybeStack(1)
-        .get();
+        .orNull();
     public static final ItemStack AE2_SINGULARITY = AEApi.instance()
         .definitions()
         .materials()
         .singularity()
         .maybeStack(1)
-        .get();
+        .orNull();
     public static final ItemStack AE2_SUPER_SPEED_CARD = new ItemStack(
         GameRegistry.findItem("appliedenergistics2", "item.ItemMultiMaterial"),
         1,
@@ -97,58 +97,89 @@ public class RecipeLoader implements Runnable {
         .items()
         .memoryCard()
         .maybeStack(1)
-        .get();
+        .orNull();
 
     public static final ItemStack AE2_CRAFTING_CARD = AEApi.instance()
         .definitions()
         .materials()
         .cardCrafting()
         .maybeStack(1)
-        .get();
+        .orNull();
 
     public static final ItemStack AE2_ADV_HOUSING = AEApi.instance()
         .definitions()
         .materials()
         .emptyAdvancedStorageCell()
         .maybeStack(1)
-        .get();
+        .orNull();
     public static final ItemStack AE2_64K_PART = AEApi.instance()
         .definitions()
         .materials()
         .cell64kPart()
         .maybeStack(1)
-        .get();
+        .orNull();
     public static final ItemStack AE2_BLANK_PATTERN = AEApi.instance()
         .definitions()
         .materials()
         .blankPattern()
         .maybeStack(1)
-        .get();
+        .orNull();
     public static final ItemStack AE2_PROCESS_LOG = AEApi.instance()
         .definitions()
         .materials()
         .logicProcessor()
         .maybeStack(1)
-        .get();
+        .orNull();
     public static final ItemStack AE2_VIEW_CELL = AEApi.instance()
         .definitions()
         .items()
         .viewCell()
         .maybeStack(1)
-        .get();
+        .orNull();
 
     public static final ItemStack AE2_WIRELESS = AEApi.instance()
         .definitions()
         .blocks()
         .wireless()
         .maybeStack(1)
-        .get();
+        .orNull();
     public static final ItemStack AE2_CERTUS = AEApi.instance()
         .definitions()
         .items()
         .certusQuartzWrench()
         .maybeStack(1)
-        .get();
+        .orNull();
+
+    public static final ItemStack AE2_STORAGE_BUS = AEApi.instance()
+        .definitions()
+        .parts()
+        .storageBus()
+        .maybeStack(1)
+        .orNull();
+    public static final ItemStack AE2_IMPORT_BUS = AEApi.instance()
+        .definitions()
+        .parts()
+        .importBus()
+        .maybeStack(1)
+        .orNull();
+    public static final ItemStack AE2_EXPORT_BUS = AEApi.instance()
+        .definitions()
+        .parts()
+        .exportBus()
+        .maybeStack(1)
+        .orNull();
+
+    public static ItemStack fluidStorageBus() {
+        return com.glodblock.github.loader.ItemAndBlockHolder.FLUID_STORAGE_BUS.stack();
+    }
+
+    public static ItemStack fluidImportBus() {
+        return com.glodblock.github.loader.ItemAndBlockHolder.FLUID_IMPORT_BUS.stack();
+    }
+
+    public static ItemStack fluidExportBus() {
+        return com.glodblock.github.loader.ItemAndBlockHolder.FLUID_EXPORT_BUS.stack();
+    }
 
     @Override
     public void run() {
@@ -245,18 +276,10 @@ public class RecipeLoader implements Runnable {
 
         }
         if (Mods.BOTANIA.isModLoaded()) {
-            GameRegistry.addShapelessRecipe(
-                MANA_IMPORT_BUS.stack(),
-                com.glodblock.github.loader.ItemAndBlockHolder.FLUID_IMPORT_BUS.stack());
-            GameRegistry.addShapelessRecipe(
-                MANA_EXPORT_BUS.stack(),
-                com.glodblock.github.loader.ItemAndBlockHolder.FLUID_EXPORT_BUS.stack());
-            GameRegistry.addShapelessRecipe(
-                com.glodblock.github.loader.ItemAndBlockHolder.FLUID_IMPORT_BUS.stack(),
-                MANA_IMPORT_BUS.stack());
-            GameRegistry.addShapelessRecipe(
-                com.glodblock.github.loader.ItemAndBlockHolder.FLUID_EXPORT_BUS.stack(),
-                MANA_EXPORT_BUS.stack());
+            GameRegistry.addShapelessRecipe(MANA_IMPORT_BUS.stack(), fluidImportBus());
+            GameRegistry.addShapelessRecipe(MANA_EXPORT_BUS.stack(), fluidExportBus());
+            GameRegistry.addShapelessRecipe(fluidImportBus(), MANA_IMPORT_BUS.stack());
+            GameRegistry.addShapelessRecipe(fluidExportBus(), MANA_EXPORT_BUS.stack());
         }
         if (Mods.isLegacyGt5Loaded() || Mods.isGt5UnofficialLoaded()) {
             if (ae2StuffWireless != null) {
@@ -283,6 +306,16 @@ public class RecipeLoader implements Runnable {
                     .eut(TierEU.RECIPE_LuV)
                     .addTo(RecipeMaps.assemblerRecipes);
             }
+        }
+        if (!Mods.SNL.isModLoaded()) {
+            GameRegistry.addShapelessRecipe(
+                ItemAndBlockHolder.UNIVERSAL_STORAGE_BUS.stack(),
+                fluidStorageBus(),
+                AE2_STORAGE_BUS);
+            GameRegistry
+                .addShapelessRecipe(ItemAndBlockHolder.UNIVERSAL_IMPORT_BUS.stack(), fluidImportBus(), AE2_IMPORT_BUS);
+            GameRegistry
+                .addShapelessRecipe(ItemAndBlockHolder.UNIVERSAL_EXPORT_BUS.stack(), fluidExportBus(), AE2_EXPORT_BUS);
         }
         WirelessTerminalQuantumBridgeRecipe.register(ITEM_WIRELESS_DUAL_INTERFACE_TERMINAL.stack());
         WirelessTerminalEnergyRecipe.register(ITEM_WIRELESS_DUAL_INTERFACE_TERMINAL.stack());

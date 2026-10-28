@@ -9,6 +9,9 @@ item.part_thaumatorium_interface.name=ME Thaumatorium Interface
 item.part_wireless_connector_terminal.name=ME Wireless Connector Terminal
 item.part_mana_export.name=ME Mana Export Bus
 item.part_mana_import.name=ME Mana Import Bus
+item.part_universal_storage.name=ME Universal Storage Bus
+item.part_universal_import.name=ME Universal Import Bus
+item.part_universal_export.name=ME Universal Export Bus
 item.wireless_dual_interface_terminal.name=ME Wireless Dual Interface Terminal
 item.wireless_connector_terminal.name=ME Wireless Connector Terminal
 item.crafting_debug_card.name=Crafting Debug Card
@@ -200,6 +203,8 @@ ae2thing.chat.auto_upload.no_blank_pattern=Auto upload: no blank pattern availab
 ae2thing.chat.auto_upload.slot_occupied=Auto upload: the target slot is already occupied
 ae2thing.chat.auto_upload.duplicate=Auto upload: the target interface already holds this pattern
 ae2thing.chat.auto_upload.failed=Auto upload failed
+
+ae2thing.chat.universal_bus.config_full=§e%s bookmark(s) of the group did not fit: the config slots are full. Install capacity cards to unlock more slots.
 
 nei.options.ae2thing.nei_craft_item=Middle click NEI panel to quick order item from ae terminal 
 nei.options.ae2thing.nei_craft_item.true=Yes

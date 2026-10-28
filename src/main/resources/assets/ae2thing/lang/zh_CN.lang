@@ -9,6 +9,9 @@ item.part_thaumatorium_interface.name=ME炼金接口
 item.part_wireless_connector_terminal.name=ME无线连接终端
 item.part_mana_export.name=ME魔力输出总线
 item.part_mana_import.name=ME魔力输入总线
+item.part_universal_storage.name=ME通用存储总线
+item.part_universal_import.name=ME通用输入总线
+item.part_universal_export.name=ME通用输出总线
 item.wireless_dual_interface_terminal.name=ME无线二合一接口终端
 item.wireless_connector_terminal.name=ME无线连接终端
 item.crafting_debug_card.name=合成DEBUG卡
@@ -193,6 +196,8 @@ ae2thing.chat.auto_upload.no_blank_pattern=自动上传：没有空白样板
 ae2thing.chat.auto_upload.slot_occupied=自动上传：目标槽位已被占用
 ae2thing.chat.auto_upload.duplicate=自动上传：目标接口已有该样板
 ae2thing.chat.auto_upload.failed=自动上传失败
+
+ae2thing.chat.universal_bus.config_full=§e书签组中有 %s 个条目没能放入：配置槽已满。安装容量卡可解锁更多槽位。
 
 nei.options.ae2thing.nei_craft_item=NEI中鼠标中键快速下单终端中的物品 
 nei.options.ae2thing.nei_craft_item.true=是

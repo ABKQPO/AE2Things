@@ -18,6 +18,7 @@ import com.asdflj.ae2thing.api.adapter.findit.FluidStorageBusAdapter;
 import com.asdflj.ae2thing.api.adapter.findit.MEChestAdapter;
 import com.asdflj.ae2thing.api.adapter.findit.MEDriverAdapter;
 import com.asdflj.ae2thing.api.adapter.findit.StorageBusAdapter;
+import com.asdflj.ae2thing.api.adapter.findit.UniversalStorageBusAdapter;
 import com.asdflj.ae2thing.api.adapter.terminal.item.BackpackTerminalHandler;
 import com.asdflj.ae2thing.api.adapter.terminal.item.DualInterfaceTerminalHandler;
 import com.asdflj.ae2thing.api.adapter.terminal.item.FCBaseTerminalHandler;
@@ -171,6 +172,24 @@ public class CommonProxy {
             Upgrades.SUPERSPEED.registerItem(ItemAndBlockHolder.MANA_IMPORT_BUS.stack(), 4);
             Upgrades.REDSTONE.registerItem(ItemAndBlockHolder.MANA_IMPORT_BUS.stack(), 1);
         }
+        if (!Mods.SNL.isModLoaded()) {
+            Upgrades.FUZZY.registerItem(ItemAndBlockHolder.UNIVERSAL_STORAGE_BUS.stack(), 1);
+            Upgrades.ORE_FILTER.registerItem(ItemAndBlockHolder.UNIVERSAL_STORAGE_BUS.stack(), 1);
+            Upgrades.INVERTER.registerItem(ItemAndBlockHolder.UNIVERSAL_STORAGE_BUS.stack(), 1);
+            Upgrades.CAPACITY.registerItem(ItemAndBlockHolder.UNIVERSAL_STORAGE_BUS.stack(), 5);
+            Upgrades.STICKY.registerItem(ItemAndBlockHolder.UNIVERSAL_STORAGE_BUS.stack(), 1);
+
+            for (ItemStack bus : new ItemStack[] { ItemAndBlockHolder.UNIVERSAL_IMPORT_BUS.stack(),
+                ItemAndBlockHolder.UNIVERSAL_EXPORT_BUS.stack() }) {
+                Upgrades.FUZZY.registerItem(bus, 1);
+                Upgrades.ORE_FILTER.registerItem(bus, 1);
+                Upgrades.REDSTONE.registerItem(bus, 1);
+                Upgrades.CAPACITY.registerItem(bus, 2);
+                Upgrades.SPEED.registerItem(bus, 4);
+                Upgrades.SUPERSPEED.registerItem(bus, 4);
+                Upgrades.SUPERLUMINALSPEED.registerItem(bus, 4);
+            }
+        }
         AE2ThingAPI.instance()
             .terminal()
             .registerFindItStorageProvider(new MEChestAdapter());
@@ -183,6 +202,11 @@ public class CommonProxy {
         AE2ThingAPI.instance()
             .terminal()
             .registerFindItStorageProvider(new FluidStorageBusAdapter());
+        if (!Mods.SNL.isModLoaded()) {
+            AE2ThingAPI.instance()
+                .terminal()
+                .registerFindItStorageProvider(new UniversalStorageBusAdapter());
+        }
         if (Mods.THAUMIC_ENERGISTICS.isModLoaded()) {
             AE2ThingAPI.instance()
                 .terminal()

@@ -21,6 +21,7 @@ public class CPacketTypeFilter implements IMessage {
     private int windowId;
     private Reference2BooleanMap<IAEStackType<?>> map;
 
+    @SuppressWarnings("unused")
     public CPacketTypeFilter() {
         // NO-OP
     }
