@@ -100,6 +100,7 @@ import appeng.util.item.AEItemStack;
 import appeng.util.item.AEItemStackType;
 import codechicken.nei.LayoutManager;
 import cpw.mods.fml.common.Loader;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 public class GuiBaseInterfaceWireless extends BaseMEGui
     implements IDropToFillTextField, IInterfaceTerminalPostUpdate, IGuiSub {
@@ -109,10 +110,12 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
     public static final int INV_HEIGHT = 98;
     public static final int VIEW_WIDTH = 174;
     public static final int VIEW_LEFT = 10;
+    private static final int BREAK_TEXT_CACHE_LIMIT = 512;
     protected static final ResourceLocation BACKGROUND = new ResourceLocation(
         AppEng.MOD_ID,
         "textures/guis/newinterfaceterminal.png");
 
+    private final Map<String, List<String>> breakTextCache = new Object2ObjectOpenHashMap<>();
     final InterfaceWirelessList masterList = new InterfaceWirelessList(
         ((StringOrder) AEConfig.instance.settings.getSetting(Settings.INTERFACE_TERMINAL_SECTION_ORDER)).comparator);
     private final MEGuiTextField searchFieldOutputs;
@@ -273,6 +276,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
     public void initGui() {
         super.initGui();
 
+        this.breakTextCache.clear();
         this.buttonList.clear();
         this.viewHeight = calculateViewHeight();
         this.ySize = HEADER_HEIGHT + INV_HEIGHT + this.viewHeight;
@@ -634,8 +638,22 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
     }
 
     public List<String> breakText(String text, int maxWidth) {
+        if (text == null || text.isEmpty()) return Collections.emptyList();
+
+        final String cacheKey = maxWidth + "\u0000" + text;
+        final List<String> cached = this.breakTextCache.get(cacheKey);
+        if (cached != null) return cached;
+
+        final List<String> computed = Collections.unmodifiableList(this.computeBreakText(text, maxWidth));
+        if (this.breakTextCache.size() >= BREAK_TEXT_CACHE_LIMIT) {
+            this.breakTextCache.clear();
+        }
+        this.breakTextCache.put(cacheKey, computed);
+        return computed;
+    }
+
+    private List<String> computeBreakText(String text, int maxWidth) {
         List<String> lines = new ArrayList<>();
-        if (text == null || text.isEmpty()) return lines;
 
         var lang = mc.getLanguageManager()
             .getCurrentLanguage();
@@ -1325,7 +1343,24 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         }
     }
 
-    private boolean itemStackMatchesSearchTerm(final ItemStack itemStack, final String searchTerm, boolean in) {
+    private static Predicate<ItemStack> createSearchFilter(final String searchTerm) {
+        if (NEI.searchField.existsSearchField()) {
+            return NEI.searchField.getFilter(searchTerm);
+        }
+        return is -> NeCharUtil.INSTANCE.contains(
+            searchTerm,
+            Platform.getItemDisplayName(
+                AEApi.instance()
+                    .storage()
+                    .createItemStack(is))
+                .toLowerCase());
+    }
+
+    private boolean itemStackMatchesSearchTerm(final ItemStack itemStack, final Predicate<ItemStack> itemFilter,
+        boolean unknownItemHint, boolean in) {
+        if (itemFilter == null) {
+            return true;
+        }
         if (itemStack == null) {
             return false;
         }
@@ -1337,22 +1372,6 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         }
 
         final NBTTagList tags = encodedValue.getTagList(in ? "in" : "out", Constants.NBT.TAG_COMPOUND);
-        final boolean containsInvalidDisplayName = GuiText.UnknownItem.getLocal()
-            .toLowerCase()
-            .contains(searchTerm);
-        Predicate<ItemStack> itemFilter;
-
-        if (NEI.searchField.existsSearchField()) {
-            itemFilter = NEI.searchField.getFilter(searchTerm);
-        } else {
-            itemFilter = is -> NeCharUtil.INSTANCE.contains(
-                searchTerm,
-                Platform.getItemDisplayName(
-                    AEApi.instance()
-                        .storage()
-                        .createItemStack(is))
-                    .toLowerCase());
-        }
 
         for (int i = 0; i < tags.tagCount(); i++) {
             final NBTTagCompound tag = tags.getCompoundTagAt(i);
@@ -1362,7 +1381,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
                 if (itemFilter.test(aes.getItemStackForNEI())) {
                     return true;
                 }
-            } else if (containsInvalidDisplayName && !tag.hasNoTags()) {
+            } else if (unknownItemHint && !tag.hasNoTags()) {
                 return true;
             }
         }
@@ -1720,13 +1739,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         String key;
         String name;
         List<InterfaceWirelessEntry> entries = new ArrayList<>();
-        Set<InterfaceWirelessEntry> visibleEntries = new TreeSet<>(Comparator.comparing(e -> {
-            if (e.dispRep != null) {
-                return e.dispRep.getDisplayName() + e.id;
-            } else {
-                return String.valueOf(e.id);
-            }
-        }));
+        Set<InterfaceWirelessEntry> visibleEntries = new TreeSet<>(Comparator.comparing(e -> e.sortKey));
         int height;
         private boolean isDirty = true;
         boolean visible = false;
@@ -1769,10 +1782,18 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
 
         public void refreshVisible() {
             visibleEntries.clear();
-            String input = GuiBaseInterfaceWireless.this.searchFieldInputs.getText()
+            final String input = GuiBaseInterfaceWireless.this.searchFieldInputs.getText()
                 .toLowerCase();
-            String output = GuiBaseInterfaceWireless.this.searchFieldOutputs.getText()
+            final String output = GuiBaseInterfaceWireless.this.searchFieldOutputs.getText()
                 .toLowerCase();
+            final boolean searchInput = !input.isEmpty();
+            final boolean searchOutput = !output.isEmpty();
+            final Predicate<ItemStack> inputFilter = searchInput ? createSearchFilter(input) : null;
+            final Predicate<ItemStack> outputFilter = searchOutput ? createSearchFilter(output) : null;
+            final String unknownItemName = GuiText.UnknownItem.getLocal()
+                .toLowerCase();
+            final boolean unknownItemHintInput = searchInput && unknownItemName.contains(input);
+            final boolean unknownItemHintOutput = searchOutput && unknownItemName.contains(output);
 
             for (InterfaceWirelessEntry entry : entries) {
                 entry.dispY = -9999;
@@ -1786,18 +1807,20 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
                 if (onlyMolecularAssemblers && !entry.isCraftingPatternProvider) {
                     continue;
                 }
-                if (!GuiBaseInterfaceWireless.this.entryMatchesEnhancedSearch(entry)) {
+                final boolean enhancedMatch = GuiBaseInterfaceWireless.this.entryMatchesEnhancedSearch(entry);
+                entry.enhancedSearchMatch = enhancedMatch;
+                if (!enhancedMatch) {
                     continue;
                 }
                 // Find search terms
-                if (!input.isEmpty() || !output.isEmpty()) {
+                if (searchInput || searchOutput) {
                     AppEngInternalInventory inv = entry.inv;
                     boolean shouldAdd = false;
 
                     for (int i = 0; i < entry.numSlots; ++i) {
                         ItemStack stack = inv.getStackInSlot(i);
-                        if (itemStackMatchesSearchTerm(stack, input, true)
-                            && itemStackMatchesSearchTerm(stack, output, false)) {
+                        if (itemStackMatchesSearchTerm(stack, inputFilter, unknownItemHintInput, true)
+                            && itemStackMatchesSearchTerm(stack, outputFilter, unknownItemHintOutput, false)) {
                             shouldAdd = true;
                             entry.filteredRecipes[i] = false;
                         } else {
@@ -1856,6 +1879,8 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
         String rawSuffix;
         String searchSuffix;
         String activeRecipeMapId;
+        String sortKey;
+        boolean enhancedSearchMatch = true;
         AppEngInternalInventory inv;
         GuiImgButton optionsButton;
         GuiImgButton renameButton;
@@ -1892,6 +1917,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             this.rawName = name;
             this.rawSuffix = suffix;
             this.dispName = translateRawName(name, suffix, null);
+            this.sortKey = String.valueOf(id);
             this.rows = Math.max(0, rows);
             this.rowSize = Math.max(1, rowSize);
             this.numSlots = Math.max(0, Math.min(numSlots, this.rows * this.rowSize));
@@ -1928,6 +1954,11 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             this.rawSuffix = suffix;
             this.dispRep = displayRep;
             this.dispName = translateRawName(name, suffix, this.dispRep);
+            this.updateSortKey();
+        }
+
+        private void updateSortKey() {
+            this.sortKey = (this.dispRep != null ? this.dispRep.getDisplayName() : "") + this.id;
         }
 
         InterfaceWirelessEntry setLocation(int x, int y, int z, int dim, int side) {
@@ -1949,6 +1980,7 @@ public class GuiBaseInterfaceWireless extends BaseMEGui
             this.selfRep = selfRep;
             this.dispRep = dispRep;
             this.dispName = translateRawName(this.rawName, this.rawSuffix, dispRep);
+            this.updateSortKey();
 
             return this;
         }

@@ -48,7 +48,7 @@ public class AdvItemRepo extends ItemRepo implements Runnable {
     protected AdvItemRepo repo;
     protected final Set<IAEStack<?>> cache = Collections.synchronizedSet(new HashSet<>());
     protected IGuiMonitor gui;
-    private static final Lock lock = new ReentrantLock();
+    private final Lock lock = new ReentrantLock();
     private final AtomicBoolean updateQueued = new AtomicBoolean();
     private final AtomicBoolean updateRequested = new AtomicBoolean();
 

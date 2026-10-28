@@ -64,6 +64,7 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
     private static final String PANEL_POSITIONS_TAG = "ae2thingPanelPositions";
     private static final int MIN_PANEL_POSITION = -10000;
     private static final int MAX_PANEL_POSITION = 10000;
+    private static final long INTERFACE_SCAN_INTERVAL = 1000L;
 
     protected AEStackItemInventory craftingEx;
     protected AEStackItemInventory outputEx;
@@ -78,6 +79,7 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
     protected boolean beSubstitute = false;
     protected int activePage = 0;
     private Util.DimensionalCoordSide tile;
+    private long nextInterfaceScan;
     private final TerminalSettings terminalSettings = new TerminalSettings();
     private final IInventory viewCells = new AppEngInternalInventory(null, 5);
     private final IAEStackInventory craftingView;
@@ -577,6 +579,9 @@ public class WirelessDualInterfaceTerminalInventory extends WirelessTerminal
 
     @Override
     public boolean needsUpdate() {
+        final long now = System.currentTimeMillis();
+        if (now < this.nextInterfaceScan) return false;
+        this.nextInterfaceScan = now + INTERFACE_SCAN_INTERVAL;
         return true;
     }
 

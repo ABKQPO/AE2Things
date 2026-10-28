@@ -128,6 +128,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     private String interfaceSearchFeedbackTooltip;
     private String interfaceSearchDumpedQuery;
     private final List<DualTerminalComponentTree.Component> itemSlotComponents = new ArrayList<>();
+    private final List<GuiButton> panelButtonsScratch = new ArrayList<>();
     private VirtualMESlot renderedVirtualSlotUnderMouse;
     private DualPatternSlot[] patternInputSlots;
     private DualPatternSlot[] patternOutputSlots;
@@ -1256,7 +1257,8 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
     }
 
     private void orderPanelButtons() {
-        List<GuiButton> panelButtons = new ArrayList<>();
+        final List<GuiButton> panelButtons = this.panelButtonsScratch;
+        panelButtons.clear();
         for (GuiButton button : this.buttonList) {
             for (IAEBasePanel panel : this.componentTree.getPanels()) {
                 if (this.ownsPanelButton(panel, button)) {
@@ -1471,7 +1473,7 @@ public class GuiWirelessDualInterfaceTerminal extends GuiBaseInterfaceWireless i
         int visible = 0;
         int modeMismatched = 0;
         for (InterfaceWirelessEntry entry : this.masterList.allEntries()) {
-            if (this.entryMatchesEnhancedSearch(entry)) {
+            if (entry.enhancedSearchMatch) {
                 visible++;
             } else if (entry.activeRecipeMapId != null && this.entryMatchesEnhancedSearchIgnoringMode(entry)) {
                 modeMismatched++;
